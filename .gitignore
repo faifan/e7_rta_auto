@@ -2,6 +2,7 @@
 dist/
 build/
 *.spec
+build.bat
 
 # 运行日志 / 调试截图
 run.log
