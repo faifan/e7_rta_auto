@@ -1,0 +1,580 @@
+{
+  "度假风优芬妮": {
+    "name": "度假风优芬妮",
+    "skills": {
+      "S1": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\度假风优芬妮_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\度假风优芬妮_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\度假风优芬妮_S3.png"
+      }
+    }
+  },
+  "调香师": {
+    "name": "调香师",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\调香师_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\调香师_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\调香师_S3.png"
+      }
+    }
+  },
+  "白银刀刃的雅拉敏塔": {
+    "name": "白银刀刃的雅拉敏塔",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\白银刀刃的雅拉敏塔_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\白银刀刃的雅拉敏塔_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\白银刀刃的雅拉敏塔_S3.png"
+      }
+    }
+  },
+  "宝剑君主伊赛丽亚": {
+    "name": "宝剑君主伊赛丽亚",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\宝剑君主伊赛丽亚_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\宝剑君主伊赛丽亚_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\宝剑君主伊赛丽亚_S3.png"
+      }
+    }
+  },
+  "伯里安": {
+    "name": "伯里安",
+    "skills": {
+      "S1": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\伯里安_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\伯里安_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\伯里安_S3.png"
+      }
+    }
+  },
+  "苍宫伊莉娜美a": {
+    "name": "苍宫伊莉娜美a",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\苍宫伊莉娜美a_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\苍宫伊莉娜美a_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\苍宫伊莉娜美a_S3.png"
+      }
+    }
+  },
+  "龙之伴侣赛娜": {
+    "name": "龙之伴侣赛娜",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\龙之伴侣赛娜_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\龙之伴侣赛娜_S2.png"
+      },
+      "S3": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\龙之伴侣赛娜_S3.png"
+      }
+    }
+  },
+  "诺托斯": {
+    "name": "诺托斯",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\诺托斯_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\诺托斯_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\诺托斯_S3.png"
+      }
+    }
+  },
+  "起源拉斯": {
+    "name": "起源拉斯",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\起源拉斯_S1.png"
+      },
+      "S2": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\起源拉斯_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\起源拉斯_S3.png"
+      }
+    }
+  },
+  "组长亚露嘉公公会": {
+    "name": "组长亚露嘉公公会",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\组长亚露嘉公公会_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\组长亚露嘉公公会_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\组长亚露嘉公公会_S3.png"
+      }
+    }
+  },
+  "狮心王洁若米亚": {
+    "name": "狮心王洁若米亚",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\狮心王洁若米亚_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\狮心王洁若米亚_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\狮心王洁若米亚_S3.png"
+      }
+    }
+  },
+  "支配者莉莉亚斯": {
+    "name": "支配者莉莉亚斯",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\支配者莉莉亚斯_S1.png"
+      },
+      "S2": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\支配者莉莉亚斯_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\支配者莉莉亚斯_S3.png"
+      }
+    }
+  },
+  "灵眼的瑟琳": {
+    "name": "灵眼的瑟琳",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\灵眼的瑟琳_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\灵眼的瑟琳_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\灵眼的瑟琳_S3.png"
+      }
+    }
+  },
+  "湖畔魔女泰妮布里雅": {
+    "name": "湖畔魔女泰妮布里雅",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\湖畔魔女泰妮布里雅_S1.png"
+      },
+      "S2": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\湖畔魔女泰妮布里雅_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\湖畔魔女泰妮布里雅_S3.png"
+      }
+    }
+  },
+  "森之贤者微微安公": {
+    "name": "森之贤者微微安公",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\森之贤者微微安公_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\森之贤者微微安公_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\森之贤者微微安公_S3.png"
+      }
+    }
+  },
+  "新月露娜4本": {
+    "name": "新月露娜4本",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\新月露娜4本_S1.png"
+      },
+      "S2": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\新月露娜4本_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\新月露娜4本_S3.png"
+      }
+    }
+  },
+  "光之瑞儿": {
+    "name": "光之瑞儿",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\光之瑞儿_S1.png"
+      },
+      "S2": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\光之瑞儿_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\光之瑞儿_S3.png"
+      }
+    }
+  },
+  "龙王莎伦": {
+    "name": "龙王莎伦",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\龙王莎伦_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\龙王莎伦_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\龙王莎伦_S3.png"
+      }
+    }
+  },
+  "仆人克萝爱公": {
+    "name": "仆人克萝爱公",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\仆人克萝爱公_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\仆人克萝爱公_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\仆人克萝爱公_S3.png"
+      }
+    }
+  },
+  "天秤之主公系": {
+    "name": "天秤之主公系",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\天秤之主公系_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\天秤之主公系_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\天秤之主公系_S3.png"
+      }
+    }
+  },
+  "都市暗影小泡美公公": {
+    "name": "都市暗影小泡美公公",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\都市暗影小泡美公公_S1.png"
+      },
+      "S2": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\都市暗影小泡美公公_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\都市暗影小泡美公公_S3.png"
+      }
+    }
+  },
+  "风纪委员艾莉雅": {
+    "name": "风纪委员艾莉雅",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\风纪委员艾莉雅_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\风纪委员艾莉雅_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\风纪委员艾莉雅_S3.png"
+      }
+    }
+  },
+  "孤狼沛伊拉公": {
+    "name": "孤狼沛伊拉公",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\孤狼沛伊拉公_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\孤狼沛伊拉公_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\孤狼沛伊拉公_S3.png"
+      }
+    }
+  },
+  "旁观者和英公公会台": {
+    "name": "旁观者和英公公会台",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\旁观者和英公公会台_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\旁观者和英公公会台_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\旁观者和英公公会台_S3.png"
+      }
+    }
+  },
+  "设计师莉莉贝a公公": {
+    "name": "设计师莉莉贝a公公",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\设计师莉莉贝a公公_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\设计师莉莉贝a公公_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\设计师莉莉贝a公公_S3.png"
+      }
+    }
+  },
+  "史瑞杰思": {
+    "name": "史瑞杰思",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\史瑞杰思_S1.png"
+      },
+      "S2": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\史瑞杰思_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\史瑞杰思_S3.png"
+      }
+    }
+  },
+  "一轮孤月维尔萝娜": {
+    "name": "一轮孤月维尔萝娜",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\一轮孤月维尔萝娜_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\一轮孤月维尔萝娜_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\一轮孤月维尔萝娜_S3.png"
+      }
+    }
+  },
+  "海上隆灵佛里带丝公": {
+    "name": "海上隆灵佛里带丝公",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\海上隆灵佛里带丝公_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\海上隆灵佛里带丝公_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\海上隆灵佛里带丝公_S3.png"
+      }
+    }
+  },
+  "赫尔赛蒂公本农": {
+    "name": "赫尔赛蒂公本农",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\赫尔赛蒂公本农_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\赫尔赛蒂公本农_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\赫尔赛蒂公本农_S3.png"
+      }
+    }
+  },
+  "黑暗牧者迪埃妮": {
+    "name": "黑暗牧者迪埃妮",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\黑暗牧者迪埃妮_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\黑暗牧者迪埃妮_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\黑暗牧者迪埃妮_S3.png"
+      }
+    }
+  },
+  "利纳柯公本": {
+    "name": "利纳柯公本",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\利纳柯公本公_S1.png"
+      },
+      "S2": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\利纳柯公本公_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\利纳柯公本公_S3.png"
+      }
+    }
+  },
+  "萨若米亚": {
+    "name": "萨若米亚",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\萨若米亚公_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\萨若米亚公_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\萨若米亚公_S3.png"
+      }
+    }
+  },
+  "午时戏水美兰": {
+    "name": "午时戏水美兰",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\午时戏水美兰_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\午时戏水美兰_S2.png"
+      },
+      "S3": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\午时戏水美兰_S3.png"
+      }
+    }
+  },
+  "庆典艾姐": {
+    "name": "庆典艾姐",
+    "skills": {
+      "S1": {
+        "type": "单体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\庆典艾姐公本_S1.png"
+      },
+      "S2": {
+        "type": "被动",
+        "icon": "D:\\e7Rta_zd\\skill_db\\庆典艾姐公本_S2.png"
+      },
+      "S3": {
+        "type": "群体",
+        "icon": "D:\\e7Rta_zd\\skill_db\\庆典艾姐公本_S3.png"
+      }
+    }
+  }
+}

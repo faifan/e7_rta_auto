@@ -1,0 +1,22 @@
+# PyInstaller 打包输出
+dist/
+build/
+*.spec
+
+# 运行日志 / 调试截图
+run.log
+build_log.txt
+debug/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# IDE / 工具隐藏目录
+.idea/
+.vscode/
+.claude/
+.qwen/
+
+# 模型权重（体积大，按需决定是否上传）
+# draft_transformer.pth

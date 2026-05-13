@@ -1,0 +1,2648 @@
+  [
+  {
+    "code": "c0001",
+    "grade": "4",
+    "name": "玫勒赛德丝",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c0002",
+    "grade": "4",
+    "name": "玫勒赛德丝",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1001",
+    "grade": "3",
+    "name": "拉斯",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1002",
+    "grade": "5",
+    "name": "赛西莉亚",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1003",
+    "grade": "4",
+    "name": "萝季",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1004",
+    "grade": "4",
+    "name": "席可",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1005",
+    "grade": "4",
+    "name": "玫勒赛德丝",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1006",
+    "grade": "5",
+    "name": "绮世",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1007",
+    "grade": "5",
+    "name": "维德瑞",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1008",
+    "grade": "4",
+    "name": "亚敏",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1009",
+    "grade": "5",
+    "name": "夏绿蒂",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1010",
+    "grade": "4",
+    "name": "杰拉图",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1011",
+    "grade": "4",
+    "name": "卡琳",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1012",
+    "grade": "4",
+    "name": "科尔布思",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1013",
+    "grade": "4",
+    "name": "卡尔图哈",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1014",
+    "grade": "4",
+    "name": "席德",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1015",
+    "grade": "5",
+    "name": "巴尔＆塞尚",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1016",
+    "grade": "5",
+    "name": "优芬妮",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1017",
+    "grade": "4",
+    "name": "雅卡泰丝",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1018",
+    "grade": "3",
+    "name": "埃德勒",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1019",
+    "grade": "5",
+    "name": "萝菲",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1020",
+    "grade": "4",
+    "name": "修里",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1021",
+    "grade": "4",
+    "name": "汀果",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1022",
+    "grade": "5",
+    "name": "光之瑞儿",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c1023",
+    "grade": "5",
+    "name": "凯隆",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1024",
+    "grade": "5",
+    "name": "伊赛丽亚",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1027",
+    "grade": "5",
+    "name": "查尔斯",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1028",
+    "grade": "4",
+    "name": "克莱莉莎",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1029",
+    "grade": "4",
+    "name": "雷欧",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1030",
+    "grade": "5",
+    "name": "尤娜",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1031",
+    "grade": "4",
+    "name": "拉兹",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1032",
+    "grade": "4",
+    "name": "玛雅",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1033",
+    "grade": "4",
+    "name": "可丽",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1034",
+    "grade": "5",
+    "name": "史瑞杰思",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c1035",
+    "grade": "4",
+    "name": "法济斯",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1036",
+    "grade": "4",
+    "name": "克罗泽",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1037",
+    "grade": "4",
+    "name": "多米妮尔",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1038",
+    "grade": "5",
+    "name": "赛兹",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1039",
+    "grade": "5",
+    "name": "海斯特",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1040",
+    "grade": "4",
+    "name": "塞丽拉",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1042",
+    "grade": "5",
+    "name": "泰温",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1043",
+    "grade": "4",
+    "name": "洛曼",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1044",
+    "grade": "5",
+    "name": "缪伊",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1046",
+    "grade": "5",
+    "name": "丽迪卡",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1047",
+    "grade": "5",
+    "name": "肯恩",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1048",
+    "grade": "5",
+    "name": "雅拉敏塔",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1049",
+    "grade": "5",
+    "name": "克萝爱",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1050",
+    "grade": "5",
+    "name": "泰妮布里雅",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1053",
+    "grade": "5",
+    "name": "巴萨尔",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1054",
+    "grade": "4",
+    "name": "铃儿",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1055",
+    "grade": "5",
+    "name": "济纽亚",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1060",
+    "grade": "5",
+    "name": "修尼尔",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1062",
+    "grade": "4",
+    "name": "安洁莉卡",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1065",
+    "grade": "4",
+    "name": "苏琳",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1066",
+    "grade": "5",
+    "name": "露娜",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1067",
+    "grade": "5",
+    "name": "塔玛林尔",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1069",
+    "grade": "5",
+    "name": "鲁特比",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1070",
+    "grade": "5",
+    "name": "克劳乌",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1071",
+    "grade": "5",
+    "name": "维尔萝娜",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1072",
+    "grade": "5",
+    "name": "赛珂兰特",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1073",
+    "grade": "5",
+    "name": "卡威利",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1074",
+    "grade": "5",
+    "name": "菲奥雷托",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1076",
+    "grade": "5",
+    "name": "迪埃妮",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1079",
+    "grade": "5",
+    "name": "洁若米亚",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1080",
+    "grade": "5",
+    "name": "帕贝尔",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1081",
+    "grade": "5",
+    "name": "赛瑞丝",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1082",
+    "grade": "5",
+    "name": "璐璐卡",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1083",
+    "grade": "5",
+    "name": "杰诺",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1085",
+    "grade": "4",
+    "name": "卡瓦朱",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1086",
+    "grade": "4",
+    "name": "卡瓦娜",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1087",
+    "grade": "4",
+    "name": "尤贝乌斯",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1088",
+    "grade": "5",
+    "name": "薇薇安",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1089",
+    "grade": "5",
+    "name": "莉莉亚斯",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1090",
+    "grade": "5",
+    "name": "雷伊",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1091",
+    "grade": "5",
+    "name": "艾蕾娜",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1092",
+    "grade": "5",
+    "name": "索尔",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1093",
+    "grade": "5",
+    "name": "梅喧",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1094",
+    "grade": "5",
+    "name": "蒂姬",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1095",
+    "grade": "5",
+    "name": "莉莉贝",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1096",
+    "grade": "5",
+    "name": "梅丽莎",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1097",
+    "grade": "5",
+    "name": "暴击型卡农",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1099",
+    "grade": "5",
+    "name": "指挥型莱伊卡",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1100",
+    "grade": "5",
+    "name": "艾莲西雅",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1101",
+    "grade": "5",
+    "name": "小泡芙",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1102",
+    "grade": "5",
+    "name": "罗安纳",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1103",
+    "grade": "5",
+    "name": "瑟琳",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1104",
+    "grade": "5",
+    "name": "魔勒",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1105",
+    "grade": "5",
+    "name": "爱尔菲特",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1106",
+    "grade": "5",
+    "name": "赛娜",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1107",
+    "grade": "4",
+    "name": "绊爱",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1108",
+    "grade": "5",
+    "name": "艾尔巴伦",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1109",
+    "grade": "5",
+    "name": "兰蒂",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1110",
+    "grade": "5",
+    "name": "芙兰",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1111",
+    "grade": "5",
+    "name": "艾妲",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1112",
+    "grade": "5",
+    "name": "佛里蒂丝",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1113",
+    "grade": "5",
+    "name": "伊莉娜芙",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1114",
+    "grade": "5",
+    "name": "雷姆",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1115",
+    "grade": "5",
+    "name": "拉姆",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1116",
+    "grade": "5",
+    "name": "爱蜜莉雅",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1117",
+    "grade": "5",
+    "name": "伯里安",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c1118",
+    "grade": "5",
+    "name": "岚",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1119",
+    "grade": "5",
+    "name": "札哈克",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1121",
+    "grade": "5",
+    "name": "利姆鲁",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1122",
+    "grade": "5",
+    "name": "米莉姆",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1123",
+    "grade": "5",
+    "name": "朱菜",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1124",
+    "grade": "5",
+    "name": "亚露嘉",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1125",
+    "grade": "5",
+    "name": "沛伊拉",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1126",
+    "grade": "5",
+    "name": "路雅",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1127",
+    "grade": "5",
+    "name": "太悟",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1128",
+    "grade": "5",
+    "name": "和英",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1129",
+    "grade": "5",
+    "name": "艾莉雅",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1130",
+    "grade": "5",
+    "name": "洁克‧欧",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1131",
+    "grade": "5",
+    "name": "律荷",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1132",
+    "grade": "5",
+    "name": "莎伦",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1133",
+    "grade": "5",
+    "name": "智武",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c1134",
+    "grade": "5",
+    "name": "爱德华·爱力克",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1135",
+    "grade": "5",
+    "name": "罗伊·马斯坦古",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1136",
+    "grade": "5",
+    "name": "莉莎·霍克爱",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1137",
+    "grade": "5",
+    "name": "ae-KARINA",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1138",
+    "grade": "5",
+    "name": "ae-GISELLE",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1139",
+    "grade": "5",
+    "name": "ae-WINTER",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1140",
+    "grade": "5",
+    "name": "ae-NINGNING",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1141",
+    "grade": "5",
+    "name": "雨修",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1142",
+    "grade": "5",
+    "name": "艾利戈斯",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1143",
+    "grade": "5",
+    "name": "雅咪德",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1144",
+    "grade": "5",
+    "name": "雅碧凯",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1145",
+    "grade": "5",
+    "name": "布里克",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1146",
+    "grade": "5",
+    "name": "红丸",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1147",
+    "grade": "5",
+    "name": "芙米尔",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1148",
+    "grade": "5",
+    "name": "艾碧拉",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1150",
+    "grade": "4",
+    "name": "贝洛妮卡",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1151",
+    "grade": "5",
+    "name": "落月",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1152",
+    "grade": "5",
+    "name": "该隐",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1153",
+    "grade": "5",
+    "name": "赫尔赛蒂",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c1154",
+    "grade": "5",
+    "name": "维波里丝",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1155",
+    "grade": "5",
+    "name": "安兹·乌尔·恭",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c1156",
+    "grade": "5",
+    "name": "雅儿贝德",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1157",
+    "grade": "5",
+    "name": "夏提雅",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1158",
+    "grade": "5",
+    "name": "佩里斯",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1159",
+    "grade": "5",
+    "name": "莱娅",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1160",
+    "grade": "5",
+    "name": "碧儿姬达",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1161",
+    "grade": "5",
+    "name": "不灭神机悟空",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1162",
+    "grade": "5",
+    "name": "小小赛娜",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1163",
+    "grade": "5",
+    "name": "弗莉达",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1166",
+    "grade": "4",
+    "name": "维多丽卡",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1168",
+    "grade": "5",
+    "name": "利纳柯",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1169",
+    "grade": "5",
+    "name": "露彬",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1170",
+    "grade": "5",
+    "name": "斐妮",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1171",
+    "grade": "5",
+    "name": "兔菈玫",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1172",
+    "grade": "5",
+    "name": "芙莉莲",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1173",
+    "grade": "5",
+    "name": "菲伦",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1174",
+    "grade": "5",
+    "name": "休塔尔克",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1176",
+    "grade": "5",
+    "name": "雪花",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1177",
+    "grade": "5",
+    "name": "萨若米亚",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1178",
+    "grade": "5",
+    "name": "赫卡特",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c1179",
+    "grade": "5",
+    "name": "亚奇",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1180",
+    "grade": "5",
+    "name": "露易莎",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c2001",
+    "grade": "5",
+    "name": "起源拉斯",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2002",
+    "grade": "5",
+    "name": "堕落的赛西莉亚",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2003",
+    "grade": "4",
+    "name": "暗影萝季",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2004",
+    "grade": "4",
+    "name": "流浪者席可",
+    "job_cd": "ranger",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2005",
+    "grade": "4",
+    "name": "外太空的玫勒赛德丝",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2006",
+    "grade": "5",
+    "name": "审判者绮世",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2007",
+    "grade": "5",
+    "name": "执行官维德瑞",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2008",
+    "grade": "4",
+    "name": "红焰亚敏",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2009",
+    "grade": "5",
+    "name": "年轻的女王夏绿蒂",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2010",
+    "grade": "4",
+    "name": "终结者杰拉图",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2011",
+    "grade": "4",
+    "name": "血剑卡琳",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2012",
+    "grade": "5",
+    "name": "黑暗的科尔布思",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2013",
+    "grade": "4",
+    "name": "杀手卡尔图哈",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2014",
+    "grade": "4",
+    "name": "杀手席德",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2015",
+    "grade": "5",
+    "name": "贤者巴尔＆塞尚",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2016",
+    "grade": "5",
+    "name": "深渊优芬妮",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2017",
+    "grade": "4",
+    "name": "流星雅卡泰丝",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2018",
+    "grade": "4",
+    "name": "求道者埃德勒",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2019",
+    "grade": "5",
+    "name": "末日萝菲",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2020",
+    "grade": "4",
+    "name": "注视者修里",
+    "job_cd": "ranger",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2021",
+    "grade": "4",
+    "name": "烈火汀果",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2022",
+    "grade": "5",
+    "name": "戴丝蒂娜",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c2023",
+    "grade": "5",
+    "name": "扭曲亡灵凯隆",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2024",
+    "grade": "5",
+    "name": "灰光森林的伊赛丽亚",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2027",
+    "grade": "5",
+    "name": "末日指挥官查尔斯",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2028",
+    "grade": "4",
+    "name": "猫咪克莱莉莎",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2029",
+    "grade": "4",
+    "name": "流浪勇士雷欧",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2031",
+    "grade": "4",
+    "name": "辅助型拉兹",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2032",
+    "grade": "4",
+    "name": "战斗型玛雅",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2033",
+    "grade": "4",
+    "name": "杀手可丽",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2035",
+    "grade": "4",
+    "name": "大将法济斯",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2036",
+    "grade": "4",
+    "name": "不法之徒克罗泽",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2037",
+    "grade": "4",
+    "name": "挑战者多米妮尔",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2038",
+    "grade": "5",
+    "name": "实验体赛兹",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2039",
+    "grade": "5",
+    "name": "赤月贵族海斯特",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2042",
+    "grade": "5",
+    "name": "野心分子泰温",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2043",
+    "grade": "4",
+    "name": "仁慈的洛曼",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2046",
+    "grade": "5",
+    "name": "无神论者丽迪卡",
+    "job_cd": "ranger",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2047",
+    "grade": "5",
+    "name": "武斗家肯恩",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2048",
+    "grade": "5",
+    "name": "白银刀刃的雅拉敏塔",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2049",
+    "grade": "5",
+    "name": "仆人克萝爱",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2050",
+    "grade": "5",
+    "name": "幻影的泰妮布里雅",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2053",
+    "grade": "5",
+    "name": "沙漠宝石巴萨尔",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2054",
+    "grade": "4",
+    "name": "新月舞姬铃儿",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2062",
+    "grade": "4",
+    "name": "罪戾的安洁莉卡",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2065",
+    "grade": "4",
+    "name": "风云苏琳",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2066",
+    "grade": "5",
+    "name": "新月露娜",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2069",
+    "grade": "5",
+    "name": "永劫漂流者鲁特比",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2070",
+    "grade": "5",
+    "name": "最后的骑士克劳乌",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2071",
+    "grade": "5",
+    "name": "一轮孤月维尔萝娜",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2072",
+    "grade": "5",
+    "name": "操作员赛珂兰特",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2073",
+    "grade": "5",
+    "name": "协调者卡威利",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2074",
+    "grade": "5",
+    "name": "残影的菲奥雷托",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2076",
+    "grade": "5",
+    "name": "黑暗牧者迪埃妮",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2079",
+    "grade": "5",
+    "name": "狮心王洁若米亚",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2080",
+    "grade": "5",
+    "name": "司令官帕贝尔",
+    "job_cd": "ranger",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2082",
+    "grade": "5",
+    "name": "最强模特璐璐卡",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2085",
+    "grade": "4",
+    "name": "烈焰的卡瓦朱",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2086",
+    "grade": "4",
+    "name": "大族长卡瓦娜",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2087",
+    "grade": "4",
+    "name": "平衡的尤贝乌斯",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2088",
+    "grade": "5",
+    "name": "森之贤者薇薇安",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2089",
+    "grade": "5",
+    "name": "支配者莉莉亚斯",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2090",
+    "grade": "5",
+    "name": "死亡探究者雷伊",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2091",
+    "grade": "5",
+    "name": "星辰神谕艾蕾娜",
+    "job_cd": "ranger",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2095",
+    "grade": "5",
+    "name": "设计师莉莉贝",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2099",
+    "grade": "5",
+    "name": "策划者莱伊卡",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2101",
+    "grade": "5",
+    "name": "都市暗影小泡芙",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2102",
+    "grade": "5",
+    "name": "镇魂罗安纳",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2103",
+    "grade": "5",
+    "name": "灵眼的瑟琳",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2106",
+    "grade": "5",
+    "name": "龙之伴侣赛娜",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2109",
+    "grade": "5",
+    "name": "海军上校兰蒂",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2110",
+    "grade": "5",
+    "name": "海盗船长芙兰",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2111",
+    "grade": "5",
+    "name": "雪国的苏莉塔妮亚",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2112",
+    "grade": "5",
+    "name": "海上幽灵佛里蒂丝",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2113",
+    "grade": "5",
+    "name": "苍穹伊莉娜芙",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2124",
+    "grade": "5",
+    "name": "组长亚露嘉",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2125",
+    "grade": "5",
+    "name": "孤狼沛伊拉",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2126",
+    "grade": "5",
+    "name": "小恶魔路雅",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2127",
+    "grade": "5",
+    "name": "继承人太悟",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2128",
+    "grade": "5",
+    "name": "旁观者和英",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2129",
+    "grade": "5",
+    "name": "风纪委员艾莉雅",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2131",
+    "grade": "5",
+    "name": "保健室老师律荷",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2132",
+    "grade": "5",
+    "name": "龙王莎伦",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c2165",
+    "grade": "4",
+    "name": "转学生艾庭",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2181",
+    "grade": "5",
+    "name": "诺托斯",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3001",
+    "grade": "3",
+    "name": "屠杀部队员",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3002",
+    "grade": "3",
+    "name": "塔拉诺尔王宫士兵",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3003",
+    "grade": "3",
+    "name": "可露莉",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3004",
+    "grade": "3",
+    "name": "雅洛薇",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3005",
+    "grade": "3",
+    "name": "费莉丝",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3006",
+    "grade": "3",
+    "name": "巴思克",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3011",
+    "grade": "3",
+    "name": "茱迪丝",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3012",
+    "grade": "3",
+    "name": "雅莉莎",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3013",
+    "grade": "3",
+    "name": "鲁兹德",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3014",
+    "grade": "3",
+    "name": "米勒莎",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3015",
+    "grade": "3",
+    "name": "史宾",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3021",
+    "grade": "3",
+    "name": "黛莉亚",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3022",
+    "grade": "3",
+    "name": "艾诺特",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3023",
+    "grade": "3",
+    "name": "赫尔嘉",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3024",
+    "grade": "3",
+    "name": "坤特",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3025",
+    "grade": "3",
+    "name": "伊利欧斯教斧兵",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3026",
+    "grade": "4",
+    "name": "永恒不变的黛莉亚",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3031",
+    "grade": "3",
+    "name": "亚洁理亚",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3032",
+    "grade": "3",
+    "name": "塔拉诺尔禁卫队员",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3033",
+    "grade": "3",
+    "name": "穆卡察",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3034",
+    "grade": "3",
+    "name": "里科黎司",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3035",
+    "grade": "3",
+    "name": "萝里娜",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3041",
+    "grade": "3",
+    "name": "海兹",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3042",
+    "grade": "3",
+    "name": "蒙茉朗西",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3043",
+    "grade": "3",
+    "name": "亚迪赖",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3044",
+    "grade": "3",
+    "name": "朵莉思",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3045",
+    "grade": "3",
+    "name": "奥缇莉尔",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3051",
+    "grade": "3",
+    "name": "卡萝",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3052",
+    "grade": "3",
+    "name": "捷娜",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3053",
+    "grade": "3",
+    "name": "杰克托",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3054",
+    "grade": "3",
+    "name": "艾尔森",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3055",
+    "grade": "3",
+    "name": "修拉杜",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3061",
+    "grade": "3",
+    "name": "尼姆拉斯",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3062",
+    "grade": "3",
+    "name": "黎玛",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3063",
+    "grade": "3",
+    "name": "奇丽丝",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3064",
+    "grade": "3",
+    "name": "赛雷斯特",
+    "job_cd": "ranger",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3065",
+    "grade": "3",
+    "name": "汪达",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3071",
+    "grade": "3",
+    "name": "卡麦萝兹",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3072",
+    "grade": "3",
+    "name": "美丝缇彩",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3073",
+    "grade": "3",
+    "name": "波萝莱珍",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3074",
+    "grade": "3",
+    "name": "格鲁美兰",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3075",
+    "grade": "3",
+    "name": "雷奎姆洛",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3084",
+    "grade": "3",
+    "name": "奇奇拉特V.2",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3091",
+    "grade": "3",
+    "name": "哈坦",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3092",
+    "grade": "3",
+    "name": "雷娜",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3093",
+    "grade": "3",
+    "name": "艾因兹",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3094",
+    "grade": "3",
+    "name": "伊顿",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3095",
+    "grade": "3",
+    "name": "巴托斯",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3101",
+    "grade": "3",
+    "name": "教母",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3102",
+    "grade": "3",
+    "name": "伊安",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3103",
+    "grade": "3",
+    "name": "格伦",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3104",
+    "grade": "3",
+    "name": "苏尼娅",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3105",
+    "grade": "3",
+    "name": "艾诺斯",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3113",
+    "grade": "3",
+    "name": "露西",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3121",
+    "grade": "3",
+    "name": "玫拉妮",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3122",
+    "grade": "3",
+    "name": "海伦",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3123",
+    "grade": "3",
+    "name": "克莉丝媞",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3124",
+    "grade": "3",
+    "name": "卡蜜拉",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3125",
+    "grade": "3",
+    "name": "潘尼罗佩",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3131",
+    "grade": "3",
+    "name": "扎努塔",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3132",
+    "grade": "3",
+    "name": "武蔚",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3133",
+    "grade": "3",
+    "name": "奥乐缇",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3134",
+    "grade": "3",
+    "name": "尹凌",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3135",
+    "grade": "3",
+    "name": "夏率",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3143",
+    "grade": "3",
+    "name": "艾庭",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3151",
+    "grade": "3",
+    "name": "珠妮",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3152",
+    "grade": "3",
+    "name": "达拉士",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3153",
+    "grade": "3",
+    "name": "莉珈",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3154",
+    "grade": "3",
+    "name": "达黎儿",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c3155",
+    "grade": "3",
+    "name": "斯坦",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3156",
+    "grade": "3",
+    "name": "克劳蒂亚",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c3157",
+    "grade": "3",
+    "name": "艾自拉",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3158",
+    "grade": "3",
+    "name": "雅蜜琪",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3160",
+    "grade": "3",
+    "name": "蕾芙娜",
+    "job_cd": "assassin",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c3162",
+    "grade": "3",
+    "name": "伯纳德",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3163",
+    "grade": "3",
+    "name": "蕾娅",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c3164",
+    "grade": "3",
+    "name": "朗巴特",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c3165",
+    "grade": "3",
+    "name": "培妮拉",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c4001",
+    "grade": "3",
+    "name": "混沌教屠杀追击者",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c4003",
+    "grade": "3",
+    "name": "鹰猎人可露莉",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4004",
+    "grade": "3",
+    "name": "自由骑士雅洛薇",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c4005",
+    "grade": "3",
+    "name": "黑骑士费莉丝",
+    "job_cd": "knight",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c4012",
+    "grade": "3",
+    "name": "夏日学生雅莉莎",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c4013",
+    "grade": "3",
+    "name": "义贼鲁兹德",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4023",
+    "grade": "3",
+    "name": "自由自在的佣兵赫尔嘉",
+    "job_cd": "warrior",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4025",
+    "grade": "3",
+    "name": "混沌教巨斧大将军",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c4034",
+    "grade": "3",
+    "name": "先锋队长里科黎司",
+    "job_cd": "warrior",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c4035",
+    "grade": "3",
+    "name": "指挥官萝里娜",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c4041",
+    "grade": "3",
+    "name": "吉祥物海兹",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c4042",
+    "grade": "3",
+    "name": "守护天使蒙茉朗西",
+    "job_cd": "manauser",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c4044",
+    "grade": "3",
+    "name": "魔法学者朵莉思",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c4051",
+    "grade": "3",
+    "name": "研究者卡萝",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c4052",
+    "grade": "3",
+    "name": "引导者捷娜",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c4062",
+    "grade": "3",
+    "name": "缪斯黎玛",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c4065",
+    "grade": "3",
+    "name": "疑难杂症专家汪达",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c4071",
+    "grade": "3",
+    "name": "传道者卡麦萝兹",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c4073",
+    "grade": "3",
+    "name": "制偶师波萝莱珍",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4103",
+    "grade": "3",
+    "name": "自卫队队长格伦",
+    "job_cd": "ranger",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4105",
+    "grade": "3",
+    "name": "艾诺斯2.0",
+    "job_cd": "manauser",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c4123",
+    "grade": "3",
+    "name": "银波克莉丝媞",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4141",
+    "grade": "3",
+    "name": "圣炎的艾庭",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c4142",
+    "grade": "3",
+    "name": "清玄的艾庭",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c4143",
+    "grade": "3",
+    "name": "新绿的艾庭",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c4144",
+    "grade": "3",
+    "name": "救援者艾庭",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c4158",
+    "grade": "3",
+    "name": "传承雅蜜琪",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5001",
+    "grade": "3",
+    "name": "冒险家拉斯",
+    "job_cd": "knight",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5004",
+    "grade": "5",
+    "name": "魔神的暗影",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c5009",
+    "grade": "5",
+    "name": "暑假夏绿蒂",
+    "job_cd": "knight",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5016",
+    "grade": "5",
+    "name": "度假风优芬妮",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5024",
+    "grade": "5",
+    "name": "南国的伊赛丽亚",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5033",
+    "grade": "5",
+    "name": "战术型可丽",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5046",
+    "grade": "5",
+    "name": "花园丽迪卡",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c5050",
+    "grade": "5",
+    "name": "童话泰妮布里雅",
+    "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5070",
+    "grade": "5",
+    "name": "护卫队长克劳乌",
+    "job_cd": "warrior",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5071",
+    "grade": "5",
+    "name": "海边的维尔萝娜",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5072",
+    "grade": "5",
+    "name": "疾速赛车手赛珂兰特",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5082",
+    "grade": "5",
+    "name": "海洋香气璐璐卡",
+    "job_cd": "manauser",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c5089",
+    "grade": "5",
+    "name": "夜宴莉莉亚斯",
+    "job_cd": "assassin",
+    "attribute_cd": "wind"
+  },
+  {
+    "code": "c5110",
+    "grade": "5",
+    "name": "午时戏水芙兰",
+    "job_cd": "ranger",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5111",
+    "grade": "5",
+    "name": "庆典艾妲",
+    "job_cd": "mage",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5128",
+    "grade": "5",
+    "name": "银光海啸和英",
+    "job_cd": "assassin",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5149",
+    "grade": "5",
+    "name": "丽希",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5154",
+    "grade": "5",
+    "name": "调香师维波里丝",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c5175",
+    "grade": "5",
+    "name": "亚澜",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c6003",
+    "grade": "4",
+    "name": "悲叹萝季",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6005",
+    "grade": "5",
+    "name": "天秤之主",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6008",
+    "grade": "4",
+    "name": "坏坏猫亚敏",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c6011",
+    "grade": "4",
+    "name": "最后的碎片卡琳",
+    "job_cd": "assassin",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6014",
+    "grade": "4",
+    "name": "流浪王子席德",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6017",
+    "grade": "4",
+    "name": "未知可能性雅卡泰丝",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6020",
+    "grade": "4",
+    "name": "西风处刑者修里",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c6024",
+    "grade": "5",
+    "name": "宝剑君主伊赛丽亚",
+    "job_cd": "knight",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6037",
+    "grade": "4",
+    "name": "月兔多米妮尔",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6050",
+    "grade": "5",
+    "name": "湖畔魔女泰妮布里雅",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6062",
+    "grade": "4",
+    "name": "光之天使安洁莉卡",
+    "job_cd": "mage",
+    "attribute_cd": "light"
+  },
+  {
+    "code": "c6065",
+    "grade": "4",
+    "name": "封眼苏琳",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  }
+]
