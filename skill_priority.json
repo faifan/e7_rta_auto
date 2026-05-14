@@ -1,5 +1,12 @@
 {
   "雅咪德": { "priority": ["S2", "S3", "S1"], "s3_skip": 2 },
-  "起源拉斯": ["S2", "S3", "S1"],
-  "诶去米亚": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3" }
+  "起源拉斯": { "priority": ["S2", "S3", "S1"], "soul_burn": "S2","s3_skip": 2 },
+  "天秤之主": { "priority": ["S3", "S2", "S1"], "soul_burn": "S1","s3_skip": 2 },
+  "赫卡特": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
+  "新月露娜": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
+  "灰光森林的伊赛丽亚": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
+  "兔菈玫": { "priority": ["S3", "S2", "S1"], "soul_burn": "S1","s3_skip": 2 },
+  "海上幽灵佛里蒂丝": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
+  "旁观者和英": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
+  "诺托斯": { "priority": ["S3", "S2", "S1"], "soul_burn": "S2","s3_skip": 2 }
 }
