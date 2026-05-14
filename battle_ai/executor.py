@@ -3,40 +3,74 @@ import time
 import ctypes
 import ctypes.wintypes as wt
 
-WINDOW_TITLE = '第七史诗'
+# 默认值（cfg 未加载时使用）
+_DEFAULT_TITLE = '第七史诗'
+_DEFAULT_SKILL_POS = {'S1': (1543, 1029), 'S2': (1685, 1027), 'S3': (1836, 1029)}
+_DEFAULT_BURN_POS  = (1021, 1020)
+_DEFAULT_ENEMY_POS = [(1280, 619), (1479, 486), (1525, 770), (1711, 594)]
 
-# 坐标基于游戏窗口客户区左上角 (0, 0)
-SKILL_POS = {
-    'S1': (1543, 1029),
-    'S2': (1685, 1027),
-    'S3': (1836, 1029),
-}
-BURN_POS = (1021, 1020)
+# 向后兼容：其他模块可能直接 import WINDOW_TITLE / SKILL_POS
+WINDOW_TITLE = _DEFAULT_TITLE
+SKILL_POS    = _DEFAULT_SKILL_POS
 
-ENEMY_POS = [
-    (1280, 619),
-    (1479, 486),
-    (1525, 770),
-    (1711, 594),
-]
+
+def _get_cfg_exec() -> dict:
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            return cfg.section('executor')
+    except ImportError:
+        pass
+    return {}
+
+
+def get_window_title() -> str:
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            return cfg.window_title
+    except ImportError:
+        pass
+    return _DEFAULT_TITLE
+
+
+def _get_skill_pos() -> dict:
+    sec = _get_cfg_exec()
+    if 'skill_pos' in sec:
+        return {k: tuple(v) for k, v in sec['skill_pos'].items()}
+    return _DEFAULT_SKILL_POS
+
+
+def _get_burn_pos() -> tuple:
+    sec = _get_cfg_exec()
+    return tuple(sec['burn_pos']) if 'burn_pos' in sec else _DEFAULT_BURN_POS
+
+
+def _get_enemy_pos() -> list:
+    sec = _get_cfg_exec()
+    return [tuple(p) for p in sec['enemy_pos']] if 'enemy_pos' in sec else _DEFAULT_ENEMY_POS
+
 
 _u32 = ctypes.windll.user32
-_clipboard_lock = __import__('threading').Lock()
 
 class _POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-_win_offset = None  # (left, top) 屏幕绝对坐标
+_win_offset = None
 
 
 def focus_game_window():
     """把游戏窗口拉到前台，缓存客户区屏幕偏移量。"""
-    global _win_offset
-    hwnd = _u32.FindWindowW(None, WINDOW_TITLE)
+    global _win_offset, WINDOW_TITLE, SKILL_POS
+    title = get_window_title()
+    WINDOW_TITLE = title  # 同步向后兼容常量
+    SKILL_POS    = _get_skill_pos()
+
+    hwnd = _u32.FindWindowW(None, title)
     if not hwnd:
-        raise RuntimeError(f"找不到窗口：{WINDOW_TITLE!r}，请确认游戏已打开")
-    _u32.ShowWindow(hwnd, 9)          # SW_RESTORE
-    _u32.keybd_event(0x12, 0, 0, 0)  # 解除前台锁定
+        raise RuntimeError(f"找不到窗口：{title!r}，请确认游戏已打开")
+    _u32.ShowWindow(hwnd, 9)
+    _u32.keybd_event(0x12, 0, 0, 0)
     _u32.SetForegroundWindow(hwnd)
     _u32.keybd_event(0x12, 0, 0x0002, 0)
     time.sleep(0.5)
@@ -55,17 +89,19 @@ def _click(x, y, delay=0.4):
 
 
 def click_skill(skill: str):
-    assert skill in SKILL_POS, f"未知技能: {skill}"
-    _click(*SKILL_POS[skill])
+    pos = _get_skill_pos()
+    assert skill in pos, f"未知技能: {skill}"
+    _click(*pos[skill])
 
 
 def click_target(idx: int):
-    assert 0 <= idx <= 3, f"目标索引超范围: {idx}"
-    _click(*ENEMY_POS[idx])
+    enemy_pos = _get_enemy_pos()
+    assert 0 <= idx < len(enemy_pos), f"目标索引超范围: {idx}"
+    _click(*enemy_pos[idx])
 
 
 def click_burn():
-    _click(*BURN_POS)
+    _click(*_get_burn_pos())
 
 
 def do_action(skill: str, target_idx: int, burn: bool = False):
@@ -80,7 +116,8 @@ def do_aoe(skill: str, burn: bool = False):
     """群体技能：(可选)烧魂 → 快速双击技能按钮"""
     if burn:
         click_burn()
-    x, y = SKILL_POS[skill]
+    pos = _get_skill_pos()
+    x, y = pos[skill]
     if _win_offset is None:
         raise RuntimeError("请先调用 focus_game_window()")
     ox, oy = _win_offset
@@ -94,14 +131,12 @@ def click_at(x: int, y: int, delay: float = 0.4):
 
 
 def type_text(text: str):
-    """输入文字（需先点击输入框）"""
     pyautogui.hotkey('ctrl', 'a')
     time.sleep(0.1)
     pyautogui.typewrite(text, interval=0.05)
 
 
 def type_text_chinese(text: str):
-    """输入中文（ctypes 写剪贴板 → Ctrl+A+V 粘贴）"""
     _set_clipboard(text)
     time.sleep(0.1)
     pyautogui.hotkey('ctrl', 'a')
@@ -111,7 +146,6 @@ def type_text_chinese(text: str):
 
 
 def _set_clipboard(text: str):
-    """直接用ctypes写剪贴板，支持中文，加锁防多线程冲突。"""
     import ctypes as c
     k = c.windll.kernel32
     u = c.windll.user32
@@ -123,6 +157,7 @@ def _set_clipboard(text: str):
     u.SetClipboardData.restype  = c.c_void_p
     u.SetClipboardData.argtypes = [c.c_uint, c.c_void_p]
 
+    _clipboard_lock = __import__('threading').Lock()
     with _clipboard_lock:
         buf = (text + '\0').encode('utf-16-le')
         h = k.GlobalAlloc(0x0002, len(buf))
@@ -133,14 +168,12 @@ def _set_clipboard(text: str):
             raise RuntimeError('GlobalLock 失败')
         c.memmove(p, buf, len(buf))
         k.GlobalUnlock(h)
-
         for _ in range(20):
             if u.OpenClipboard(0):
                 break
             time.sleep(0.05)
         else:
             raise RuntimeError('OpenClipboard 失败')
-
         u.EmptyClipboard()
         if not u.SetClipboardData(13, h):
             u.CloseClipboard()

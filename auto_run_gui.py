@@ -1,14 +1,13 @@
 """
 第七史诗 全自动RTA 主控界面
-运行此文件启动 GUI，点击"开始"启动自动化，点击"停止"随时暂停。
-停止后可点"开始"继续，程序会自动检测当前游戏阶段从断点恢复。
+运行此文件启动 GUI，选择窗口和语言后点击"开始"启动自动化。
 """
 import os
 import sys
 import time
 import threading
 import tkinter as tk
-from tkinter import scrolledtext
+from tkinter import ttk, scrolledtext
 import queue
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
@@ -25,6 +24,7 @@ HERO_LIST_PATH = os.path.join(_HERE, 'hero_list_146.json')
 
 CN_FONT  = ('Microsoft YaHei', 10)
 CN_BOLD  = ('Microsoft YaHei', 13, 'bold')
+CN_SMALL = ('Microsoft YaHei', 9)
 MONO     = ('Consolas', 9)
 
 
@@ -33,7 +33,7 @@ class AutoRunApp:
         self.root = root
         self.root.title("第七史诗 全自动RTA")
         self.root.configure(bg='#1e1e1e')
-        self.root.geometry('720x520')
+        self.root.geometry('720x600')
         self.root.resizable(True, True)
 
         self._stop_event  = threading.Event()
@@ -48,15 +48,60 @@ class AutoRunApp:
     # ── UI ───────────────────────────────────────────────────
     def _build_ui(self):
         tk.Label(self.root, text='第七史诗 全自动RTA',
-                 font=CN_BOLD, fg='#61dafb', bg='#1e1e1e').pack(pady=(14, 2))
+                 font=CN_BOLD, fg='#61dafb', bg='#1e1e1e').pack(pady=(14, 4))
 
-        self._status_var = tk.StringVar(value='就绪 — 点击"开始"启动')
+        # ── 配置区 ────────────────────────────────────────────
+        cfg_frame = tk.LabelFrame(self.root, text=' 启动配置 ',
+                                  font=CN_SMALL, fg='#888', bg='#1e1e1e',
+                                  labelanchor='nw')
+        cfg_frame.pack(fill=tk.X, padx=14, pady=(0, 6))
+
+        # 窗口选择行
+        row1 = tk.Frame(cfg_frame, bg='#1e1e1e')
+        row1.pack(fill=tk.X, padx=8, pady=(6, 2))
+        tk.Label(row1, text='游戏窗口:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
+
+        self._window_var = tk.StringVar()
+        self._window_cb  = ttk.Combobox(row1, textvariable=self._window_var,
+                                        font=CN_FONT, width=38, state='readonly')
+        self._window_cb.pack(side=tk.LEFT, padx=(4, 4))
+
+        tk.Button(row1, text='刷新', font=CN_SMALL,
+                  bg='#30363d', fg='#c9d1d9', relief=tk.FLAT,
+                  cursor='hand2', command=self._refresh_windows).pack(side=tk.LEFT)
+
+        # 语言 + 坐标方案行
+        row2 = tk.Frame(cfg_frame, bg='#1e1e1e')
+        row2.pack(fill=tk.X, padx=8, pady=(2, 6))
+
+        tk.Label(row2, text='语言:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
+        self._lang_var = tk.StringVar(value='简体中文')
+        self._lang_cb  = ttk.Combobox(row2, textvariable=self._lang_var,
+                                      font=CN_FONT, width=14, state='readonly')
+        self._lang_cb.pack(side=tk.LEFT, padx=(4, 16))
+
+        tk.Label(row2, text='分辨率:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e').pack(side=tk.LEFT)
+        self._profile_var = tk.StringVar(value='1922x1115.json')
+        self._profile_cb  = ttk.Combobox(row2, textvariable=self._profile_var,
+                                         font=CN_FONT, width=18, state='readonly')
+        self._profile_cb.pack(side=tk.LEFT, padx=(4, 0))
+
+        # 填充下拉选项
+        self._refresh_windows()
+        self._refresh_lang_profile()
+
+        # ── 状态行 ────────────────────────────────────────────
+        self._status_var = tk.StringVar(value='就绪 — 选择窗口后点击"开始"')
         self._status_lbl = tk.Label(self.root, textvariable=self._status_var,
                                     font=CN_FONT, fg='#888888', bg='#1e1e1e')
         self._status_lbl.pack()
 
+        # ── 按钮行 ────────────────────────────────────────────
         btn_frame = tk.Frame(self.root, bg='#1e1e1e')
-        btn_frame.pack(pady=10)
+        btn_frame.pack(pady=8)
 
         self._start_btn = tk.Button(
             btn_frame, text='▶  开始', font=CN_FONT,
@@ -71,6 +116,7 @@ class AutoRunApp:
             command=self._on_stop)
         self._stop_btn.pack(side=tk.LEFT, padx=12)
 
+        # ── 日志区 ────────────────────────────────────────────
         log_frame = tk.Frame(self.root, bg='#1e1e1e')
         log_frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(0, 14))
         tk.Label(log_frame, text='运行日志', font=CN_FONT,
@@ -87,9 +133,37 @@ class AutoRunApp:
         self._log.tag_config('error', foreground='#f85149')
         self._log.tag_config('phase', foreground='#61dafb')
 
+    # ── 下拉刷新 ──────────────────────────────────────────────
+    def _refresh_windows(self):
+        from config_loader import list_windows
+        titles = list_windows()
+        self._window_cb['values'] = titles
+        # 优先预选第七史诗
+        for t in titles:
+            if '第七史诗' in t or '史诗' in t:
+                self._window_var.set(t)
+                break
+        else:
+            if titles:
+                self._window_var.set(titles[0])
+
+    def _refresh_lang_profile(self):
+        from config_loader import list_langs, list_profiles
+
+        langs = list_langs()
+        self._lang_cb['values'] = list(langs.keys())
+        if self._lang_var.get() not in langs:
+            self._lang_var.set(list(langs.keys())[0] if langs else '')
+        self._lang_map = langs
+
+        profiles = list_profiles()
+        self._profile_cb['values'] = profiles
+        if self._profile_var.get() not in profiles and profiles:
+            self._profile_var.set(profiles[0])
+
     # ── 日志 ─────────────────────────────────────────────────
     def log(self, msg: str, tag: str = 'info'):
-        ts = time.strftime('%H:%M:%S')
+        ts   = time.strftime('%H:%M:%S')
         line = f'[{ts}] {msg}\n'
         self._log_queue.put((line, tag))
         _log_fh.write(line)
@@ -112,6 +186,22 @@ class AutoRunApp:
 
     # ── 按钮回调 ─────────────────────────────────────────────
     def _on_start(self):
+        window_title = self._window_var.get().strip()
+        if not window_title:
+            self._set_status('请先选择游戏窗口！', '#f85149')
+            return
+
+        # 加载配置
+        from config_loader import cfg, _ROOT
+        import os
+        lang_name    = self._lang_var.get()
+        lang_path    = self._lang_map.get(lang_name,
+                                          os.path.join(_ROOT, 'lang', 'zh_cn.json'))
+        profile_name = self._profile_var.get()
+        profile_path = os.path.join(_ROOT, 'profiles', profile_name)
+        cfg.load(window_title, profile_path, lang_path)
+        self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}', 'ok')
+
         self._stop_event.clear()
         self._start_btn.config(state=tk.DISABLED)
         self._stop_btn.config(state=tk.NORMAL)
@@ -160,7 +250,7 @@ class AutoRunApp:
 
         round_num = 0
         try:
-            while    not self._stop_event.is_set():
+            while not self._stop_event.is_set():
                 round_num += 1
                 self.log(f'═══ 第 {round_num} 场 ═══', 'phase')
                 self._run_one_round()
@@ -199,7 +289,6 @@ class AutoRunApp:
         postban_done = False
         draft_result = {'my_picks': [], 'enemy_picks': []}
 
-
         while not self._stop_event.is_set():
             img = capture()
 
@@ -221,7 +310,7 @@ class AutoRunApp:
                 self.log('战斗结算，点击确认', 'info')
                 confirm_battle_result()
                 time.sleep(2.0)
-                return  # 本局结束，外层 while 开启下一场
+                return
 
             elif phase == 'lobby':
                 self.log('大厅，点击申请战斗', 'info')
@@ -229,7 +318,7 @@ class AutoRunApp:
                 time.sleep(2.0)
 
             elif phase == 'waiting':
-                time.sleep(2.0)  # 等待匹配中，轮询
+                time.sleep(2.0)
 
             elif phase == 'preban':
                 if not preban_done:
@@ -246,7 +335,6 @@ class AutoRunApp:
                     init_opp = list(draft_result['enemy_picks'])
                     if init_my or init_opp:
                         self.log(f'  中途接入：我方{len(init_my)}个 对手{len(init_opp)}个', 'info')
-
                     draft_result = run_draft(
                         self._recommender,
                         log_fn=lambda msg: self.log(msg, 'info'),
@@ -285,9 +373,8 @@ class AutoRunApp:
                     self.log('战斗结束', 'ok')
                 except Exception as e:
                     self.log(f'战斗异常: {e}', 'error')
-                return  # 战斗结束，下一轮处理结算
+                return
 
-            # wait：加载/过渡/黑屏，什么都不做，等待
             time.sleep(1.0)
 
 

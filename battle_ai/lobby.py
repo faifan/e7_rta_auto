@@ -9,28 +9,53 @@ from battle_ai.perception import capture
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-_APPLY_BTN   = (1292, 1009)   # 申请战斗按钮中心（43.png 四角平均）
-_CONFIRM_BTN = (1755, 1026)   # VICTORY/DEFEAT 确认按钮
+_DEFAULT_APPLY_BTN          = (1292, 1009)
+_DEFAULT_CONFIRM_BTN        = (1755, 1026)
+_DEFAULT_CONFIRM_BTN_LEVELUP = (961,  1023)
+_DEFAULT_BTN_REGION         = (1120, 947, 1464, 1072)
+_TMPL_SIZE                  = (128, 46)
+_TMPL_DIR                   = os.path.join(_ROOT, 'templates', 'phase')
 
-# 按钮区域（43.png 标记的四个角）
-_BTN_REGION = (1120, 947, 1464, 1072)
-_TMPL_SIZE  = (128, 46)
 
-_TMPL_DIR     = os.path.join(_ROOT, 'templates', 'phase')
+def _lcfg() -> dict:
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            return cfg.section('lobby')
+    except ImportError:
+        pass
+    return {}
+
+def _apply_btn():
+    p = _lcfg()
+    return tuple(p['apply_btn']) if 'apply_btn' in p else _DEFAULT_APPLY_BTN
+
+def _confirm_btn():
+    p = _lcfg()
+    return tuple(p['confirm_btn']) if 'confirm_btn' in p else _DEFAULT_CONFIRM_BTN
+
+def _confirm_btn_levelup():
+    p = _lcfg()
+    return tuple(p['confirm_btn_levelup']) if 'confirm_btn_levelup' in p else _DEFAULT_CONFIRM_BTN_LEVELUP
+
+def _btn_region():
+    p = _lcfg()
+    return tuple(p['btn_region']) if 'btn_region' in p else _DEFAULT_BTN_REGION
+
+
 _lobby_tmpl   = None
 _waiting_tmpl = None
 
 
 def _crop_btn(img_path: str) -> np.ndarray:
     img = np.array(Image.open(img_path).convert('L'))
-    x1, y1, x2, y2 = _BTN_REGION
+    x1, y1, x2, y2 = _btn_region()
     crop = img[y1:y2, x1:x2]
     return cv2.resize(crop, _TMPL_SIZE).astype(np.float32)
 
 
 def _load_templates():
     global _lobby_tmpl, _waiting_tmpl
-    import os
     _lobby_tmpl   = _crop_btn(os.path.join(_TMPL_DIR, 'lobby_apply.png'))
     _waiting_tmpl = _crop_btn(os.path.join(_TMPL_DIR, 'lobby_waiting.png'))
 
@@ -42,25 +67,22 @@ def _ncc(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _btn_ncc(img: np.ndarray, tmpl: np.ndarray) -> float:
-    x1, y1, x2, y2 = _BTN_REGION
-    crop = img[y1:y2, x1:x2]
-    gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+    x1, y1, x2, y2 = _btn_region()
+    crop  = img[y1:y2, x1:x2]
+    gray  = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _TMPL_SIZE).astype(np.float32)
     return _ncc(query, tmpl)
 
 
 def is_in_lobby(img: np.ndarray = None) -> bool:
-    """检测是否在大厅（申请战斗绿色按钮可见）"""
     if _lobby_tmpl is None:
         _load_templates()
     if img is None:
         img = capture()
-    score = _btn_ncc(img, _lobby_tmpl)
-    return score >= 0.5
+    return _btn_ncc(img, _lobby_tmpl) >= 0.5
 
 
 def is_waiting_for_match(img: np.ndarray = None) -> bool:
-    """检测是否已在等待匹配（取消按钮可见）"""
     if _waiting_tmpl is None:
         _load_templates()
     if img is None:
@@ -69,19 +91,19 @@ def is_waiting_for_match(img: np.ndarray = None) -> bool:
 
 
 def confirm_battle_result():
-    """点击战斗结算确认按钮"""
-    click_at(*_CONFIRM_BTN)
+    from battle_ai.perception import capture, is_levelup_screen
+    img = capture()
+    btn = _confirm_btn_levelup() if is_levelup_screen(img) else _confirm_btn()
+    click_at(*btn)
     time.sleep(1.5)
 
 
 def apply_for_battle():
-    """点击申请战斗"""
-    click_at(*_APPLY_BTN)
+    click_at(*_apply_btn())
     time.sleep(1.0)
 
 
 def wait_for_lobby(timeout: int = 30) -> bool:
-    """等待进入大厅界面，超时返回 False"""
     deadline = time.time() + timeout
     while time.time() < deadline:
         if is_in_lobby():

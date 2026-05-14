@@ -1,0 +1,21 @@
+{
+  "turn_enemy": "對手",
+  "turn_my": "回合",
+  "cooldown": "回合",
+  "hero_banned": "禁用英雄",
+  "hero_selected": "已選擇",
+  "levelup_confirm": "確認",
+  "preban_keywords": ["禁用", "預先"],
+  "skill_single": "單體",
+  "skill_aoe": "群體",
+  "skill_passive": "被動",
+  "draft_opp_turn": "對手",
+  "draft_banner_postban": ["選後禁用", "禁用英雄"],
+  "draft_banner_battle": ["準備戰鬥", "戰鬥開始"],
+  "draft_my_turn_kw": "你的",
+  "draft_opp_turn_kw": ["對手", "對方"],
+  "draft_ban_kw": "禁用",
+  "draft_ready_kw": "準備",
+  "draft_hero_banned": "禁用",
+  "draft_hero_selected": "已選"
+}

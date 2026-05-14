@@ -1,31 +1,95 @@
-import random
-from battle_ai.recognition import identify
+import json
+import os
+import difflib
+
 from battle_ai.perception import is_skill_on_cooldown
 
-_PRIORITY = ['S3', 'S2', 'S1']
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_PRIORITY_FILE = os.path.join(_ROOT, 'skill_priority.json')
 
-def get_candidates(img=None):
+_DEFAULT_PRIORITY = ['S3', 'S2', 'S1']
+_DEFAULT_S3_SKIP  = 2
+
+
+def _load_db() -> dict:
+    if not os.path.exists(_PRIORITY_FILE):
+        return {}
+    with open(_PRIORITY_FILE, encoding='utf-8') as f:
+        return json.load(f)
+
+_db = _load_db()
+
+# 每场战斗内存状态：{normalized_name: s3_skip_remaining}
+_s3_skip: dict[str, int] = {}
+
+
+def _fuzzy_key(name: str) -> str | None:
+    """在JSON键中找最相似的，相似度>=0.6才返回。"""
+    if not name or not _db:
+        return None
+    matches = difflib.get_close_matches(name, _db.keys(), n=1, cutoff=0.6)
+    return matches[0] if matches else None
+
+
+def _norm(name: str | None) -> str | None:
+    """把OCR名字归一化为JSON键（或原始名）。"""
+    if not name:
+        return None
+    key = _fuzzy_key(name)
+    return key if key else name
+
+
+def _get_priority(key: str | None) -> list[str]:
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, list):
+            return list(entry)
+        if isinstance(entry, dict):
+            return list(entry.get('priority', _DEFAULT_PRIORITY))
+    return list(_DEFAULT_PRIORITY)
+
+
+def _get_s3_skip_cfg(key: str | None) -> int:
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return int(entry.get('s3_skip', _DEFAULT_S3_SKIP))
+    return _DEFAULT_S3_SKIP
+
+
+def get_candidates(char_name: str | None, img=None) -> list[str]:
     """
-    返回经过OCR冷却过滤后的候选技能列表 [(skill, stype), ...]，按优先级排序。
-    stype: '单体' | '群体' | '自动'
+    返回本回合候选技能有序列表（已过滤s3_skip和OCR冷却）。
     """
-    char_name, skill_types = identify(img) if img is not None else (None, None)
+    key = _norm(char_name)
+    priority = _get_priority(key)
+
+    # s3_skip 检查与递减
+    skip = _s3_skip.get(key or char_name or '', 0)
+    s3_ready = (skip == 0)
+    if not s3_ready and (key or char_name):
+        _s3_skip[key or char_name] = skip - 1
+
     candidates = []
-    for skill in _PRIORITY:
-        stype = (skill_types or {}).get(skill, '自动')
-        if stype == '被动':
+    for skill in priority:
+        if skill == 'S3' and not s3_ready:
             continue
-        # Gate 1: OCR冷却检测（S2/S3，主动/被动均会显示回合数）
         if skill != 'S1' and img is not None and is_skill_on_cooldown(img, skill):
             continue
-        candidates.append((skill, stype))
+        candidates.append(skill)
+
     return candidates
 
-def decide(img=None):
-    """向后兼容接口，返回 (skill, target_idx, stype)。"""
-    candidates = get_candidates(img)
-    if not candidates:
-        return 'S1', random.randint(0, 3), '单体'
-    skill, stype = candidates[0]
-    target = None if stype == '群体' else random.randint(0, 3)
-    return skill, target, stype
+
+def on_s3_success(char_name: str | None):
+    """S3成功触发后调用，设置该角色的s3_skip计数。"""
+    key = _norm(char_name)
+    target = key or char_name
+    if not target:
+        return
+    _s3_skip[target] = _get_s3_skip_cfg(key)
+
+
+def reset_battle():
+    """每场战斗开始时调用，清空所有角色状态。"""
+    _s3_skip.clear()

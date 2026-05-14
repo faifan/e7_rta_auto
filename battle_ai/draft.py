@@ -14,21 +14,113 @@ _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEBUG_DIR = os.path.join(_ROOT, 'debug')
 os.makedirs(_DEBUG_DIR, exist_ok=True)
 
-# ── 坐标 ─────────────────────────────────────────────────────
-_SEARCH_OPEN   = (1820, 173)
-_SEARCH_INPUT  = (1073, 269)
-_SEARCH_BTN    = (1437, 264)
-_FIRST_RESULT  = (1010, 443)
-_CONFIRM_BTN   = (1274, 1029)
 
-# 选秀后禁用 & 战斗开始按钮（来自 说明_utf8.txt 12.png，取矩形中心）
-_POST_BAN_BTN  = (1282, 1027)
+# ── 配置加载 ──────────────────────────────────────────────────
+def _dcfg() -> dict:
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            return cfg.section('draft')
+    except ImportError:
+        pass
+    return {}
 
-# ── 对手回合检测区域 ──────────────────────────────────────────
-_OPP_TURN_REGION = (679, 65, 823, 115)
+def _dlang(key: str, default=None):
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            return cfg.lang(key, default)
+    except ImportError:
+        pass
+    return default
 
-# ── 选秀后禁对手英雄 & 准备战斗：顶部 banner 检测区域 ────────
-_BANNER_REGION = (550, 3, 950, 55)
+
+# ── 坐标默认值 ────────────────────────────────────────────────
+_DEFAULT_SEARCH_OPEN          = (1820, 173)
+_DEFAULT_SEARCH_INPUT         = (1073, 269)
+_DEFAULT_SEARCH_BTN           = (1437, 264)
+_DEFAULT_FIRST_RESULT         = (1010, 443)
+_DEFAULT_CONFIRM_BTN          = (1274, 1029)
+_DEFAULT_POST_BAN_BTN         = (1282, 1027)
+_DEFAULT_OPP_TURN_REGION      = (679, 65, 823, 115)
+_DEFAULT_BANNER_REGION        = (550, 3, 950, 55)
+_DEFAULT_LABEL_REGION         = (632, 53, 862, 127)
+_DEFAULT_SEARCH_RESULT_REGION = (855, 402, 1264, 469)
+_DEFAULT_SELECTED_HERO_REGION = (1541, 389, 1699, 458)
+_DEFAULT_SEARCH_STATE_REGION  = (1747, 142, 1897, 197)
+_DEFAULT_SEARCH_EXEC_REGION   = (1341, 227, 1538, 300)
+_DEFAULT_SEARCH_CLEAR_BTN     = (1284, 264)
+_DEFAULT_PREBAN_REGION        = (181, 137, 505, 203)
+
+_DEFAULT_MY_SLOTS = [
+    ( 37, 216, 461, 343),
+    ( 34, 367, 361, 491),
+    ( 37, 520, 318, 638),
+    ( 35, 668, 314, 788),
+    ( 41, 819, 359, 937),
+]
+_DEFAULT_OPP_SLOTS = [
+    (1033, 219, 1456, 337),
+    (1133, 367, 1456, 487),
+    (1175, 518, 1453, 638),
+    (1177, 668, 1463, 790),
+    (1136, 818, 1462, 937),
+]
+_DEFAULT_MY_BAN_SLOTS  = [(565, 1010, 646, 1096), (646, 1010, 741, 1096)]
+_DEFAULT_OPP_BAN_SLOTS = [(753, 1006, 842, 1095), (842, 1006, 937, 1095)]
+
+# 向后兼容模块级常量
+MY_SLOTS  = _DEFAULT_MY_SLOTS
+OPP_SLOTS = _DEFAULT_OPP_SLOTS
+
+
+# ── 坐标访问（懒加载，cfg 未加载时用默认值）──────────────────
+def _search_open():           return tuple(_dcfg().get('search_open',          _DEFAULT_SEARCH_OPEN))
+def _search_input():          return tuple(_dcfg().get('search_input',         _DEFAULT_SEARCH_INPUT))
+def _search_btn():            return tuple(_dcfg().get('search_btn',           _DEFAULT_SEARCH_BTN))
+def _first_result():          return tuple(_dcfg().get('first_result',         _DEFAULT_FIRST_RESULT))
+def _confirm_btn():           return tuple(_dcfg().get('confirm_btn',          _DEFAULT_CONFIRM_BTN))
+def _post_ban_btn():          return tuple(_dcfg().get('post_ban_btn',         _DEFAULT_POST_BAN_BTN))
+def _banner_region():         return tuple(_dcfg().get('banner_region',        _DEFAULT_BANNER_REGION))
+def _label_region():          return tuple(_dcfg().get('label_region',         _DEFAULT_LABEL_REGION))
+def _search_result_region():  return tuple(_dcfg().get('search_result_region', _DEFAULT_SEARCH_RESULT_REGION))
+def _selected_hero_region():  return tuple(_dcfg().get('selected_hero_region', _DEFAULT_SELECTED_HERO_REGION))
+def _search_exec_region():    return tuple(_dcfg().get('search_exec_region',   _DEFAULT_SEARCH_EXEC_REGION))
+def _search_clear_btn():      return tuple(_dcfg().get('search_clear_btn',     _DEFAULT_SEARCH_CLEAR_BTN))
+def _preban_region_draft():   return tuple(_dcfg().get('preban_region',        _DEFAULT_PREBAN_REGION))
+def _my_slots():   return [tuple(v) for v in _dcfg().get('my_slots',   _DEFAULT_MY_SLOTS)]
+def _opp_slots():  return [tuple(v) for v in _dcfg().get('opp_slots',  _DEFAULT_OPP_SLOTS)]
+def _my_ban_slots():  return [tuple(v) for v in _dcfg().get('my_ban_slots',  _DEFAULT_MY_BAN_SLOTS)]
+def _opp_ban_slots(): return [tuple(v) for v in _dcfg().get('opp_ban_slots', _DEFAULT_OPP_BAN_SLOTS)]
+def _opp_slot_centers():
+    return [((x1 + x2) // 2, (y1 + y2) // 2) for x1, y1, x2, y2 in _opp_slots()]
+
+
+# ── 文字匹配辅助（通过 lang 文件支持多语言）──────────────────
+def _is_my_turn_text(text: str) -> bool:
+    kw = _dlang('draft_my_turn_kw', '你的')
+    return bool(kw) and kw in text
+
+def _is_opp_turn_text(text: str) -> bool:
+    kws = _dlang('draft_opp_turn_kw', ['对手', '对方'])
+    if isinstance(kws, list):
+        return any(k in text for k in kws)
+    return bool(kws) and kws in text
+
+def _is_ban_kw(text: str) -> bool:
+    kw = _dlang('draft_ban_kw', '禁用')
+    return bool(kw) and kw in text
+
+def _is_ready_kw(text: str) -> bool:
+    kw = _dlang('draft_ready_kw', '准备')
+    return bool(kw) and kw in text
+
+def _check_preban_text(text: str) -> bool:
+    kws = _dlang('preban_keywords', ['禁用', '预先'])
+    if isinstance(kws, list):
+        return any(k in text for k in kws)
+    return bool(kws) and kws in text
+
 
 # ── 英雄名称映射 ──────────────────────────────────────────────
 _E7_JSON = os.path.join(_ROOT, 'e7.json')
@@ -43,37 +135,14 @@ def _load_hero_names():
             _code_to_name[hero['code']] = hero['name']
 
 
-# ── pick 槽坐标 ───────────────────────────────────────────────
-MY_SLOTS = [
-    ( 37, 216, 461, 343),
-    ( 34, 367, 361, 491),
-    ( 37, 520, 318, 638),
-    ( 35, 668, 314, 788),
-    ( 41, 819, 359, 937),
-]
-OPP_SLOTS = [
-    (1033, 219, 1456, 337),
-    (1133, 367, 1456, 487),
-    (1175, 518, 1453, 638),
-    (1177, 668, 1463, 790),
-    (1136, 818, 1462, 937),
-]
-
-# 对手 pick 槽中心坐标（用于选秀后禁用点击）
-_OPP_SLOT_CENTERS = [
-    ((x1 + x2) // 2, (y1 + y2) // 2)
-    for x1, y1, x2, y2 in OPP_SLOTS
-]
-
-_TMPL_BASE = os.path.join(_ROOT, 'templates')
-
 # ── 选秀卡识别 ────────────────────────────────────────────────
 _DRAFT_CARDS_DIR = os.path.join(_ROOT, 'templates', 'draft_cards')
+_TMPL_BASE       = os.path.join(_ROOT, 'templates')
 _TMPL_SIZE       = (96, 56)
 _NCC_THRESHOLD   = 0.5
 _NCC_GAP         = 0.02
 
-_draft_templates: dict = {}   # code -> list[ndarray]
+_draft_templates: dict = {}
 
 
 def _load_draft_templates():
@@ -135,15 +204,6 @@ _HERO_IMAGES_DIR = os.path.join(_ROOT, 'templates', 'hero_images')
 _BAN_TMPL_SIZE   = (64, 64)
 _BAN_THRESHOLD   = 0.35
 
-_MY_BAN_SLOTS = [
-    (565, 1010, 646, 1096),
-    (646, 1010, 741, 1096),
-]
-_OPP_BAN_SLOTS = [
-    (753, 1006, 842, 1095),
-    (842, 1006, 937, 1095),
-]
-
 _ban_templates: dict = {}
 
 
@@ -180,7 +240,6 @@ def identify_ban_slots(img: np.ndarray = None) -> tuple:
         _load_ban_templates()
     if img is None:
         img = capture()
-    # 存完整截图供坐标核验
     try:
         cv2.imwrite(os.path.join(_DEBUG_DIR, 'dbg_ban_full.png'),
                     cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
@@ -190,19 +249,17 @@ def identify_ban_slots(img: np.ndarray = None) -> tuple:
     scores = []
     debug_crops = []
     labels = ['我方ban1', '我方ban2', '对手ban1', '对手ban2']
-    all_slots = list(_MY_BAN_SLOTS) + list(_OPP_BAN_SLOTS)
+    all_slots = _my_ban_slots() + _opp_ban_slots()
     for i, (x1, y1, x2, y2) in enumerate(all_slots):
         crop = img[y1:y2, x1:x2]
         gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
         code, ban_score = _identify_ban_slot(gray)
         result.append(code)
         scores.append(ban_score)
-        # 存 debug 图：放大3倍方便肉眼查看
         enlarged = cv2.resize(cv2.cvtColor(crop, cv2.COLOR_RGB2BGR),
                               (crop.shape[1]*3, crop.shape[0]*3),
                               interpolation=cv2.INTER_NEAREST)
         debug_crops.append((labels[i], code, enlarged))
-    # 单独保存4张 + 拼一张横排
     try:
         for i, (label, code, c) in enumerate(debug_crops):
             cv2.imwrite(os.path.join(_DEBUG_DIR, f'dbg_ban_{i+1}.png'), c)
@@ -221,8 +278,6 @@ def identify_ban_slots(img: np.ndarray = None) -> tuple:
 
 
 # ── 顶部文字区域检测（你的回合 / 对手回合 / 选择禁用英雄）────────
-# 坐标由用户在 tp/10-12.png 标记
-_LABEL_REGION = (632, 53, 862, 127)
 _LABEL_SIZE   = (115, 37)
 
 _MY_TURN_TMPL  = None
@@ -231,9 +286,8 @@ _POSTBAN_TMPL  = None
 
 
 def _load_label_tmpls():
-    import os
     global _MY_TURN_TMPL, _OPP_TURN_TMPL, _POSTBAN_TMPL
-    x1, y1, x2, y2 = _LABEL_REGION
+    x1, y1, x2, y2 = _label_region()
     for var, fname in [('_MY_TURN_TMPL',  'my_turn.png'),
                        ('_OPP_TURN_TMPL', 'opp_turn.png'),
                        ('_POSTBAN_TMPL',  'postban.png')]:
@@ -250,7 +304,7 @@ def _ncc(a, b):
 
 
 def _label_ncc(img: np.ndarray, tmpl: np.ndarray) -> float:
-    x1, y1, x2, y2 = _LABEL_REGION
+    x1, y1, x2, y2 = _label_region()
     crop = img[y1:y2, x1:x2]
     gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _LABEL_SIZE).astype(np.float32)
@@ -288,11 +342,11 @@ def _get_ocr():
 
 
 def _read_turn_text(img: np.ndarray = None) -> str:
-    """OCR 识别顶部回合文字，返回识别结果字符串（可能含 '你的回合' 或 '对手回合'）"""
+    """OCR 识别顶部回合文字。"""
     import io
     if img is None:
         img = capture()
-    x1, y1, x2, y2 = _LABEL_REGION
+    x1, y1, x2, y2 = _label_region()
     crop = img[y1:y2, x1:x2]
     pil = Image.fromarray(crop)
     buf = io.BytesIO()
@@ -305,13 +359,11 @@ def _read_turn_text(img: np.ndarray = None) -> str:
 
 
 def is_my_turn_ocr(img: np.ndarray = None) -> bool:
-    text = _read_turn_text(img)
-    return '你的' in text
+    return _is_my_turn_text(_read_turn_text(img))
 
 
 def is_opponent_turn_ocr(img: np.ndarray = None) -> bool:
-    text = _read_turn_text(img)
-    return '对手' in text or '对方' in text
+    return _is_opp_turn_text(_read_turn_text(img))
 
 
 def is_opponent_turn(img: np.ndarray = None) -> bool:
@@ -322,15 +374,14 @@ def is_opponent_turn(img: np.ndarray = None) -> bool:
 
 
 # ── 选秀后禁用 & 战斗开始检测 ────────────────────────────────
-_POST_BAN_TMPL    = None
-_BATTLE_RDY_TMPL  = None
-_BANNER_SIZE      = (100, 13)
+_POST_BAN_TMPL   = None
+_BATTLE_RDY_TMPL = None
+_BANNER_SIZE     = (100, 13)
 
 
 def _load_banner_tmpls():
     global _POST_BAN_TMPL, _BATTLE_RDY_TMPL
-    x1, y1, x2, y2 = _BANNER_REGION
-    import os
+    x1, y1, x2, y2 = _banner_region()
     for attr, path in [('_POST_BAN_TMPL',   os.path.join(_TMPL_BASE, 'phase', 'postban.png')),
                        ('_BATTLE_RDY_TMPL', os.path.join(_TMPL_BASE, 'phase', 'battle_ready.png'))]:
         img = np.array(Image.open(path).convert('L'))
@@ -340,7 +391,7 @@ def _load_banner_tmpls():
 
 
 def _banner_ncc(img: np.ndarray, tmpl: np.ndarray) -> float:
-    x1, y1, x2, y2 = _BANNER_REGION
+    x1, y1, x2, y2 = _banner_region()
     crop = img[y1:y2, x1:x2]
     gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _BANNER_SIZE).astype(np.float32)
@@ -348,11 +399,11 @@ def _banner_ncc(img: np.ndarray, tmpl: np.ndarray) -> float:
 
 
 def is_in_draft(img: np.ndarray = None) -> bool:
-    """检测是否在选秀阶段：OCR 读到"你的回合"或"对手回合" """
+    """检测是否在选秀阶段：OCR 读到我的/对手的回合关键词。"""
     if img is None:
         img = capture()
     text = _read_turn_text(img)
-    return '你的' in text or '对手' in text or '对方' in text
+    return _is_my_turn_text(text) or _is_opp_turn_text(text)
 
 
 def is_in_post_draft_ban(img: np.ndarray = None) -> bool:
@@ -360,20 +411,17 @@ def is_in_post_draft_ban(img: np.ndarray = None) -> bool:
     if img is None:
         img = capture()
     text = _read_turn_text(img)
-    return '禁用' in text and '你的' not in text and '对手' not in text and '对方' not in text
+    return _is_ban_kw(text) and not _is_my_turn_text(text) and not _is_opp_turn_text(text)
 
-
-_PREBAN_REGION = (181, 137, 505, 203)   # 与preban.py保持一致
 
 def is_battle_ready(img: np.ndarray = None) -> bool:
-    """检测是否在准备战斗阶段：顶部"准备战斗" 且 preban区域无禁用文字（排除preban阶段）。"""
+    """检测是否在准备战斗阶段。"""
     if img is None:
         img = capture()
-    if '准备' not in _read_turn_text(img):
+    if not _is_ready_kw(_read_turn_text(img)):
         return False
-    # preban阶段label也显示"准备战斗"，用preban区域排除
-    preban_text = _ocr_region(img, _PREBAN_REGION)
-    return '禁用' not in preban_text and '预先' not in preban_text
+    preban_text = _ocr_region(img, _preban_region_draft())
+    return not _check_preban_text(preban_text)
 
 
 def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
@@ -407,14 +455,14 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
         code = enemy_picks[ban_idx] if enemy_picks else '?'
         _log(f'  [禁用] 随机禁: {_code_to_name.get(code, code)}（对手槽{ban_idx+1}）')
 
-    cx, cy = _OPP_SLOT_CENTERS[ban_idx]
+    cx, cy = _opp_slot_centers()[ban_idx]
     click_at(cx, cy, delay=1.5)
-    click_at(*_POST_BAN_BTN, delay=1.5)
+    click_at(*_post_ban_btn(), delay=1.5)
 
 
 def click_battle_start():
     """点击战斗开始按钮（与postban完成选择同坐标）"""
-    click_at(*_POST_BAN_BTN, delay=1.5)
+    click_at(*_post_ban_btn(), delay=1.5)
 
 
 # ── 选秀顺序（仅保留供参考，不再驱动逻辑） ────────────────────
@@ -466,8 +514,6 @@ def _type_unicode(text: str):
     KEYEVENTF_UNICODE = 0x0004
     KEYEVENTF_KEYUP   = 0x0002
 
-    # dwExtraInfo 必须用 c_size_t（指针大小），64-bit 下是 8 字节
-    # 否则 sizeof(INPUT) 算错，SendInput 静默失败返回 0
     class KEYBDINPUT(ctypes.Structure):
         _fields_ = [
             ('wVk',         ctypes.c_ushort),
@@ -499,7 +545,7 @@ def _type_unicode(text: str):
     for ch in text:
         for flag in (KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP):
             inp = INPUT()
-            inp.type       = 1   # INPUT_KEYBOARD
+            inp.type       = 1
             inp._u.ki.wVk   = 0
             inp._u.ki.wScan = ord(ch)
             inp._u.ki.dwFlags = flag
@@ -518,16 +564,6 @@ def _paste_via_keybd_event():
     time.sleep(0.05)
     u.keybd_event(VK_V,       0x2f, KEYUP,   0)
     u.keybd_event(VK_CONTROL, 0x1d, KEYUP,   0)
-
-
-# 搜索结果行区域（图70）
-_SEARCH_RESULT_REGION  = (855, 402, 1264, 469)
-# 点击结果后右侧状态文字区域（图80禁用/图81已选）
-_SELECTED_HERO_REGION  = (1541, 389, 1699, 458)
-# 右上角搜索/取消切换按钮区域（图73）：显示"搜索"=未打开，显示"取消"=已打开
-_SEARCH_STATE_REGION  = (1747, 142, 1897, 197)
-# 弹窗内绿色搜索执行按钮区域（图72）
-_SEARCH_EXEC_REGION   = (1341, 227, 1538, 300)
 
 
 def _ocr_region(img, region) -> str:
@@ -550,9 +586,9 @@ def _ocr_region_robust(img, region) -> str:
     crop = img[y1:y2, x1:x2]
     gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
     candidates_img = [
-        crop,                                                                 # 原图
-        cv2.cvtColor(cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY     + cv2.THRESH_OTSU)[1], cv2.COLOR_GRAY2RGB),  # 正向OTSU
-        cv2.cvtColor(cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1], cv2.COLOR_GRAY2RGB),  # 反向OTSU
+        crop,
+        cv2.cvtColor(cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY     + cv2.THRESH_OTSU)[1], cv2.COLOR_GRAY2RGB),
+        cv2.cvtColor(cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1], cv2.COLOR_GRAY2RGB),
     ]
     ocr = _get_ocr()
     for ci in candidates_img:
@@ -577,16 +613,15 @@ def _name_matches(hero_name: str, ocr_text: str) -> bool:
 
 
 def _is_search_popup_open(img=None) -> bool:
-    """检测搜索弹窗是否打开：72区域绿色像素占比足够高则认为绿色搜索按钮存在。"""
+    """检测搜索弹窗是否打开：绿色搜索按钮像素占比足够高则认为弹窗打开。"""
     if img is None:
         img = capture()
-    x1, y1, x2, y2 = _SEARCH_EXEC_REGION
+    x1, y1, x2, y2 = _search_exec_region()
     patch = img[y1:y2, x1:x2].astype(float)
     r, g, b = patch[:, :, 0], patch[:, :, 1], patch[:, :, 2]
-    # 绿色像素：G明显高于R和B
     green_mask = (g > 80) & (g > r * 1.3) & (g > b * 1.3)
     ratio = green_mask.mean()
-    return ratio > 0.05   # 超过5%像素是绿色即认为按钮存在
+    return ratio > 0.05
 
 
 def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set = None) -> str:
@@ -598,11 +633,10 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
     _log = log_fn or (lambda m: None)
 
     if not candidates:
-        return ''
+        return '', [], []
 
-    # 点搜索按钮，等弹窗打开（OCR反色确认）
     _log('  [搜索] 点击搜索按钮')
-    click_at(*_SEARCH_OPEN, delay=1.5)
+    click_at(*_search_open(), delay=1.5)
 
     deadline = time.time() + 10
     while time.time() < deadline:
@@ -613,24 +647,25 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         time.sleep(0.5)
     else:
         _log('  [搜索] 超时：弹窗未打开，放弃本轮')
-        return ''
+        return '', [], []
 
-    # 弹窗打开后，点一次输入框让光标进去
-    click_at(*_SEARCH_INPUT, delay=1.0)
+    click_at(*_search_input(), delay=1.0)
 
     picked_code = ''
-    seen_selected = []   # 搜到"已选择"的英雄code（可能是对手的）
-    seen_banned   = []   # 搜到"禁用英雄"的英雄code（可能识别有误的禁用）
+    seen_selected = []
+    seen_banned   = []
+    banned_kw   = _dlang('draft_hero_banned',   '禁用')
+    selected_kw = _dlang('draft_hero_selected',  '已选')
+
     for code, name, prob in candidates:
-        # 每次搜索前确认绿色按钮还在，没有就尝试重新打开一次
         if not _is_search_popup_open():
             _log('  [搜索] 弹窗未打开，反复尝试重开...')
             opened = False
             for _attempt in range(30):
-                click_at(*_SEARCH_OPEN, delay=1.5)
+                click_at(*_search_open(), delay=1.5)
                 if _is_search_popup_open():
                     _log(f'  [搜索] 弹窗已重新打开（第{_attempt+1}次）')
-                    click_at(*_SEARCH_INPUT, delay=0.5)
+                    click_at(*_search_input(), delay=0.5)
                     opened = True
                     break
             if not opened:
@@ -639,44 +674,38 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
 
         _log(f'  [搜索] 搜索: {name!r}（{code}）')
 
-        # 点X清空输入框，再输入
-        click_at(1284, 264, delay=0.5)
+        click_at(*_search_clear_btn(), delay=0.5)
         _type_unicode(name)
-        time.sleep(3.0)   # 等输入后自动出结果再识别
+        time.sleep(3.0)
 
-        # OCR 读搜索结果行（鲁棒预处理）
         img = capture()
-        # 保存调试截图
         try:
-            x1, y1, x2, y2 = _SEARCH_RESULT_REGION
+            x1, y1, x2, y2 = _search_result_region()
             cv2.imwrite(os.path.join(_DEBUG_DIR, 'dbg_result.png'),
                         cv2.cvtColor(img[y1:y2, x1:x2], cv2.COLOR_RGB2BGR))
         except Exception:
             pass
-        result_text = _ocr_region_robust(img, _SEARCH_RESULT_REGION)
+        result_text = _ocr_region_robust(img, _search_result_region())
         _log(f'  [搜索] 结果OCR="{result_text}"')
 
         if _name_matches(name, result_text):
-            # 点结果行，等右侧英雄卡出现
-            click_at(*_FIRST_RESULT, delay=2.0)
+            click_at(*_first_result(), delay=2.0)
 
-            # OCR右侧英雄卡，检测是否可选
             img2 = capture()
-            right_text = _ocr_region_robust(img2, _SELECTED_HERO_REGION)
+            right_text = _ocr_region_robust(img2, _selected_hero_region())
             _log(f'  [搜索] 右侧状态OCR="{right_text}"')
 
-            if '禁用' in right_text or '已选' in right_text:
+            if banned_kw in right_text or selected_kw in right_text:
                 _log(f'  [搜索] 英雄不可选（{right_text.strip()}），换下一个')
                 if unavailable is not None:
                     unavailable.add(code)
-                if '已选' in right_text:
+                if selected_kw in right_text:
                     seen_selected.append(code)
-                elif '禁用' in right_text:
+                elif banned_kw in right_text:
                     seen_banned.append(code)
             else:
-                # 可以选，点确认 → 点取消搜索复位状态
-                click_at(*_CONFIRM_BTN, delay=2.0)
-                click_at(*_SEARCH_OPEN, delay=1.5)
+                click_at(*_confirm_btn(), delay=2.0)
+                click_at(*_search_open(), delay=1.5)
                 _log(f'  [搜索] 选人成功: {name}')
                 picked_code = code
                 break
@@ -699,13 +728,13 @@ def scan_existing_picks(img=None, log_fn=None) -> tuple:
     if img is None:
         img = capture()
     my_picks, enemy_picks = [], []
-    for i, region in enumerate(MY_SLOTS):
+    for i, region in enumerate(_my_slots()):
         code, score, gap = identify_slot_debug(img, region)
         if log_fn:
             log_fn(f"  我方槽{i+1}: {_code_to_name.get(code, code)}（score={score:.3f}）")
         if code != 'unknown' and code not in my_picks:
             my_picks.append(code)
-    for i, region in enumerate(OPP_SLOTS):
+    for i, region in enumerate(_opp_slots()):
         code, score, gap = identify_slot_debug(img, region)
         if log_fn:
             log_fn(f"  对手槽{i+1}: {_code_to_name.get(code, code)}（score={score:.3f}）")
@@ -732,14 +761,12 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
 
     my_picks          = list(init_my_picks    or [])
     enemy_picks       = list(init_enemy_picks or [])
-    enemy_pick_scores = [0.5] * len(enemy_picks)   # 预填充时给保守默认值
-    banned_scores     = [0.5] * len(banned)         # 预填充时给保守默认值
+    enemy_pick_scores = [0.5] * len(enemy_picks)
+    banned_scores     = [0.5] * len(banned)
     start_pos         = len(my_picks) + len(enemy_picks)
 
-    # 跨轮不可用英雄（禁用 or 已选），避免重复搜索
     unavailable_codes: set = set(banned)
 
-    # 先后手只在第一次OCR确认时锁定，中途接入则信任传入值
     my_first_locked = (start_pos > 0)
 
     label = f"（先后手待OCR确认）" if not my_first_locked else f"（{'先手' if my_first else '后手'}，中途接入）"
@@ -747,23 +774,23 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
         label += f" 从第{start_pos + 1}步继续"
     log_fn(f"选秀开始{label}")
 
+    cur_opp_slots = _opp_slots()
+
     for pos in range(start_pos, 10):
         if _stopped():
             break
         total_before = len(my_picks) + len(enemy_picks)
 
-        # 直接看屏幕判断是谁的回合，返回同一帧供后续使用
         whose, turn_img = _detect_current_turn(pos, stop_event=stop_event, log_fn=log_fn)
         if whose == 0:
             break
 
-        # 第一次OCR成功：锁定先后手 + 等ban图标动画结束后截图识别
         if not my_first_locked:
             my_first = (whose == 1)
             my_first_locked = True
             log_fn(f'  {"先手" if my_first else "后手"}（OCR锁定，全程固定）')
 
-            time.sleep(2.0)  # 等禁用图标动画结束
+            time.sleep(2.0)
             ban_frame = capture()
             raw_bans, raw_ban_scores = identify_ban_slots(ban_frame)
             detected = [(c, s) for c, s in zip(raw_bans, raw_ban_scores) if c != 'empty']
@@ -774,20 +801,21 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             ban_names = [_code_to_name.get(c, c) for c in banned]
             log_fn(f'  禁用: {ban_names or "无"}（{len(banned)}/4）')
 
-        if whose == 1:   # 我的回合
-            time.sleep(1.5)  # 等界面稳定
+        if whose == 1:
+            if len(my_picks) >= 5:
+                log_fn(f'  我方已满5人，跳过选人')
+                time.sleep(1.0)
+                continue
+            time.sleep(1.5)
 
-            # 扫描对手当前槽位
             img_scan = capture()
             _my_set = set(my_picks)
             for slot_i in range(len(enemy_picks), 5):
-                # exclude=my_picks：我方选的不可能在对手槽，自动跳过取次高分
-                code_s, score_s, gap_s = identify_slot_debug(img_scan, OPP_SLOTS[slot_i], exclude=_my_set)
+                code_s, score_s, gap_s = identify_slot_debug(img_scan, cur_opp_slots[slot_i], exclude=_my_set)
                 if code_s == 'unknown':
                     continue
                 name_s = _code_to_name.get(code_s, code_s)
                 if code_s in banned:
-                    # 被禁英雄不可能出现在选人槽 → ban识别有误，选秀卡识别更可信
                     if code_s not in enemy_picks:
                         enemy_picks.append(code_s)
                         enemy_pick_scores.append(score_s)
@@ -844,7 +872,6 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 picked_code, seen_selected, seen_banned = search_and_pick_candidates(
                     candidates, log_fn=log_fn, unavailable=unavailable_codes)
 
-                # 已选择 → 确认为对手英雄，修正最低置信度条目
                 for conf_code in seen_selected:
                     if (conf_code not in my_picks and conf_code not in banned
                             and conf_code not in enemy_picks):
@@ -859,7 +886,6 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                             enemy_pick_scores[min_idx] = 1.0
                             unavailable_codes.add(conf_code)
 
-                # 禁用英雄 → 确认被禁，修正最低置信度禁用条目
                 for conf_code in seen_banned:
                     if conf_code not in banned:
                         unconf = [(i, s) for i, s in enumerate(banned_scores) if s < 1.0]
@@ -877,7 +903,6 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                     time.sleep(1.0)
                     my_picks.append(picked_code)
                 else:
-                    # 搜索全部失败，仍须占位保持序列长度正确
                     placeholder = candidates[0][0] if candidates else (recs[0]['hero_code'] if recs else 'unknown')
                     log_fn(f"  ⚠ 搜索全部失败，以 {_code_to_name.get(placeholder, placeholder)} 占位")
                     my_picks.append(placeholder)
@@ -889,12 +914,12 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
 
             time.sleep(1.5)
 
-        else:   # 对手回合
+        else:
             _wait_after_opponent_pick(stop_event=stop_event, log_fn=log_fn)
             if _stopped():
                 break
             opp_slot_idx = len(enemy_picks)
-            if opp_slot_idx >= len(OPP_SLOTS):
+            if opp_slot_idx >= len(cur_opp_slots):
                 log_fn(f"  对手槽已满，跳过识别")
                 continue
             code = 'unknown'
@@ -902,14 +927,13 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             for attempt in range(1, 6):
                 time.sleep(0.4)
                 img_after = capture()
-                code, score, gap = identify_slot_debug(img_after, OPP_SLOTS[opp_slot_idx], exclude=set(my_picks))
+                code, score, gap = identify_slot_debug(img_after, cur_opp_slots[opp_slot_idx], exclude=set(my_picks))
                 name = _code_to_name.get(code, code)
                 log_fn(f"  识别第{attempt}次: {name}（{code}）分数={score:.3f} gap={gap:.3f}")
                 if code != 'unknown':
                     pick_score = score
                     break
 
-            # 识别到的英雄已被占用（重复），视为识别失败走 fallback
             all_used = set(my_picks + enemy_picks + banned)
             if code != 'unknown' and code in all_used:
                 log_fn(f"  ⚠ {_code_to_name.get(code, code)} 已被占用，视为识别失败")
@@ -927,7 +951,6 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                     code = fb_recs[0]['hero_code']
                     log_fn(f"  ⚠ 识别失败，以模型推荐最高 {_code_to_name.get(code, code)} 占位")
                 else:
-                    # 推荐也拿不到，用已知英雄列表里第一个未被占用的代码占位
                     all_used = set(my_picks + enemy_picks + banned)
                     fallback = next((h for h in recommender.hero_list if h not in all_used), 'unknown')
                     code = fallback
@@ -940,41 +963,43 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
         log_fn(f"  进度 我方:{[_code_to_name.get(c,c) for c in my_picks]} "
                f"对方:{[_code_to_name.get(c,c) for c in enemy_picks]}")
 
-    # 过渡到禁人阶段：只扫最后一个可能遗漏的槽位
-    # 先手→对手最后选→检查OPP_SLOTS[4]；后手→我方最后选→检查MY_SLOTS[4]
     img_final = capture()
-    if my_first and len(enemy_picks) < 5:
+    cur_my_slots  = _my_slots()
+    cur_opp_slots = _opp_slots()
+    while len(enemy_picks) < 5:
         slot_i = len(enemy_picks)
-        code_new, score, _ = identify_slot_debug(img_final, OPP_SLOTS[slot_i], exclude=set(my_picks))
-        trans_score = score
+        code_new, score, _ = identify_slot_debug(img_final, cur_opp_slots[slot_i], exclude=set(my_picks))
         all_used = set(my_picks + enemy_picks + banned)
         if code_new != 'unknown' and code_new in all_used:
             log_fn(f'  [过渡] {_code_to_name.get(code_new, code_new)} 已被占用，视为识别失败')
             code_new = 'unknown'
-            trans_score = 0.0
+            score = 0.0
         if code_new != 'unknown':
             log_fn(f'  [过渡] 对手槽{slot_i+1}: {_code_to_name.get(code_new, code_new)}（score={score:.3f}）')
         else:
-            trans_score = 0.0
+            score = 0.0
             fb = recommender.recommend(my_picks=my_picks, enemy_picks=enemy_picks,
                                        banned=banned, phase='pick5', my_first=my_first, top_k=1)
             code_new = fb[0]['hero_code'] if fb else next(
                 (h for h in recommender.hero_list if h not in all_used), 'unknown')
             log_fn(f'  [过渡] 对手槽{slot_i+1} 识别失败，占位: {_code_to_name.get(code_new, code_new)}')
         enemy_picks.append(code_new)
-        enemy_pick_scores.append(trans_score)
-    elif not my_first and len(my_picks) < 5:
+        enemy_pick_scores.append(score)
+    while len(my_picks) < 5:
         slot_i = len(my_picks)
-        code_new, score, _ = identify_slot_debug(img_final, MY_SLOTS[slot_i])
+        code_new, score, _ = identify_slot_debug(img_final, cur_my_slots[slot_i])
         all_used = set(my_picks + enemy_picks + banned)
         if code_new != 'unknown' and code_new in all_used:
             log_fn(f'  [过渡] {_code_to_name.get(code_new, code_new)} 已被占用，视为识别失败')
             code_new = 'unknown'
+            score = 0.0
         if code_new != 'unknown':
             log_fn(f'  [过渡] 我方槽{slot_i+1}: {_code_to_name.get(code_new, code_new)}（score={score:.3f}）')
         else:
+            score = 0.0
             fb = recommender.recommend(my_picks=my_picks, enemy_picks=enemy_picks,
                                        banned=banned, phase='pick5', my_first=my_first, top_k=1)
+            all_used = set(my_picks + enemy_picks + banned)
             code_new = fb[0]['hero_code'] if fb else next(
                 (h for h in recommender.hero_list if h not in all_used), 'unknown')
             log_fn(f'  [过渡] 我方槽{slot_i+1} 识别失败，占位: {_code_to_name.get(code_new, code_new)}')
@@ -992,11 +1017,11 @@ def _save_debug_slots():
     try:
         img = capture()
         out = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        for i, (x1, y1, x2, y2) in enumerate(MY_SLOTS):
+        for i, (x1, y1, x2, y2) in enumerate(_my_slots()):
             cv2.rectangle(out, (x1, y1), (x2, y2), (0, 0, 255), 2)
             cv2.putText(out, f'MY{i+1}', (x1+2, y1+14),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
-        for i, (x1, y1, x2, y2) in enumerate(OPP_SLOTS):
+        for i, (x1, y1, x2, y2) in enumerate(_opp_slots()):
             cv2.rectangle(out, (x1, y1), (x2, y2), (0, 0, 255), 2)
             cv2.putText(out, f'OPP{i+1}', (x1+2, y1+14),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
@@ -1019,13 +1044,13 @@ def _detect_current_turn(pos: int, timeout: int = 90, stop_event=None, log_fn=No
         if time.time() - last_log >= 3:
             _log(f'  [第{pos+1}步] 等待回合... OCR="{text}"')
             last_log = time.time()
-        if '你的' in text:
+        if _is_my_turn_text(text):
             _log(f'  [第{pos+1}步] 我的回合（OCR="{text}"）')
             return 1, img
-        if '对手' in text or '对方' in text:
+        if _is_opp_turn_text(text):
             _log(f'  [第{pos+1}步] 对手回合（OCR="{text}"）')
             return 2, img
-        if '禁用' in text or '准备' in text:
+        if _is_ban_kw(text) or _is_ready_kw(text):
             _log(f'  [第{pos+1}步] 检测到下一阶段（OCR="{text}"），退出')
             return 0, None
         time.sleep(0.5)
@@ -1034,7 +1059,7 @@ def _detect_current_turn(pos: int, timeout: int = 90, stop_event=None, log_fn=No
 
 
 def _wait_after_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
-    """已确认是对手回合，等对手选完（等到"你的回合"出现）。"""
+    """已确认是对手回合，等对手选完（等到我的回合出现）。"""
     _log = log_fn or (lambda m: None)
     deadline = time.time() + timeout
     last_log = 0
@@ -1045,10 +1070,10 @@ def _wait_after_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
         if time.time() - last_log >= 3:
             _log(f'  等待对手选完... OCR="{text}"')
             last_log = time.time()
-        if '你的' in text:
+        if _is_my_turn_text(text):
             _log(f'  对手选完，我方回合（OCR="{text}"）')
             return
-        if '禁用' in text or '准备' in text:
+        if _is_ban_kw(text) or _is_ready_kw(text):
             _log(f'  检测到下一阶段（OCR="{text}"），退出等待')
             return
         time.sleep(0.5)
@@ -1067,12 +1092,12 @@ def _wait_my_turn(timeout: int = 60, stop_event=None, log_fn=None):
         if time.time() - last_log >= 3:
             _log(f'  等待我方回合... OCR="{text}"')
             last_log = time.time()
-        if '你的' in text:
+        if _is_my_turn_text(text):
             _log(f'  我方回合开始（OCR="{text}"）')
             time.sleep(1.5)
             return
-        preban_text = _ocr_region(img, _PREBAN_REGION)
-        if '禁用' in preban_text or '预先' in preban_text:
+        preban_text = _ocr_region(img, _preban_region_draft())
+        if _check_preban_text(preban_text):
             _log(f'  检测到preban阶段，退出等待')
             return
         time.sleep(0.5)
@@ -1087,7 +1112,7 @@ def _wait_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
         if stop_event and stop_event.is_set():
             return
         text = _read_turn_text()
-        if '对手' in text or '对方' in text:
+        if _is_opp_turn_text(text):
             _log(f'  检测到对手回合（OCR="{text}"）')
             break
         time.sleep(0.5)
@@ -1102,10 +1127,10 @@ def _wait_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
         if time.time() - last_log >= 3:
             _log(f'  等待对手选完... OCR="{text}"')
             last_log = time.time()
-        if '你的' in text:
+        if _is_my_turn_text(text):
             _log(f'  对手选完，我方回合（OCR="{text}"）')
             return
-        if '禁用' in text or '准备' in text:
+        if _is_ban_kw(text) or _is_ready_kw(text):
             _log(f'  检测到下一阶段（OCR="{text}"），退出等待')
             return
         time.sleep(0.5)
@@ -1116,11 +1141,9 @@ def detect_my_first(img: np.ndarray = None) -> bool:
     if img is None:
         img = capture()
     text = _read_turn_text(img)
-    if '对手' in text or '对方' in text:
+    if _is_opp_turn_text(text):
         return False
-    # "你的回合"时，再确认对手第一槽是否已有英雄
-    # 有的话说明对手先选了一个，我是后手（NCC>0.35即认为槽位非空）
-    _, score, _ = identify_slot_debug(img, OPP_SLOTS[0])
+    _, score, _ = identify_slot_debug(img, _opp_slots()[0])
     if score > 0.35:
         return False
     return True
