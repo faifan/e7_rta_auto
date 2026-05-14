@@ -272,22 +272,24 @@ class AutoRunApp:
 
     def _run_one_round(self):
         from battle_ai.executor   import focus_game_window
-        from battle_ai.perception import capture, is_battle_over, is_in_battle
+        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen
         from battle_ai.lobby      import (confirm_battle_result, apply_for_battle,
                                           is_in_lobby, is_waiting_for_match)
         from battle_ai.preban     import is_in_preban, do_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
                                           is_in_draft,
                                           is_in_post_draft_ban, do_post_draft_ban,
-                                          is_battle_ready, click_battle_start)
+                                          is_battle_ready, click_battle_start,
+                                          arrange_yazuga_first)
         from battle_ai.main_loop  import run as run_battle
 
         focus_game_window()
 
-        preban_done  = False
-        draft_done   = False
-        postban_done = False
-        draft_result = {'my_picks': [], 'enemy_picks': []}
+        preban_done      = False
+        draft_done       = False
+        postban_done     = False
+        force_burn_armed = False
+        draft_result     = {'my_picks': [], 'enemy_picks': []}
 
         while not self._stop_event.is_set():
             img = capture()
@@ -309,7 +311,13 @@ class AutoRunApp:
             if phase == 'result':
                 self.log('战斗结算，点击确认', 'info')
                 confirm_battle_result()
-                time.sleep(2.0)
+                for _ in range(5):
+                    time.sleep(1.5)
+                    if is_levelup_screen():
+                        self.log('升级界面，点击确认', 'info')
+                        confirm_battle_result()
+                    else:
+                        break
                 return
 
             elif phase == 'lobby':
@@ -344,6 +352,14 @@ class AutoRunApp:
                     )
                     self.log('选秀阶段结束', 'ok')
                     draft_done = True
+                    # 检查迪埃妮是否在我方阵容，有则开启首回合强制烧魂
+                    from battle_ai.draft import _code_to_name
+                    from battle_ai.decision import check_force_first_burn_pick
+                    for code in draft_result.get('my_picks', []):
+                        if check_force_first_burn_pick(_code_to_name.get(code, code)):
+                            force_burn_armed = True
+                            self.log('队伍含迪埃妮，首回合强制烧魂已开启', 'ok')
+                            break
                 time.sleep(1.0)
 
             elif phase == 'postban':
@@ -361,6 +377,10 @@ class AutoRunApp:
                 time.sleep(1.0)
 
             elif phase == 'battle_ready':
+                arrange_yazuga_first(
+                    draft_result.get('my_picks', []),
+                    log_fn=lambda msg: self.log(msg, 'info'),
+                )
                 self.log('点击战斗开始', 'info')
                 click_battle_start()
                 time.sleep(4.0)
@@ -369,7 +389,8 @@ class AutoRunApp:
                 self.log('战斗AI运行中...', 'phase')
                 try:
                     run_battle(stop_event=self._stop_event,
-                               log_fn=lambda msg: self.log(msg, 'info'))
+                               log_fn=lambda msg: self.log(msg, 'info'),
+                               arm_force_burn=force_burn_armed)
                     self.log('战斗结束', 'ok')
                 except Exception as e:
                     self.log(f'战斗异常: {e}', 'error')

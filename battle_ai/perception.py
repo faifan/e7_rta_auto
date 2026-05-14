@@ -1,6 +1,7 @@
 import ctypes
 import io
 import os
+import time
 import numpy as np
 import pyautogui
 import cv2
@@ -336,13 +337,16 @@ def img_similarity(img_a: np.ndarray, img_b: np.ndarray) -> float:
 
 
 # ── 烧魂检测 ──────────────────────────────────────────────────
-_DEFAULT_BURN_BTN_REGION = (878, 961, 1212, 1092)
-_BURN_AVAILABLE_RATIO    = 0.05   # 蓝色像素占比 ≥ 5% → Burn可用
-_BURN_ACTIVATED_RATIO    = 0.015  # 蓝色像素占比 < 1.5% → Cancel已激活
+_DEFAULT_BURN_BTN_REGION    = (878, 961, 1212, 1092)
+_DEFAULT_CANCEL_BTN_REGION  = (899, 981, 1171, 1070)   # Cancel按钮文字区域（102.png标定）
+_BURN_AVAILABLE_RATIO       = 0.05   # 蓝色像素占比 ≥ 5% → Burn可用
 
 def _burn_btn_region() -> tuple:
     p = _pcfg()
     return tuple(p['burn_btn_region']) if 'burn_btn_region' in p else _DEFAULT_BURN_BTN_REGION
+
+def _cancel_btn_region() -> tuple:
+    return _DEFAULT_CANCEL_BTN_REGION
 
 def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
     """返回region内HSV蓝色像素占比。"""
@@ -357,16 +361,41 @@ def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
     return float(mask.sum()) / max(mask.size, 1)
 
 def is_soul_burn_available(img: np.ndarray = None) -> bool:
-    """检测"Burn!"按钮是否可用（HSV蓝色检测）。"""
-    if img is None:
-        img = capture()
-    return _check_blue_ratio(img, _burn_btn_region()) >= _BURN_AVAILABLE_RATIO
+    """
+    检测"Burn!"按钮是否可用（HSV蓝色检测）。
+    传入img时单次检测；不传时2秒内每0.1s截图，检测到立刻返回。
+    """
+    region = _burn_btn_region()
+    if img is not None:
+        return _check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
+    start = time.time()
+    while time.time() - start < 2.0:
+        if _check_blue_ratio(capture(), region) >= _BURN_AVAILABLE_RATIO:
+            return True
+        time.sleep(0.1)
+    return False
 
 def is_soul_burn_activated(img: np.ndarray = None) -> bool:
-    """检测烧魂已激活（按钮变为Cancel灰色状态：蓝色消失）。"""
-    if img is None:
-        img = capture()
-    return _check_blue_ratio(img, _burn_btn_region()) < _BURN_ACTIVATED_RATIO
+    """检测烧魂已激活（Cancel按钮出现）。
+    无参数时：OCR裁Cancel区域识别文字，每0.15s一帧，最多3秒。
+    """
+    if img is not None:
+        region = _burn_btn_region()
+        _BURN_ACTIVATED_RATIO = 0.015
+        return _check_blue_ratio(img, region) < _BURN_ACTIVATED_RATIO
+
+    x1, y1, x2, y2 = _cancel_btn_region()
+    start = time.time()
+    while time.time() - start < 3.0:
+        frame = capture()
+        crop  = frame[y1:y2, x1:x2]
+        buf   = io.BytesIO()
+        Image.fromarray(crop).save(buf, format='PNG')
+        text  = _get_ocr().classification(buf.getvalue())
+        if 'cancel' in text.lower():
+            return True
+        time.sleep(0.15)
+    return False
 
 
 # ── 调试工具 ──────────────────────────────────────────────────

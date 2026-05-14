@@ -69,6 +69,16 @@ _DEFAULT_OPP_SLOTS = [
 _DEFAULT_MY_BAN_SLOTS  = [(565, 1010, 646, 1096), (646, 1010, 741, 1096)]
 _DEFAULT_OPP_BAN_SLOTS = [(753, 1006, 842, 1095), (842, 1006, 937, 1095)]
 
+_DEFAULT_BATTLE_SLOT_CENTERS = [(735, 618), (587, 728), (767, 817), (909, 708)]
+_DEFAULT_BATTLE_SWAP_REGIONS = [
+    (687, 484, 775, 573),
+    (544, 594, 628, 676),
+    (875, 583, 963, 665),
+    (727, 673, 798, 750),
+]
+_DEFAULT_BATTLE_DESELECT      = (744, 916)
+_DEFAULT_BATTLE_YAZUGA_DETECT = (847, 373, 1078, 754)
+
 # 向后兼容模块级常量
 MY_SLOTS  = _DEFAULT_MY_SLOTS
 OPP_SLOTS = _DEFAULT_OPP_SLOTS
@@ -94,6 +104,11 @@ def _my_ban_slots():  return [tuple(v) for v in _dcfg().get('my_ban_slots',  _DE
 def _opp_ban_slots(): return [tuple(v) for v in _dcfg().get('opp_ban_slots', _DEFAULT_OPP_BAN_SLOTS)]
 def _opp_slot_centers():
     return [((x1 + x2) // 2, (y1 + y2) // 2) for x1, y1, x2, y2 in _opp_slots()]
+def _battle_slot_centers(): return [tuple(v) for v in _dcfg().get('battle_slot_centers', _DEFAULT_BATTLE_SLOT_CENTERS)]
+def _battle_swap_regions():  return [tuple(v) for v in _dcfg().get('battle_swap_regions',  _DEFAULT_BATTLE_SWAP_REGIONS)]
+def _battle_swap_centers():  return [(int((r[0]+r[2])/2), int((r[1]+r[3])/2)) for r in _battle_swap_regions()]
+def _battle_deselect():      return tuple(_dcfg().get('battle_deselect',      _DEFAULT_BATTLE_DESELECT))
+def _battle_yazuga_detect(): return tuple(_dcfg().get('battle_yazuga_detect', _DEFAULT_BATTLE_YAZUGA_DETECT))
 
 
 # ── 文字匹配辅助（通过 lang 文件支持多语言）──────────────────
@@ -458,6 +473,85 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
     cx, cy = _opp_slot_centers()[ban_idx]
     click_at(cx, cy, delay=1.5)
     click_at(*_post_ban_btn(), delay=1.5)
+
+
+# ── 战斗前亚露嘉位置调整 ──────────────────────────────────────
+
+_yazuga_battle_tmpl = None
+_swap_btn_tmpl       = None
+
+
+def _get_yazuga_tmpl():
+    global _yazuga_battle_tmpl
+    if _yazuga_battle_tmpl is None:
+        _yazuga_battle_tmpl = cv2.imread(os.path.join(_TMPL_BASE, 'yazuga_battle.png'))
+    return _yazuga_battle_tmpl
+
+
+def _get_swap_btn_tmpl():
+    global _swap_btn_tmpl
+    if _swap_btn_tmpl is None:
+        _swap_btn_tmpl = cv2.imread(os.path.join(_TMPL_BASE, 'swap_btn.png'))
+    return _swap_btn_tmpl
+
+
+def _region_score(img, region, tmpl) -> float:
+    x1, y1, x2, y2 = region
+    patch = img[y1:y2, x1:x2]
+    h, w = tmpl.shape[:2]
+    if patch.shape[0] != h or patch.shape[1] != w:
+        patch = cv2.resize(patch, (w, h))
+    return float(cv2.matchTemplate(patch, tmpl, cv2.TM_CCOEFF_NORMED).max())
+
+
+def _slot1_yazuga_score(img=None) -> float:
+    tmpl = _get_yazuga_tmpl()
+    if tmpl is None:
+        return 0.0
+    if img is None:
+        img = capture()
+    return _region_score(img, _battle_yazuga_detect(), tmpl)
+
+
+def arrange_yazuga_first(my_picks, log_fn=None):
+    """
+    battle_ready阶段：若我方有亚露嘉，确保她在最右槽（前位）。
+    穷举槽0→1→2：点击槽→等最右边交换按钮→点交换→等动画→检测最右槽。
+    每槽只试一次，失败则点两下deselect重置后继续下一槽。
+    """
+    _log = log_fn or (lambda m: None)
+    _load_hero_names()
+
+    if not any('亚露嘉' in _code_to_name.get(c, '') for c in (my_picks or [])):
+        return
+
+    score = _slot1_yazuga_score()
+    _log(f'  [阵容] 最右槽亚露嘉相似度: {score:.3f}')
+    if score >= 0.70:
+        _log('  [阵容] 亚露嘉已在最右槽，无需调整')
+        return
+
+    slot_centers = _battle_slot_centers()
+    deselect     = _battle_deselect()
+    _SWAP_IDX    = 2
+    swap_center  = _battle_swap_centers()[_SWAP_IDX]
+
+    for slot_i in range(3):
+        _log(f'  [阵容] 尝试槽{slot_i + 1}')
+        click_at(*slot_centers[slot_i], delay=1.0)
+        click_at(*swap_center, delay=0.5)
+        time.sleep(2.0)
+
+        new_score = _slot1_yazuga_score()
+        _log(f'  [阵容] 槽{slot_i + 1} 交换后最右槽相似度: {new_score:.3f}')
+        if new_score >= 0.70:
+            _log(f'  [阵容] 亚露嘉已移至最右槽（来自槽{slot_i + 1}）')
+            return
+
+        click_at(*deselect, delay=0.5)
+        click_at(*deselect, delay=0.5)
+
+    _log('  [阵容] 亚露嘉位置调整完成')
 
 
 def click_battle_start():

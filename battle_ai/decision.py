@@ -23,6 +23,34 @@ _db = _load_db()
 # 每场战斗内存状态：{normalized_name: s3_skip_remaining}
 _s3_skip: dict[str, int] = {}
 
+# 首回合强制烧魂（队伍含特定角色时触发）
+_FORCE_FIRST_BURN_CHARS = {'黑暗牧者迪埃妮'}
+_force_first_burn_armed = False
+_force_first_burn_done  = False
+
+
+def check_force_first_burn_pick(name: str) -> bool:
+    """检查该英雄名是否触发首回合强制烧魂（繁简均支持）。"""
+    return zhconv.convert(name, 'zh-hans') in _FORCE_FIRST_BURN_CHARS
+
+
+def arm_force_first_burn():
+    """选秀后确认迪埃妮在阵容时调用，armed首回合强制烧魂。"""
+    global _force_first_burn_armed, _force_first_burn_done
+    _force_first_burn_armed = True
+    _force_first_burn_done  = False
+
+
+def is_force_first_burn_pending() -> bool:
+    """返回True表示首回合强制烧魂尚未触发。"""
+    return _force_first_burn_armed and not _force_first_burn_done
+
+
+def mark_force_first_burn_done():
+    """首回合逻辑执行后调用，无论是否成功。"""
+    global _force_first_burn_done
+    _force_first_burn_done = True
+
 
 def _fuzzy_key(name: str) -> str | None:
     """在JSON键中找最相似的，相似度>=0.6才返回。"""
@@ -105,3 +133,6 @@ def on_s3_success(char_name: str | None):
 def reset_battle():
     """每场战斗开始时调用，清空所有角色状态。"""
     _s3_skip.clear()
+    global _force_first_burn_armed, _force_first_burn_done
+    _force_first_burn_armed = False
+    _force_first_burn_done  = False
