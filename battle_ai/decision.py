@@ -1,6 +1,7 @@
 import json
 import os
 import difflib
+import zhconv
 
 from battle_ai.perception import is_skill_on_cooldown
 
@@ -32,9 +33,10 @@ def _fuzzy_key(name: str) -> str | None:
 
 
 def _norm(name: str | None) -> str | None:
-    """把OCR名字归一化为JSON键（或原始名）。"""
+    """把OCR名字归一化为JSON键（或原始名）。繁体先转简体再匹配。"""
     if not name:
         return None
+    name = zhconv.convert(name, 'zh-hans')
     key = _fuzzy_key(name)
     return key if key else name
 
@@ -55,6 +57,16 @@ def _get_s3_skip_cfg(key: str | None) -> int:
         if isinstance(entry, dict):
             return int(entry.get('s3_skip', _DEFAULT_S3_SKIP))
     return _DEFAULT_S3_SKIP
+
+
+def get_soul_burn_skill(char_name: str | None) -> str | None:
+    """返回该角色配置的烧魂技能，未配置或配置格式不含soul_burn则返回None。"""
+    key = _norm(char_name)
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return entry.get('soul_burn')
+    return None
 
 
 def get_candidates(char_name: str | None, img=None) -> list[str]:

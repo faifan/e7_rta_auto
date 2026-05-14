@@ -1,11 +1,39 @@
 import time
-from battle_ai.executor import focus_game_window, do_aoe
-from battle_ai.perception import capture, is_battle_over, read_turn_badge, read_char_name
-from battle_ai.decision import get_candidates, on_s3_success, reset_battle
+from battle_ai.executor import focus_game_window, do_aoe, click_burn
+from battle_ai.perception import (capture, is_battle_over, read_turn_badge, read_char_name,
+                                   is_soul_burn_available, is_soul_burn_activated)
+from battle_ai.decision import get_candidates, on_s3_success, reset_battle, get_soul_burn_skill
 
 POLL_INTERVAL       = 1.0   # 主循环轮询间隔（秒）
 _SKILL_POLL_SEC     = 2.0   # 技能成功检测间隔
 _SKILL_MAX_POLLS    = 3     # 最多检测3次
+
+
+def _execute_with_burn(skill: str, char_name: str | None, turn: int, log_fn) -> bool:
+    """
+    烧魂路径：click_burn → 验证Cancel激活 → 双击技能 → 轮询徽章。
+    激活验证失败最多重试一次，仍失败则返回False退回普通流程。
+    """
+    click_burn()
+    time.sleep(0.4)
+
+    img = capture()
+    if not is_soul_burn_activated(img):
+        time.sleep(0.3)
+        img = capture()
+        if not is_soul_burn_activated(img):
+            log_fn(f"[回合 {turn}] 烧魂未激活，退回普通流程")
+            return False
+
+    do_aoe(skill)
+    for _ in range(_SKILL_MAX_POLLS):
+        time.sleep(_SKILL_POLL_SEC)
+        badge = read_turn_badge()
+        if badge != 'my_turn':
+            log_fn(f"[回合 {turn}] {char_name or '?'} {skill} 烧魂 ✓")
+            return True
+    log_fn(f"[回合 {turn}] {char_name or '?'} {skill} 烧魂无响应")
+    return False
 
 
 def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn) -> bool:
@@ -61,25 +89,43 @@ def run(stop_event=None, log_fn=None):
 
         turn += 1
         char_name = read_char_name(img)
-        candidates = get_candidates(char_name, img)
-        _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={candidates}")
 
         if is_battle_over(img):
             _log(f"战斗结束！共行动 {turn - 1} 次")
             break
 
+        # 烧魂优先：仅对配置了soul_burn的角色检测
+        soul_burn_skill = get_soul_burn_skill(char_name)
         executed = False
-        for skill in candidates:
-            success = _execute_skill(skill, char_name, turn, _log)
-            if success:
+
+        if soul_burn_skill:
+            burn_avail = is_soul_burn_available(img)
+            if not burn_avail:
+                # 补采样：覆盖闪烁暗帧
+                time.sleep(0.3)
+                burn_avail = is_soul_burn_available()
+            if burn_avail:
+                _log(f"[回合 {turn}] 角色={char_name or '未知'} 烧魂→{soul_burn_skill}")
+                success = _execute_with_burn(soul_burn_skill, char_name, turn, _log)
+                if success:
+                    if soul_burn_skill == 'S3':
+                        on_s3_success(char_name)
+                    executed = True
+
+        if not executed:
+            candidates = get_candidates(char_name, img)
+            _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={candidates}")
+            for skill in candidates:
+                success = _execute_skill(skill, char_name, turn, _log)
+                if success:
+                    if skill == 'S3':
+                        on_s3_success(char_name)
+                    executed = True
+                    break
+                # S3失败（说明被对手加了CD）→ 跳过S2直接兜底S1
                 if skill == 'S3':
-                    on_s3_success(char_name)
-                executed = True
-                break
-            # S3失败（说明被对手加了CD）→ 跳过S2直接兜底S1
-            if skill == 'S3':
-                _log(f"[回合 {turn}] S3无响应，跳过S2")
-                break
+                    _log(f"[回合 {turn}] S3无响应，跳过S2")
+                    break
 
         if not executed:
             _log(f"[回合 {turn}] 兜底S1")

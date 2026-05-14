@@ -335,6 +335,40 @@ def img_similarity(img_a: np.ndarray, img_b: np.ndarray) -> float:
     return float(np.sum(a * b) / denom) if denom > 1e-6 else 0.0
 
 
+# ── 烧魂检测 ──────────────────────────────────────────────────
+_DEFAULT_BURN_BTN_REGION = (878, 961, 1212, 1092)
+_BURN_AVAILABLE_RATIO    = 0.05   # 蓝色像素占比 ≥ 5% → Burn可用
+_BURN_ACTIVATED_RATIO    = 0.015  # 蓝色像素占比 < 1.5% → Cancel已激活
+
+def _burn_btn_region() -> tuple:
+    p = _pcfg()
+    return tuple(p['burn_btn_region']) if 'burn_btn_region' in p else _DEFAULT_BURN_BTN_REGION
+
+def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
+    """返回region内HSV蓝色像素占比。"""
+    x1, y1, x2, y2 = region
+    crop = img[y1:y2, x1:x2]
+    hsv  = cv2.cvtColor(crop, cv2.COLOR_RGB2HSV)
+    mask = (
+        (hsv[:, :, 0] >= 95) & (hsv[:, :, 0] <= 135) &
+        (hsv[:, :, 1] >= 60) &
+        (hsv[:, :, 2] >= 60)
+    )
+    return float(mask.sum()) / max(mask.size, 1)
+
+def is_soul_burn_available(img: np.ndarray = None) -> bool:
+    """检测"Burn!"按钮是否可用（HSV蓝色检测）。"""
+    if img is None:
+        img = capture()
+    return _check_blue_ratio(img, _burn_btn_region()) >= _BURN_AVAILABLE_RATIO
+
+def is_soul_burn_activated(img: np.ndarray = None) -> bool:
+    """检测烧魂已激活（按钮变为Cancel灰色状态：蓝色消失）。"""
+    if img is None:
+        img = capture()
+    return _check_blue_ratio(img, _burn_btn_region()) < _BURN_ACTIVATED_RATIO
+
+
 # ── 调试工具 ──────────────────────────────────────────────────
 def debug_thresholds():
     img    = capture()
