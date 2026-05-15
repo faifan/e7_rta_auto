@@ -139,16 +139,16 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False):
         if soul_burn_skill and not executed:
             burn_avail = _early_burn_avail or is_soul_burn_available(img)
             if not burn_avail:
-                burn_avail = is_soul_burn_available()
+                burn_avail = is_soul_burn_available()  # 连拍4帧覆盖闪烁周期
             if burn_avail:
                 _log(f"[回合 {turn}] 角色={char_name or '未知'} 烧魂→{soul_burn_skill}")
                 success = _execute_with_burn(soul_burn_skill, char_name, turn, _log)
+            else:
+                _log(f"[回合 {turn}] 角色={char_name or '未知'} 烧魂按钮未检测到")
                 if success:
                     if soul_burn_skill == 'S3':
                         on_s3_success(char_name)
                     executed = True
-            else:
-                _log(f"[回合 {turn}] 角色={char_name or '未知'} 烧魂按钮未检测到")
 
         if not executed:
             candidates = get_candidates(char_name, img)

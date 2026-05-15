@@ -140,7 +140,7 @@ def is_battle_over(img: np.ndarray = None) -> bool:
         return True
     if is_in_battle(img):
         return False
-    return is_levelup_screen(img)
+    return False
 
 
 # ── 技能图标亮度 ──────────────────────────────────────────────
@@ -363,7 +363,7 @@ def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
 def is_soul_burn_available(img: np.ndarray = None) -> bool:
     """
     检测"Burn!"按钮是否可用（HSV蓝色检测）。
-    传入img时单次检测；不传时2秒内每0.1s截图，检测到立刻返回。
+    传入img时单次检测；不传时连拍4帧取最大值，覆盖完整闪烁周期。
     """
     region = _burn_btn_region()
     if img is not None:
@@ -380,6 +380,7 @@ def is_soul_burn_activated(img: np.ndarray = None) -> bool:
     无参数时：OCR裁Cancel区域识别文字，每0.15s一帧，最多3秒。
     """
     if img is not None:
+        # 兼容旧单帧调用，保留原逻辑
         region = _burn_btn_region()
         _BURN_ACTIVATED_RATIO = 0.015
         return _check_blue_ratio(img, region) < _BURN_ACTIVATED_RATIO

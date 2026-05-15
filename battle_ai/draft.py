@@ -76,7 +76,7 @@ _DEFAULT_BATTLE_SWAP_REGIONS = [
     (875, 583, 963, 665),
     (727, 673, 798, 750),
 ]
-_DEFAULT_BATTLE_DESELECT      = (744, 916)
+_DEFAULT_BATTLE_DESELECT     = (744, 916)
 _DEFAULT_BATTLE_YAZUGA_DETECT = (847, 373, 1078, 754)
 
 # 向后兼容模块级常量
@@ -445,6 +445,12 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
     _log = log_fn or (lambda m: None)
     _load_hero_names()
 
+    # 规则2（永远生效）：绝不禁对手槽3（索引2）
+    _FORBIDDEN_SLOT = 2
+
+    # 规则1（有亚露嘉时生效）：确认后暂停5秒
+    _has_yazuga = any('亚露嘉' in _code_to_name.get(c, '') for c in (my_picks or []))
+
     ban_idx = None
 
     if recommender is not None and enemy_picks:
@@ -459,14 +465,21 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
             for rec in recs:
                 code = rec['hero_code']
                 if code in enemy_picks:
-                    ban_idx = enemy_picks.index(code)
+                    idx = enemy_picks.index(code)
+                    if idx == _FORBIDDEN_SLOT:
+                        _log(f'  [禁用] 跳过槽3推荐: {_code_to_name.get(code, code)}，找下一个')
+                        continue
+                    ban_idx = idx
                     _log(f'  [禁用] 模型推荐禁: {_code_to_name.get(code, code)}（对手槽{ban_idx+1}）')
                     break
         except Exception as e:
             _log(f'  [禁用] 模型推荐异常: {e}')
 
     if ban_idx is None:
-        ban_idx = random.randrange(len(enemy_picks)) if enemy_picks else 0
+        candidates = [i for i in range(len(enemy_picks)) if i != _FORBIDDEN_SLOT]
+        if not candidates:
+            candidates = list(range(len(enemy_picks)))
+        ban_idx = random.choice(candidates)
         code = enemy_picks[ban_idx] if enemy_picks else '?'
         _log(f'  [禁用] 随机禁: {_code_to_name.get(code, code)}（对手槽{ban_idx+1}）')
 
@@ -474,8 +487,12 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
     click_at(cx, cy, delay=1.5)
     click_at(*_post_ban_btn(), delay=1.5)
 
+    # 亚露嘉阵容位置调整在 battle_ready 阶段由 arrange_yazuga_first 处理
+
 
 # ── 战斗前亚露嘉位置调整 ──────────────────────────────────────
+
+# 战斗准备位置调整坐标均从配置文件读取，见 _battle_slot_centers() 等 accessor
 
 _yazuga_battle_tmpl = None
 _swap_btn_tmpl       = None
@@ -496,6 +513,7 @@ def _get_swap_btn_tmpl():
 
 
 def _region_score(img, region, tmpl) -> float:
+    """对img的region区域和tmpl做NCC，返回最大相似度。"""
     x1, y1, x2, y2 = region
     patch = img[y1:y2, x1:x2]
     h, w = tmpl.shape[:2]
@@ -511,6 +529,14 @@ def _slot1_yazuga_score(img=None) -> float:
     if img is None:
         img = capture()
     return _region_score(img, _battle_yazuga_detect(), tmpl)
+
+
+def _swap_btn_visible(img, slot_i) -> float:
+    """检测slot_i对应的交换按钮区域是否出现了交换按钮，返回相似度。"""
+    tmpl = _get_swap_btn_tmpl()
+    if tmpl is None:
+        return 0.0
+    return _region_score(img, _battle_swap_regions()[slot_i], tmpl)
 
 
 def arrange_yazuga_first(my_picks, log_fn=None):
@@ -533,14 +559,16 @@ def arrange_yazuga_first(my_picks, log_fn=None):
 
     slot_centers = _battle_slot_centers()
     deselect     = _battle_deselect()
+    # 交换按钮固定在最右边（索引2），无论点的是哪个槽
     _SWAP_IDX    = 2
     swap_center  = _battle_swap_centers()[_SWAP_IDX]
 
-    for slot_i in range(3):
+    for slot_i in range(3):   # 依次试槽0、1、2，每槽只试一次
         _log(f'  [阵容] 尝试槽{slot_i + 1}')
-        click_at(*slot_centers[slot_i], delay=1.0)
-        click_at(*swap_center, delay=0.5)
-        time.sleep(2.0)
+        click_at(*slot_centers[slot_i], delay=1.0)  # 点槽，等UI响应
+
+        click_at(*swap_center, delay=0.5)           # 点交换按钮
+        time.sleep(2.0)                             # 等换位动画（共2.5s）
 
         new_score = _slot1_yazuga_score()
         _log(f'  [阵容] 槽{slot_i + 1} 交换后最右槽相似度: {new_score:.3f}')
@@ -548,6 +576,7 @@ def arrange_yazuga_first(my_picks, log_fn=None):
             _log(f'  [阵容] 亚露嘉已移至最右槽（来自槽{slot_i + 1}）')
             return
 
+        # 重置：点两下deselect，已试槽不再重试
         click_at(*deselect, delay=0.5)
         click_at(*deselect, delay=0.5)
 
@@ -902,9 +931,30 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 continue
             time.sleep(1.5)
 
+            # 根据先后手和当前步骤，推算对手此时最多应有几个人，防止扫到空槽误判
+            # 格式（代码视角，连续同队选人合并为1个游戏回合）:
+            #   我后手: E(1) M M E(2) M M E(2) M ...  → 期望E: pos≤3→1, pos≤6→3, pos>6→5
+            #   我先手: M E(2) M M E(2) M M E(1) M ... → 期望E: pos≤1→0, pos≤4→2, pos≤7→4, else→5
+            if my_first:
+                if pos <= 1:
+                    _exp_enemy = 0
+                elif pos <= 4:
+                    _exp_enemy = 2
+                elif pos <= 7:
+                    _exp_enemy = 4
+                else:
+                    _exp_enemy = 5
+            else:
+                if pos <= 3:
+                    _exp_enemy = 1
+                elif pos <= 6:
+                    _exp_enemy = 3
+                else:
+                    _exp_enemy = 5
+
             img_scan = capture()
             _my_set = set(my_picks)
-            for slot_i in range(len(enemy_picks), 5):
+            for slot_i in range(len(enemy_picks), min(_exp_enemy, 5)):
                 code_s, score_s, gap_s = identify_slot_debug(img_scan, cur_opp_slots[slot_i], exclude=_my_set)
                 if code_s == 'unknown':
                     continue

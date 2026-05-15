@@ -24,9 +24,10 @@ _db = _load_db()
 _s3_skip: dict[str, int] = {}
 
 # 首回合强制烧魂（队伍含特定角色时触发）
-_FORCE_FIRST_BURN_CHARS = {'黑暗牧者迪埃妮'}
-_force_first_burn_armed = False
-_force_first_burn_done  = False
+_FORCE_FIRST_BURN_CHARS  = {'黑暗牧者迪埃妮'}
+_NO_SOUL_BURN_SELF       = {'黑暗牧者迪埃妮'}   # 这些角色自己永不烧魂
+_force_first_burn_armed  = False
+_force_first_burn_done   = False
 
 
 def check_force_first_burn_pick(name: str) -> bool:
@@ -90,6 +91,8 @@ def _get_s3_skip_cfg(key: str | None) -> int:
 def get_soul_burn_skill(char_name: str | None) -> str | None:
     """返回该角色配置的烧魂技能，未配置或配置格式不含soul_burn则返回None。"""
     key = _norm(char_name)
+    if key in _NO_SOUL_BURN_SELF:
+        return None
     if key and key in _db:
         entry = _db[key]
         if isinstance(entry, dict):
