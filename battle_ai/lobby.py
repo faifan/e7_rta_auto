@@ -91,10 +91,11 @@ def is_waiting_for_match(img: np.ndarray = None) -> bool:
 
 
 def confirm_battle_result():
-    from battle_ai.perception import capture, is_levelup_screen
-    img = capture()
-    btn = _confirm_btn_levelup() if is_levelup_screen(img) else _confirm_btn()
-    click_at(*btn)
+    click_at(*_confirm_btn())
+    time.sleep(1.5)
+
+def confirm_levelup_result():
+    click_at(*_confirm_btn_levelup())
     time.sleep(1.5)
 
 

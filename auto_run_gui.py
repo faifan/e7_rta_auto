@@ -271,9 +271,10 @@ class AutoRunApp:
         self.log('模型加载完成', 'ok')
 
     def _run_one_round(self):
-        from battle_ai.executor   import focus_game_window
+        from battle_ai.executor   import focus_game_window, click_at
         from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen
-        from battle_ai.lobby      import (confirm_battle_result, apply_for_battle,
+        from battle_ai.lobby      import (confirm_battle_result, confirm_levelup_result,
+                                          apply_for_battle,
                                           is_in_lobby, is_waiting_for_match)
         from battle_ai.preban     import is_in_preban, do_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
@@ -313,11 +314,15 @@ class AutoRunApp:
                 confirm_battle_result()
                 for _ in range(5):
                     time.sleep(1.5)
-                    if is_levelup_screen():
-                        self.log('升级界面，点击确认', 'info')
-                        confirm_battle_result()
-                    else:
+                    img2 = capture()
+                    if is_levelup_screen(img2):
+                        self.log('升级/段位界面，点击确认', 'info')
+                        confirm_levelup_result()
+                    elif is_in_lobby(img2) or is_waiting_for_match(img2):
                         break
+                    else:
+                        self.log('中间界面，点击屏幕中央', 'info')
+                        click_at(961, 558)
                 return
 
             elif phase == 'lobby':
