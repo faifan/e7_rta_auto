@@ -214,36 +214,57 @@ def identify_slot_debug(img: np.ndarray, region: tuple, exclude: set = None) -> 
     return 'unknown', best_score, gap
 
 
-# ── 禁用槽识别（CDN头像匹配）────────────────────────────────
+# ── 禁用槽识别 ────────────────────────────────────────────────
+# ban_images/ 优先（实际游戏截图），没有时回退到 hero_images/ CDN头像
 _HERO_IMAGES_DIR = os.path.join(_ROOT, 'templates', 'hero_images')
+_BAN_IMAGES_DIR  = os.path.join(_ROOT, 'templates', 'ban_images')
 _BAN_TMPL_SIZE   = (64, 64)
-_BAN_THRESHOLD   = 0.35
+_BAN_THRESHOLD   = 0.50   # ban_images 实拍模板匹配分更高，可收紧阈值
 
+# code -> list of templates（支持同一英雄多张）
 _ban_templates: dict = {}
 
 
 def _load_ban_templates():
-    if not os.path.exists(_HERO_IMAGES_DIR):
-        return
-    for fname in os.listdir(_HERO_IMAGES_DIR):
-        if not fname.endswith('.png'):
-            continue
-        code = fname[:-4]
-        path = os.path.join(_HERO_IMAGES_DIR, fname)
-        try:
-            img = np.array(Image.open(path).convert('L'))
-            _ban_templates[code] = cv2.resize(img, _BAN_TMPL_SIZE).astype(np.float32)
-        except Exception:
-            pass
+    # 先从 hero_images 加载所有英雄（CDN头像，作为兜底）
+    if os.path.exists(_HERO_IMAGES_DIR):
+        for fname in os.listdir(_HERO_IMAGES_DIR):
+            if not fname.endswith('.png'):
+                continue
+            code = fname[:-4]
+            path = os.path.join(_HERO_IMAGES_DIR, fname)
+            try:
+                img = np.array(Image.open(path).convert('L'))
+                _ban_templates[code] = [cv2.resize(img, _BAN_TMPL_SIZE).astype(np.float32)]
+            except Exception:
+                pass
+    # 再从 ban_images 追加实拍模板（覆盖/补充，文件名 code.png 或 code_N.png）
+    if os.path.exists(_BAN_IMAGES_DIR):
+        for fname in sorted(os.listdir(_BAN_IMAGES_DIR)):
+            if not fname.endswith('.png'):
+                continue
+            stem = fname[:-4]
+            # 去掉 _2 / _3 等后缀，得到 code
+            code = stem.rsplit('_', 1)[0] if '_' in stem and stem.rsplit('_', 1)[1].isdigit() else stem
+            path = os.path.join(_BAN_IMAGES_DIR, fname)
+            try:
+                img = np.array(Image.open(path).convert('L'))
+                tmpl = cv2.resize(img, _BAN_TMPL_SIZE).astype(np.float32)
+                if code not in _ban_templates:
+                    _ban_templates[code] = []
+                _ban_templates[code].append(tmpl)
+            except Exception:
+                pass
 
 
 def _identify_ban_slot(crop_gray: np.ndarray) -> tuple:
     query = cv2.resize(crop_gray, _BAN_TMPL_SIZE).astype(np.float32)
     best_code, best_score = 'empty', -1.0
-    for code, tmpl in _ban_templates.items():
-        s = _ncc_flat(query, tmpl)
-        if s > best_score:
-            best_score, best_code = s, code
+    for code, tmpls in _ban_templates.items():
+        for tmpl in tmpls:
+            s = _ncc_flat(query, tmpl)
+            if s > best_score:
+                best_score, best_code = s, code
     if best_score >= _BAN_THRESHOLD:
         return best_code, best_score
     return 'empty', best_score
@@ -944,7 +965,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             my_first_locked = True
             log_fn(f'  {"先手" if my_first else "后手"}（OCR锁定，全程固定）')
 
-            time.sleep(2.0)
+            time.sleep(4.5)
             ban_frame = capture()
             raw_bans, raw_ban_scores = identify_ban_slots(ban_frame)
             detected = [(c, s) for c, s in zip(raw_bans, raw_ban_scores) if c != 'empty']
