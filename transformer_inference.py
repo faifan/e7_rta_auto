@@ -130,9 +130,16 @@ class DraftRecommender:
             (second_side_picks, 1, second_side_id),    # pick5: 后手方选 1
         ]
 
+        first_offset = 0
+        second_offset = 0
         for picks, count, side_id in picks_order:
-            for i in range(min(count, len(picks))):
-                hero = picks[i]
+            if picks is first_side_picks:
+                segment = first_side_picks[first_offset:first_offset + count]
+                first_offset += count
+            else:
+                segment = second_side_picks[second_offset:second_offset + count]
+                second_offset += count
+            for hero in segment:
                 if hero in self.hero_to_idx:
                     hero_seq.append(self.hero_to_idx[hero])
                     side_seq.append(side_id)
@@ -278,6 +285,8 @@ class DraftRecommender:
             first_picks, second_picks = enemy_picks, my_picks
             first_id, second_id = 2, 1
 
+        first_offset = 0
+        second_offset = 0
         for picks, count, side_id in [
             (first_picks,  1, first_id),
             (second_picks, 2, second_id),
@@ -286,7 +295,13 @@ class DraftRecommender:
             (first_picks,  2, first_id),
             (second_picks, 1, second_id),
         ]:
-            for hero in picks[:count]:
+            if picks is first_picks:
+                segment = first_picks[first_offset:first_offset + count]
+                first_offset += count
+            else:
+                segment = second_picks[second_offset:second_offset + count]
+                second_offset += count
+            for hero in segment:
                 if hero in self.hero_to_idx:
                     hero_seq.append(self.hero_to_idx[hero])
                     side_seq.append(side_id)

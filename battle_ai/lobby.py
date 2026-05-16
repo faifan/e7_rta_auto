@@ -38,6 +38,10 @@ def _confirm_btn_levelup():
     p = _lcfg()
     return tuple(p['confirm_btn_levelup']) if 'confirm_btn_levelup' in p else _DEFAULT_CONFIRM_BTN_LEVELUP
 
+def _match_accept_btn():
+    p = _lcfg()
+    return tuple(p['match_accept_btn']) if 'match_accept_btn' in p else None
+
 def _btn_region():
     p = _lcfg()
     return tuple(p['btn_region']) if 'btn_region' in p else _DEFAULT_BTN_REGION
@@ -49,8 +53,16 @@ _waiting_tmpl = None
 
 def _crop_btn(img_path: str) -> np.ndarray:
     img = np.array(Image.open(img_path).convert('L'))
+    tmpl_h, tmpl_w = img.shape[:2]
     x1, y1, x2, y2 = _btn_region()
-    crop = img[y1:y2, x1:x2]
+    try:
+        from config_loader import cfg
+        r = cfg._profile.get('resolution', [1922, 1115]) if cfg.is_loaded() else [1922, 1115]
+        ew, eh = int(r[0]), int(r[1])
+    except Exception:
+        ew, eh = 1922, 1115
+    sx, sy = tmpl_w / ew, tmpl_h / eh
+    crop = img[int(y1*sy):int(y2*sy), int(x1*sx):int(x2*sx)]
     return cv2.resize(crop, _TMPL_SIZE).astype(np.float32)
 
 
@@ -89,6 +101,12 @@ def is_waiting_for_match(img: np.ndarray = None) -> bool:
         img = capture()
     return _btn_ncc(img, _waiting_tmpl) >= 0.5
 
+
+def click_match_accept():
+    """点击匹配确认界面的确认按钮（waiting→preban 之间的中间界面）。"""
+    btn = _match_accept_btn()
+    if btn:
+        click_at(*btn, delay=1.0)
 
 def confirm_battle_result():
     click_at(*_confirm_btn())

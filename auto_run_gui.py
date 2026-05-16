@@ -89,6 +89,17 @@ class AutoRunApp:
                                          font=CN_FONT, width=18, state='readonly')
         self._profile_cb.pack(side=tk.LEFT, padx=(4, 0))
 
+        # 客户端类型行
+        row3 = tk.Frame(cfg_frame, bg='#1e1e1e')
+        row3.pack(fill=tk.X, padx=8, pady=(2, 6))
+        tk.Label(row3, text='客户端:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
+        self._client_var = tk.StringVar(value='安卓模拟器')
+        self._client_cb  = ttk.Combobox(row3, textvariable=self._client_var,
+                                        font=CN_FONT, width=14, state='readonly')
+        self._client_cb['values'] = ['安卓模拟器', 'PC客户端']
+        self._client_cb.pack(side=tk.LEFT, padx=(4, 0))
+
         # 填充下拉选项
         self._refresh_windows()
         self._refresh_lang_profile()
@@ -200,7 +211,8 @@ class AutoRunApp:
         profile_name = self._profile_var.get()
         profile_path = os.path.join(_ROOT, 'profiles', profile_name)
         cfg.load(window_title, profile_path, lang_path)
-        self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}', 'ok')
+        cfg.input_method = 'pc' if self._client_var.get() == 'PC客户端' else 'emulator'
+        self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}  客户端={self._client_var.get()}', 'ok')
 
         self._stop_event.clear()
         self._start_btn.config(state=tk.DISABLED)
@@ -270,11 +282,46 @@ class AutoRunApp:
         self._recommender = DraftRecommender(MODEL_PATH, HERO_LIST_PATH)
         self.log('模型加载完成', 'ok')
 
+    def _save_debug_screenshot(self, img, tag: str = 'wait'):
+        import os
+        from PIL import Image as _PIL
+        debug_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'debug')
+        os.makedirs(debug_dir, exist_ok=True)
+        ts = time.strftime('%H%M%S')
+        path = os.path.join(debug_dir, f'debug_{tag}_{ts}.png')
+        _PIL.fromarray(img).save(path)
+        # self.log(f'[debug] 截图已保存: {path}', 'warn')
+
+    def _ocr_debug_regions(self, img):
+        """对关键区域OCR，输出到日志，帮助诊断未知界面。"""
+        import io as _io
+        from PIL import Image as _PIL
+        try:
+            import ddddocr
+            ocr = ddddocr.DdddOcr(show_ad=False)
+        except Exception:
+            return
+        from config_loader import cfg
+        regions = {
+            'preban': tuple(cfg.section('preban').get('region', [181, 133, 505, 197])),
+            'label':  tuple(cfg.section('draft').get('label_region', [631, 51, 861, 123])),
+            'banner': tuple(cfg.section('draft').get('banner_region', [549, 3, 949, 53])),
+        }
+        for name, (x1, y1, x2, y2) in regions.items():
+            try:
+                crop = img[y1:y2, x1:x2]
+                buf = _io.BytesIO()
+                _PIL.fromarray(crop).save(buf, format='PNG')
+                text = ocr.classification(buf.getvalue())
+                self.log(f'  [debug OCR] {name}="{text}"', 'warn')
+            except Exception:
+                pass
+
     def _run_one_round(self):
         from battle_ai.executor   import focus_game_window, click_at
         from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen
         from battle_ai.lobby      import (confirm_battle_result, confirm_levelup_result,
-                                          apply_for_battle,
+                                          apply_for_battle, click_match_accept,
                                           is_in_lobby, is_waiting_for_match)
         from battle_ai.preban     import is_in_preban, do_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
@@ -291,6 +338,8 @@ class AutoRunApp:
         postban_done     = False
         force_burn_armed = False
         draft_result     = {'my_picks': [], 'enemy_picks': []}
+        prev_phase       = 'wait'
+        wait_count       = 0
 
         while not self._stop_event.is_set():
             img = capture()
@@ -305,6 +354,21 @@ class AutoRunApp:
             elif preban_done and not draft_done:   phase = 'draft'
             elif is_in_draft(img):                 phase = 'draft'
             else:                                  phase = 'wait'
+
+            if phase == 'wait':
+                wait_count += 1
+                if wait_count == 1 and prev_phase == 'waiting':
+                    # waiting→wait 第一帧：极可能是匹配确认界面，保存截图
+                    self.log('检测到 waiting→wait 过渡，可能是匹配确认界面', 'warn')
+                    self._save_debug_screenshot(img, 'match_accept')
+                    self._ocr_debug_regions(img)
+                if wait_count == 3:
+                    # 3秒仍未识别：保存截图并输出OCR
+                    self._save_debug_screenshot(img, 'wait')
+                    self._ocr_debug_regions(img)
+            else:
+                wait_count = 0
+            prev_phase = phase
 
             h, w = img.shape[:2]
             self.log(f'[阶段] {phase}  ({w}x{h})', 'phase')
@@ -321,8 +385,8 @@ class AutoRunApp:
                     elif is_in_lobby(img2) or is_waiting_for_match(img2):
                         break
                     else:
-                        self.log('中间界面，点击屏幕中央', 'info')
-                        click_at(961, 558)
+                        self.log('中间界面，点击确认区域', 'info')
+                        confirm_levelup_result()
                 return
 
             elif phase == 'lobby':
@@ -332,6 +396,12 @@ class AutoRunApp:
 
             elif phase == 'waiting':
                 time.sleep(2.0)
+
+            elif phase == 'wait':
+                # 前3秒内尝试点击匹配确认按钮（处理waiting→确认界面的情况）
+                if wait_count <= 3:
+                    self.log(f'  [wait#{wait_count}] 尝试点击匹配确认按钮...', 'warn')
+                    click_match_accept()
 
             elif phase == 'preban':
                 if not preban_done:

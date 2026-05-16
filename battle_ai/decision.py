@@ -3,8 +3,6 @@ import os
 import difflib
 import zhconv
 
-from battle_ai.perception import is_skill_on_cooldown
-
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _PRIORITY_FILE = os.path.join(_ROOT, 'skill_priority.json')
 
@@ -100,9 +98,9 @@ def get_soul_burn_skill(char_name: str | None) -> str | None:
     return None
 
 
-def get_candidates(char_name: str | None, img=None) -> list[str]:
+def get_candidates(char_name: str | None) -> list[str]:
     """
-    返回本回合候选技能有序列表（已过滤s3_skip和OCR冷却）。
+    返回本回合候选技能有序列表（仅过滤s3_skip，不检测亮度/冷却）。
     """
     key = _norm(char_name)
     priority = _get_priority(key)
@@ -113,15 +111,7 @@ def get_candidates(char_name: str | None, img=None) -> list[str]:
     if not s3_ready and (key or char_name):
         _s3_skip[key or char_name] = skip - 1
 
-    candidates = []
-    for skill in priority:
-        if skill == 'S3' and not s3_ready:
-            continue
-        if skill != 'S1' and img is not None and is_skill_on_cooldown(img, skill):
-            continue
-        candidates.append(skill)
-
-    return candidates
+    return [s for s in priority if not (s == 'S3' and not s3_ready)]
 
 
 def on_s3_success(char_name: str | None):

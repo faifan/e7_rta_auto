@@ -303,12 +303,20 @@ _POSTBAN_TMPL  = None
 def _load_label_tmpls():
     global _MY_TURN_TMPL, _OPP_TURN_TMPL, _POSTBAN_TMPL
     x1, y1, x2, y2 = _label_region()
+    try:
+        from config_loader import cfg
+        r = cfg._profile.get('resolution', [1922, 1115]) if cfg.is_loaded() else [1922, 1115]
+        ew, eh = int(r[0]), int(r[1])
+    except Exception:
+        ew, eh = 1922, 1115
     for var, fname in [('_MY_TURN_TMPL',  'my_turn.png'),
                        ('_OPP_TURN_TMPL', 'opp_turn.png'),
                        ('_POSTBAN_TMPL',  'postban.png')]:
         path = os.path.join(_TMPL_BASE, 'phase', fname)
         img  = np.array(Image.open(path).convert('L'))
-        crop = img[y1:y2, x1:x2]
+        tmpl_h, tmpl_w = img.shape[:2]
+        sx, sy = tmpl_w / ew, tmpl_h / eh
+        crop = img[int(y1*sy):int(y2*sy), int(x1*sx):int(x2*sx)]
         globals()[var] = cv2.resize(crop, _LABEL_SIZE).astype(np.float32)
 
 
@@ -397,10 +405,18 @@ _BANNER_SIZE     = (100, 13)
 def _load_banner_tmpls():
     global _POST_BAN_TMPL, _BATTLE_RDY_TMPL
     x1, y1, x2, y2 = _banner_region()
+    try:
+        from config_loader import cfg
+        r = cfg._profile.get('resolution', [1922, 1115]) if cfg.is_loaded() else [1922, 1115]
+        ew, eh = int(r[0]), int(r[1])
+    except Exception:
+        ew, eh = 1922, 1115
     for attr, path in [('_POST_BAN_TMPL',   os.path.join(_TMPL_BASE, 'phase', 'postban.png')),
                        ('_BATTLE_RDY_TMPL', os.path.join(_TMPL_BASE, 'phase', 'battle_ready.png'))]:
         img = np.array(Image.open(path).convert('L'))
-        crop = img[y1:y2, x1:x2]
+        tmpl_h, tmpl_w = img.shape[:2]
+        sx, sy = tmpl_w / ew, tmpl_h / eh
+        crop = img[int(y1*sy):int(y2*sy), int(x1*sx):int(x2*sx)]
         tmpl = cv2.resize(crop, _BANNER_SIZE).astype(np.float32)
         globals()[attr] = tmpl
 
@@ -727,10 +743,13 @@ def _ocr_region_robust(img, region) -> str:
 
 
 def _name_matches(hero_name: str, ocr_text: str) -> bool:
-    """名字字符匹配：≤4字需2+，5字需3+，6字需4+，>6字需4+（上限4）。"""
+    """名字字符匹配：2字需1+，3+字需 min(4, len-2) 个。"""
     if not ocr_text:
         return False
-    min_match = min(4, max(2, len(hero_name) - 2))
+    if len(hero_name) <= 2:
+        min_match = 1
+    else:
+        min_match = min(4, max(2, len(hero_name) - 2))
     matched = sum(1 for ch in hero_name if ch in ocr_text)
     return matched >= min_match
 
@@ -760,13 +779,17 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
 
     _log('  [搜索] 点击搜索按钮')
     click_at(*_search_open(), delay=1.5)
+    _last_click = time.time()
 
-    deadline = time.time() + 10
+    deadline = time.time() + 15
     while time.time() < deadline:
         img = capture()
         if _is_search_popup_open(img):
             _log('  [搜索] 弹窗已打开')
             break
+        if time.time() - _last_click >= 3.0:
+            click_at(*_search_open(), delay=0.5)
+            _last_click = time.time()
         time.sleep(0.5)
     else:
         _log('  [搜索] 超时：弹窗未打开，放弃本轮')
@@ -798,7 +821,15 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         _log(f'  [搜索] 搜索: {name!r}（{code}）')
 
         click_at(*_search_clear_btn(), delay=0.5)
-        _type_unicode(name)
+        try:
+            from config_loader import cfg
+            if cfg.is_loaded() and getattr(cfg, 'input_method', 'emulator') == 'pc':
+                from battle_ai.executor import type_text_chinese
+                type_text_chinese(name)
+            else:
+                _type_unicode(name)
+        except Exception:
+            _type_unicode(name)
         time.sleep(3.0)
 
         img = capture()
