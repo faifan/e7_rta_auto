@@ -325,7 +325,9 @@
       225,
       715,
       474
-    ]
+    ],
+    "battle_last_detect": [321, 251, 432, 495],
+    "battle_last_swap": [486, 326]
   },
   "preban": {
     "region": [

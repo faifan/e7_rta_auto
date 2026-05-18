@@ -329,7 +329,8 @@ class AutoRunApp:
                                           is_in_draft,
                                           is_in_post_draft_ban, do_post_draft_ban,
                                           is_battle_ready, click_battle_start,
-                                          arrange_yazuga_first)
+                                          arrange_yazuga_first,
+                                          arrange_kris_not_last)
         from battle_ai.main_loop  import run as run_battle
 
         focus_game_window()
@@ -454,6 +455,10 @@ class AutoRunApp:
 
             elif phase == 'battle_ready':
                 arrange_yazuga_first(
+                    draft_result.get('my_picks', []),
+                    log_fn=lambda msg: self.log(msg, 'info'),
+                )
+                arrange_kris_not_last(
                     draft_result.get('my_picks', []),
                     log_fn=lambda msg: self.log(msg, 'info'),
                 )

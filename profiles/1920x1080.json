@@ -83,7 +83,9 @@
       [726, 650, 797, 725]
     ],
     "battle_deselect": [742, 882],
-    "battle_yazuga_detect": [825, 338, 1072, 711]
+    "battle_yazuga_detect": [825, 338, 1072, 711],
+    "battle_last_detect": [482, 377, 648, 743],
+    "battle_last_swap": [729, 489]
   },
   "preban": {
     "region": [178, 104, 500, 161],

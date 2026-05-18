@@ -621,6 +621,61 @@ def arrange_yazuga_first(my_picks, log_fn=None):
     _log('  [阵容] 亚露嘉位置调整完成')
 
 
+_KRIS_CODE = 'c4123'
+_kris_battle_tmpl = None
+
+
+def _get_kris_tmpl():
+    global _kris_battle_tmpl
+    if _kris_battle_tmpl is None:
+        _kris_battle_tmpl = cv2.imread(os.path.join(_TMPL_BASE, 'kris_battle.png'))
+    return _kris_battle_tmpl
+
+
+def _last_detect_region():
+    return tuple(_dcfg().get('battle_last_detect', [482, 377, 648, 743]))
+
+
+def _last_swap_point():
+    return tuple(_dcfg().get('battle_last_swap', [729, 489]))
+
+
+def _slot_last_kris_score(img=None) -> float:
+    tmpl = _get_kris_tmpl()
+    if tmpl is None:
+        return 0.0
+    if img is None:
+        img = capture()
+    return _region_score(img, _last_detect_region(), tmpl)
+
+
+def arrange_kris_not_last(my_picks, log_fn=None):
+    """battle_ready阶段：若我方有银波克莉丝媞，确保她不在最后槽。"""
+    _log = log_fn or (lambda m: None)
+
+    if _KRIS_CODE not in (my_picks or []):
+        return
+
+    score = _slot_last_kris_score()
+    _log(f'  [阵容] 最后槽克莉丝媞相似度: {score:.3f}')
+    if score < 0.70:
+        _log('  [阵容] 克莉丝媞不在最后槽，无需调整')
+        return
+
+    _log('  [阵容] 克莉丝媞在最后槽，执行换位')
+    slot_cx, slot_cy = _battle_slot_centers()[1]   # 最后槽固定是索引1
+    click_at(slot_cx, slot_cy, delay=1.0)
+    click_at(*_last_swap_point(), delay=0.5)
+    time.sleep(2.0)
+
+    new_score = _slot_last_kris_score()
+    _log(f'  [阵容] 换位后最后槽克莉丝媞相似度: {new_score:.3f}')
+    if new_score < 0.70:
+        _log('  [阵容] 克莉丝媞已移出最后槽')
+    else:
+        _log('  [阵容] ⚠ 克莉丝媞仍在最后槽，换位可能未成功')
+
+
 def click_battle_start():
     """点击战斗开始按钮（与postban完成选择同坐标）"""
     click_at(*_post_ban_btn(), delay=1.5)
