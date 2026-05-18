@@ -27,6 +27,111 @@ CN_BOLD  = ('Microsoft YaHei', 13, 'bold')
 CN_SMALL = ('Microsoft YaHei', 9)
 MONO     = ('Consolas', 9)
 
+# ── 英雄列表（用于预禁用下拉） ────────────────────────────────
+import json as _json
+try:
+    with open(os.path.join(_HERE, 'e7.json'), encoding='utf-8') as _f:
+        _e7_heroes = _json.load(_f)
+    _HERO_NAMES     = sorted(h['name'] for h in _e7_heroes)
+    _HERO_NAME2CODE = {h['name']: h['code'] for h in _e7_heroes}
+except Exception:
+    _HERO_NAMES     = []
+    _HERO_NAME2CODE = {}
+
+
+class _HeroSearchCombo(tk.Frame):
+    """可搜索的英雄名下拉框（深色主题）。"""
+    def __init__(self, parent, **kw):
+        super().__init__(parent, bg='#1e1e1e')
+        self.var    = tk.StringVar()
+        self._popup = None
+        self.var.trace_add('write', self._on_change)
+
+        self.entry = tk.Entry(self, textvariable=self.var, width=14, font=CN_FONT,
+                              bg='#0d1117', fg='#c9d1d9', insertbackground='white',
+                              relief=tk.FLAT, highlightthickness=1,
+                              highlightbackground='#30363d', highlightcolor='#1f6feb')
+        self.entry.pack(fill=tk.X)
+        self.entry.bind('<FocusIn>',  self._show_popup)
+        self.entry.bind('<FocusOut>', self._hide_later)
+        self.entry.bind('<Down>',     self._on_down)
+        self.entry.bind('<Return>',   self._on_enter)
+
+    def get_code(self) -> str:
+        return _HERO_NAME2CODE.get(self.var.get().strip(), '')
+
+    def _filtered(self):
+        text = self.var.get().strip()
+        return [n for n in _HERO_NAMES if text in n] if text else _HERO_NAMES
+
+    def _on_change(self, *_):
+        self._refresh_popup()
+
+    def _show_popup(self, *_):
+        if self._popup:
+            return
+        self._popup = tk.Toplevel(self.winfo_toplevel())
+        self._popup.wm_overrideredirect(True)
+        self._popup.wm_attributes('-topmost', True)
+        self._popup.configure(bg='#161b22')
+        sb = tk.Scrollbar(self._popup, orient=tk.VERTICAL)
+        self.lb = tk.Listbox(self._popup, yscrollcommand=sb.set,
+                             font=CN_FONT, height=8, activestyle='dotbox',
+                             bg='#161b22', fg='#c9d1d9',
+                             selectbackground='#1f6feb', selectforeground='white',
+                             borderwidth=0, highlightthickness=0)
+        sb.config(command=self.lb.yview)
+        self.lb.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+        self.lb.bind('<ButtonRelease-1>', self._on_select)
+        self.lb.bind('<Return>',          self._on_enter)
+        self._refresh_popup()
+        self._place_popup()
+
+    def _place_popup(self):
+        if not self._popup:
+            return
+        x = self.entry.winfo_rootx()
+        y = self.entry.winfo_rooty() + self.entry.winfo_height()
+        w = max(self.entry.winfo_width(), 140)
+        self._popup.wm_geometry(f'{w}x180+{x}+{y}')
+
+    def _refresh_popup(self):
+        if not self._popup:
+            return
+        items = self._filtered()
+        self.lb.delete(0, tk.END)
+        for name in items[:200]:
+            self.lb.insert(tk.END, name)
+        self._place_popup()
+
+    def _hide_later(self, *_):
+        self.after(150, self._hide_popup)
+
+    def _hide_popup(self):
+        if self._popup:
+            self._popup.destroy()
+            self._popup = None
+
+    def _on_select(self, *_):
+        sel = self.lb.curselection()
+        if sel:
+            self.var.set(self.lb.get(sel[0]))
+        self._hide_popup()
+
+    def _on_down(self, *_):
+        if self._popup and self.lb.size() > 0:
+            self.lb.focus_set()
+            self.lb.selection_set(0)
+
+    def _on_enter(self, *_):
+        if self._popup:
+            sel = self.lb.curselection()
+            if sel:
+                self.var.set(self.lb.get(sel[0]))
+            self._hide_popup()
+        self.entry.focus_set()
+
 
 class AutoRunApp:
     def __init__(self, root: tk.Tk):
@@ -99,6 +204,28 @@ class AutoRunApp:
                                         font=CN_FONT, width=14, state='readonly')
         self._client_cb['values'] = ['安卓模拟器', 'PC客户端']
         self._client_cb.pack(side=tk.LEFT, padx=(4, 0))
+
+        # 预禁用配置行
+        row4 = tk.Frame(cfg_frame, bg='#1e1e1e')
+        row4.pack(fill=tk.X, padx=8, pady=(2, 2))
+        tk.Label(row4, text='先手禁用:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
+        self._first_ban_cb  = [_HeroSearchCombo(row4) for _ in range(2)]
+        for cb in self._first_ban_cb:
+            cb.pack(side=tk.LEFT, padx=(4, 0))
+
+        row5 = tk.Frame(cfg_frame, bg='#1e1e1e')
+        row5.pack(fill=tk.X, padx=8, pady=(2, 6))
+        tk.Label(row5, text='后手禁用:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
+        self._second_ban_cb = [_HeroSearchCombo(row5) for _ in range(2)]
+        for cb in self._second_ban_cb:
+            cb.pack(side=tk.LEFT, padx=(4, 0))
+
+        # 恢复上次保存的预禁用配置，并绑定自动保存
+        self._load_preban_config()
+        for cb in self._first_ban_cb + self._second_ban_cb:
+            cb.var.trace_add('write', lambda *_: self._save_preban_config())
 
         # 填充下拉选项
         self._refresh_windows()
@@ -195,6 +322,31 @@ class AutoRunApp:
         self._status_var.set(text)
         self._status_lbl.config(fg=color)
 
+    # ── 预禁用配置持久化 ──────────────────────────────────────
+    _PREBAN_SAVE = os.path.join(_HERE, 'preban_save.json')
+
+    def _save_preban_config(self):
+        data = {
+            'first_ban':  [cb.var.get().strip() for cb in self._first_ban_cb],
+            'second_ban': [cb.var.get().strip() for cb in self._second_ban_cb],
+        }
+        try:
+            with open(self._PREBAN_SAVE, 'w', encoding='utf-8') as f:
+                _json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def _load_preban_config(self):
+        try:
+            with open(self._PREBAN_SAVE, encoding='utf-8') as f:
+                data = _json.load(f)
+            for cb, name in zip(self._first_ban_cb,  data.get('first_ban',  [])):
+                cb.var.set(name)
+            for cb, name in zip(self._second_ban_cb, data.get('second_ban', [])):
+                cb.var.set(name)
+        except Exception:
+            pass
+
     # ── 按钮回调 ─────────────────────────────────────────────
     def _on_start(self):
         window_title = self._window_var.get().strip()
@@ -213,6 +365,12 @@ class AutoRunApp:
         cfg.load(window_title, profile_path, lang_path)
         cfg.input_method = 'pc' if self._client_var.get() == 'PC客户端' else 'emulator'
         self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}  客户端={self._client_var.get()}', 'ok')
+
+        # 读取预禁用目标（英雄名 → code）
+        self._first_ban_codes  = [cb.get_code() for cb in self._first_ban_cb  if cb.get_code()]
+        self._second_ban_codes = [cb.get_code() for cb in self._second_ban_cb if cb.get_code()]
+        if self._first_ban_codes or self._second_ban_codes:
+            self.log(f'预禁用配置：先手={self._first_ban_codes}  后手={self._second_ban_codes}', 'ok')
 
         self._stop_event.clear()
         self._start_btn.config(state=tk.DISABLED)
@@ -324,7 +482,7 @@ class AutoRunApp:
                                           apply_for_battle, click_match_accept,
                                           click_result_unknown,
                                           is_in_lobby, is_waiting_for_match)
-        from battle_ai.preban     import is_in_preban, do_preban
+        from battle_ai.preban     import is_in_preban, do_preban, do_smart_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
                                           is_in_draft,
                                           is_in_post_draft_ban, do_post_draft_ban,
@@ -407,8 +565,15 @@ class AutoRunApp:
 
             elif phase == 'preban':
                 if not preban_done:
-                    self.log('预禁用，点击英雄并确认', 'info')
-                    do_preban()
+                    first_codes  = getattr(self, '_first_ban_codes',  [])
+                    second_codes = getattr(self, '_second_ban_codes', [])
+                    if first_codes or second_codes:
+                        self.log('预禁用（智能选英雄）', 'info')
+                        do_smart_preban(first_codes, second_codes,
+                                        log_fn=lambda m: self.log(m, 'info'))
+                    else:
+                        self.log('预禁用（固定坐标）', 'info')
+                        do_preban()
                     preban_done = True
                 time.sleep(1.0)
 
