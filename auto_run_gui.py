@@ -463,9 +463,12 @@ class AutoRunApp:
             elif phase == 'battle':
                 self.log('战斗AI运行中...', 'phase')
                 try:
+                    from battle_ai.draft import _code_to_name
+                    my_team_names = [_code_to_name.get(c, c) for c in draft_result.get('my_picks', [])]
                     run_battle(stop_event=self._stop_event,
                                log_fn=lambda msg: self.log(msg, 'info'),
-                               arm_force_burn=force_burn_armed)
+                               arm_force_burn=force_burn_armed,
+                               my_team_names=my_team_names)
                     self.log('战斗结束', 'ok')
                 except Exception as e:
                     self.log(f'战斗异常: {e}', 'error')

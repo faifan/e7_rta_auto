@@ -4,7 +4,7 @@ from battle_ai.perception import (capture, is_battle_over, read_turn_badge, read
                                    is_soul_burn_available, is_soul_burn_activated)
 from battle_ai.decision import (get_candidates, on_s3_success, reset_battle, get_soul_burn_skill,
                                  is_force_first_burn_pending, mark_force_first_burn_done,
-                                 arm_force_first_burn)
+                                 arm_force_first_burn, set_my_team, team_has_soul_burn)
 
 POLL_INTERVAL       = 1.0   # 主循环轮询间隔（秒）
 _SKILL_POLL_SEC     = 1.3   # 普通技能：单次等待后检测徽章（需覆盖技能动画延迟）
@@ -65,12 +65,15 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn) -> bool
     return False
 
 
-def run(stop_event=None, log_fn=None, arm_force_burn=False):
+def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
     _log = log_fn or print
     _log("切换到游戏窗口...")
     offset = focus_game_window()
     _log(f"[focus] 窗口偏移={offset}")
     reset_battle()
+    if my_team_names:
+        set_my_team(my_team_names)
+        _log(f"己方阵容：{my_team_names}")
     if arm_force_burn:
         arm_force_first_burn()
         _log("迪埃妮首回合烧魂已预装")
@@ -97,7 +100,12 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False):
             time.sleep(POLL_INTERVAL)
             continue
 
-        # 立刻采样烧魂帧（在0.5s确认延迟前，覆盖首回合快速闪烁窗口）
+        # 队伍有烧魂角色时，等1秒让烧魂按钮出现后再采样
+        if team_has_soul_burn():
+            time.sleep(1.0)
+            img = capture()
+
+        # 采样烧魂帧（在0.5s确认延迟前，覆盖首回合快速闪烁窗口）
         _early_burn_avail = is_soul_burn_available(img)
 
         # 0.5秒二次确认，防止过渡帧误触

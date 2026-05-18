@@ -983,30 +983,28 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 continue
             time.sleep(1.5)
 
-            # 根据先后手和当前步骤，推算对手此时最多应有几个人，防止扫到空槽误判
-            # 格式（代码视角，连续同队选人合并为1个游戏回合）:
-            #   我后手: E(1) M M E(2) M M E(2) M ...  → 期望E: pos≤3→1, pos≤6→3, pos>6→5
-            #   我先手: M E(2) M M E(2) M M E(1) M ... → 期望E: pos≤1→0, pos≤4→2, pos≤7→4, else→5
+            # 用我方已选次数推算对方期望人数，避免对方光速选人导致pos失真
+            # 先手: 我方第N选（0起）前对方应有人数 [0,2,2,4,4]
+            # 后手: 我方第N选（0起）前对方应有人数 [1,1,3,3,5]
+            _my_pick_idx = len(my_picks) - len(init_my_picks or [])
             if my_first:
-                if pos <= 1:
-                    _exp_enemy = 0
-                elif pos <= 4:
-                    _exp_enemy = 2
-                elif pos <= 7:
-                    _exp_enemy = 4
-                else:
-                    _exp_enemy = 5
+                _exp_enemy = [0, 2, 2, 4, 4][min(_my_pick_idx, 4)]
             else:
-                if pos <= 3:
-                    _exp_enemy = 1
-                elif pos <= 6:
-                    _exp_enemy = 3
-                else:
-                    _exp_enemy = 5
+                _exp_enemy = [1, 1, 3, 3, 5][min(_my_pick_idx, 4)]
 
-            img_scan = capture()
             _my_set = set(my_picks)
-            for slot_i in range(len(enemy_picks), min(_exp_enemy, 5)):
+            _new_slots = list(range(len(enemy_picks), min(_exp_enemy, 5)))
+            if _new_slots:
+                # 等对方槽位渲染完成（最多8秒），防止对方光速选人动画未结束
+                for _scan_retry in range(16):
+                    img_scan = capture()
+                    if all(identify_slot_debug(img_scan, cur_opp_slots[si], exclude=_my_set)[0] != 'unknown'
+                           for si in _new_slots):
+                        break
+                    time.sleep(0.5)
+            else:
+                img_scan = capture()
+            for slot_i in _new_slots:
                 code_s, score_s, gap_s = identify_slot_debug(img_scan, cur_opp_slots[slot_i], exclude=_my_set)
                 if code_s == 'unknown':
                     continue
@@ -1138,19 +1136,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
 
             if code == 'unknown':
                 pick_score = 0.0
-                phase = _get_phase(total_before)
-                fb_recs = recommender.recommend(
-                    my_picks=my_picks, enemy_picks=enemy_picks,
-                    banned=banned, phase=phase, my_first=my_first, top_k=1,
-                )
-                if fb_recs:
-                    code = fb_recs[0]['hero_code']
-                    log_fn(f"  ⚠ 识别失败，以模型推荐最高 {_code_to_name.get(code, code)} 占位")
-                else:
-                    all_used = set(my_picks + enemy_picks + banned)
-                    fallback = next((h for h in recommender.hero_list if h not in all_used), 'unknown')
-                    code = fallback
-                    log_fn(f"  ⚠ 识别失败且无推荐，以 {_code_to_name.get(code, code)} 兜底占位")
+                log_fn(f"  ⚠ 识别失败，以 unknown 占位（不猜测，避免污染后续识别）")
 
             log_fn(f"  → 对手选了: {_code_to_name.get(code, code)}（{code}）")
             enemy_picks.append(code)
