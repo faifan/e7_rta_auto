@@ -42,6 +42,10 @@ def _match_accept_btn():
     p = _lcfg()
     return tuple(p['match_accept_btn']) if 'match_accept_btn' in p else None
 
+def _result_unknown_click():
+    p = _lcfg()
+    return tuple(p['result_unknown_click']) if 'result_unknown_click' in p else None
+
 def _btn_region():
     p = _lcfg()
     return tuple(p['btn_region']) if 'btn_region' in p else _DEFAULT_BTN_REGION
@@ -107,6 +111,12 @@ def click_match_accept():
     btn = _match_accept_btn()
     if btn:
         click_at(*btn, delay=1.0)
+
+def click_result_unknown():
+    """点击结算后未知中间界面的屏幕中心。"""
+    pos = _result_unknown_click()
+    if pos:
+        click_at(*pos, delay=1.0)
 
 def confirm_battle_result():
     click_at(*_confirm_btn())

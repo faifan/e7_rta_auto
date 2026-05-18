@@ -95,6 +95,7 @@
     "apply_btn": [1294, 978],
     "confirm_btn": [1754, 992],
     "confirm_btn_levelup": [961, 991],
+    "result_unknown_click": [1142, 843],
     "btn_region": [1121, 917, 1467, 1039]
   },
   "recognition": {

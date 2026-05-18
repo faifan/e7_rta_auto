@@ -9,6 +9,7 @@ import cv2
 from PIL import Image
 from battle_ai.executor import click_at, type_text_chinese
 from battle_ai.perception import capture
+from battle_ai.hero_config import is_unpracticed, is_priority
 
 _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEBUG_DIR = os.path.join(_ROOT, 'debug')
@@ -1047,6 +1048,20 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 my_first=my_first,
                 top_k=5,
             )
+
+            # 未练跳过 + 优先前移
+            _front, _rest = [], []
+            for _rec in recs:
+                _rname = _code_to_name.get(_rec['hero_code'], '')
+                if is_unpracticed(_rname):
+                    log_fn(f"  → 跳过未练: {_rname}（{_rec['hero_code']}）")
+                    continue
+                if is_priority(_rname):
+                    log_fn(f"  → 优先前移: {_rname}（{_rec['hero_code']}）")
+                    _front.append(_rec)
+                else:
+                    _rest.append(_rec)
+            recs = _front + _rest
 
             if recs:
                 candidates = list(prepend_candidates or [])

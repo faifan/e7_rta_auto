@@ -322,6 +322,7 @@ class AutoRunApp:
         from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen
         from battle_ai.lobby      import (confirm_battle_result, confirm_levelup_result,
                                           apply_for_battle, click_match_accept,
+                                          click_result_unknown,
                                           is_in_lobby, is_waiting_for_match)
         from battle_ai.preban     import is_in_preban, do_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
@@ -385,8 +386,8 @@ class AutoRunApp:
                     elif is_in_lobby(img2) or is_waiting_for_match(img2):
                         break
                     else:
-                        self.log('中间界面，点击确认区域', 'info')
-                        confirm_levelup_result()
+                        self.log('中间界面，点击屏幕中心', 'info')
+                        click_result_unknown()
                 return
 
             elif phase == 'lobby':
