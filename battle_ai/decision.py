@@ -18,8 +18,11 @@ def _load_db() -> dict:
 
 _db = _load_db()
 
-# 每场战斗内存状态：{normalized_name: s3_skip_remaining}
-_s3_skip: dict[str, int] = {}
+# 每场战斗内存状态
+_s3_skip:            dict[str, int]  = {}
+_s2_fail_streak:     dict[str, int]  = {}   # S2 连续无响应次数
+_s2_disabled:        dict[str, bool] = {}   # 满2次后本场禁用S2
+_pending_extra_turn: dict[str, str]  = {}   # char_key -> 'force_burn'|'soul_burn'|'normal'
 
 # 首回合强制烧魂（队伍含特定角色时触发）
 _FORCE_FIRST_BURN_CHARS  = {'黑暗牧者迪埃妮'}
@@ -126,6 +129,16 @@ def team_has_soul_burn() -> bool:
     return any(get_soul_burn_skill(name) for name in _my_team_names)
 
 
+def get_extra_turn_skill(char_name: str | None) -> str | None:
+    """返回该角色配置的额外回合技能代号，未配置返回None。"""
+    key = _norm(char_name)
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return entry.get('extra_turn')
+    return None
+
+
 def get_soul_burn_skill(char_name: str | None) -> str | None:
     """返回该角色配置的烧魂技能，未配置或配置格式不含soul_burn则返回None。"""
     key = _norm(char_name)
@@ -139,19 +152,20 @@ def get_soul_burn_skill(char_name: str | None) -> str | None:
 
 
 def get_candidates(char_name: str | None) -> list[str]:
-    """
-    返回本回合候选技能有序列表（仅过滤s3_skip，不检测亮度/冷却）。
-    """
+    """返回本回合候选技能有序列表（过滤 s3_skip 和 s2_disabled）。"""
     key = _norm(char_name)
     priority = _get_priority(key)
 
-    # s3_skip 检查与递减
     skip = _s3_skip.get(key or char_name or '', 0)
     s3_ready = (skip == 0)
     if not s3_ready and (key or char_name):
         _s3_skip[key or char_name] = skip - 1
 
-    return [s for s in priority if not (s == 'S3' and not s3_ready)]
+    s2_off = _s2_disabled.get(key or char_name or '', False)
+
+    return [s for s in priority
+            if not (s == 'S3' and not s3_ready)
+            and not (s == 'S2' and s2_off)]
 
 
 def on_s3_success(char_name: str | None):
@@ -163,9 +177,53 @@ def on_s3_success(char_name: str | None):
     _s3_skip[target] = _get_s3_skip_cfg(key)
 
 
+def on_s2_success(char_name: str | None):
+    """S2成功：重置连续失败计数，允许继续使用。"""
+    key = _norm(char_name)
+    target = key or char_name
+    if target:
+        _s2_fail_streak.pop(target, None)
+        _s2_disabled.pop(target, None)
+
+
+def on_s2_fail(char_name: str | None):
+    """S2无响应：累计次数，连续失败2次后本场禁用。"""
+    key = _norm(char_name)
+    target = key or char_name
+    if not target:
+        return
+    streak = _s2_fail_streak.get(target, 0) + 1
+    _s2_fail_streak[target] = streak
+    if streak >= 2:
+        _s2_disabled[target] = True
+
+
+# ── 额外回合 pending 状态 ─────────────────────────────────────
+
+def set_pending_extra_turn(char_name: str | None, mode: str):
+    """mode: 'force_burn' | 'soul_burn' | 'normal'"""
+    key = _norm(char_name) or char_name
+    if key:
+        _pending_extra_turn[key] = mode
+
+
+def get_pending_extra_turn(char_name: str | None) -> str | None:
+    key = _norm(char_name) or char_name
+    return _pending_extra_turn.get(key) if key else None
+
+
+def clear_pending_extra_turn(char_name: str | None):
+    key = _norm(char_name) or char_name
+    if key:
+        _pending_extra_turn.pop(key, None)
+
+
 def reset_battle():
     """每场战斗开始时调用，清空所有角色状态。"""
     _s3_skip.clear()
+    _s2_fail_streak.clear()
+    _s2_disabled.clear()
+    _pending_extra_turn.clear()
     global _force_first_burn_armed, _force_first_burn_done
     _force_first_burn_armed = False
     _force_first_burn_done  = False
