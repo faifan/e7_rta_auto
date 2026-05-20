@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 from PIL import Image
 from battle_ai.executor import click_at, type_text_chinese
-from battle_ai.perception import capture
+from battle_ai.perception import capture, is_battle_over
 from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks
 
 _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1348,6 +1348,9 @@ def _detect_current_turn(pos: int, timeout: int = 90, stop_event=None, log_fn=No
         if stop_event and stop_event.is_set():
             return 0, None
         img = capture()
+        if is_battle_over(img):
+            _log(f'  [第{pos+1}步] 选秀中检测到战斗结束（对手投降），退出')
+            return 0, None
         text = _read_turn_text(img)
         if time.time() - last_log >= 3:
             _log(f'  [第{pos+1}步] 等待回合... OCR="{text}"')
@@ -1374,7 +1377,11 @@ def _wait_after_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
     while time.time() < deadline:
         if stop_event and stop_event.is_set():
             return
-        text = _read_turn_text()
+        img = capture()
+        if is_battle_over(img):
+            _log('  选秀中检测到战斗结束（对手投降），退出等待')
+            return
+        text = _read_turn_text(img)
         if time.time() - last_log >= 3:
             _log(f'  等待对手选完... OCR="{text}"')
             last_log = time.time()
@@ -1396,6 +1403,9 @@ def _wait_my_turn(timeout: int = 60, stop_event=None, log_fn=None):
         if stop_event and stop_event.is_set():
             return
         img = capture()
+        if is_battle_over(img):
+            _log('  选秀中检测到战斗结束（对手投降），退出等待')
+            return
         text = _read_turn_text(img)
         if time.time() - last_log >= 3:
             _log(f'  等待我方回合... OCR="{text}"')
@@ -1419,7 +1429,10 @@ def _wait_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
     while time.time() - start < 8:
         if stop_event and stop_event.is_set():
             return
-        text = _read_turn_text()
+        img = capture()
+        if is_battle_over(img):
+            return
+        text = _read_turn_text(img)
         if _is_opp_turn_text(text):
             _log(f'  检测到对手回合（OCR="{text}"）')
             break
@@ -1431,6 +1444,8 @@ def _wait_opponent_pick(timeout: int = 90, stop_event=None, log_fn=None):
         if stop_event and stop_event.is_set():
             return
         img = capture()
+        if is_battle_over(img):
+            return
         text = _read_turn_text(img)
         if time.time() - last_log >= 3:
             _log(f'  等待对手选完... OCR="{text}"')

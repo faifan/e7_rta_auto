@@ -60,10 +60,10 @@
     },
     "cooldown_ratio": 0.7,
     "levelup_btn_region": [
-      523,
-      631,
+      519,
+      629,
       759,
-      691
+      695
     ],
     "cooldown_text_crops": {
       "S2": [
@@ -417,7 +417,7 @@
       661
     ],
     "confirm_btn_levelup": [
-      641,
+      639,
       661
     ],
     "result_unknown_click": [

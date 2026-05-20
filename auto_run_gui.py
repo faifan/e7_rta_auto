@@ -506,6 +506,7 @@ class AutoRunApp:
             img = capture()
 
             if   is_battle_over(img):              phase = 'result'
+            elif is_levelup_screen(img):           phase = 'levelup'
             elif is_in_lobby(img):                 phase = 'lobby'
             elif is_in_preban(img):                phase = 'preban'
             elif is_waiting_for_match(img):        phase = 'waiting'
@@ -534,20 +535,17 @@ class AutoRunApp:
             h, w = img.shape[:2]
             self.log(f'[阶段] {phase}  ({w}x{h})', 'phase')
 
-            if phase == 'result':
-                self.log('战斗结算，点击确认', 'info')
-                confirm_battle_result()
-                for _ in range(5):
-                    time.sleep(1.5)
+            if phase in ('result', 'levelup'):
+                self.log('战斗结算/晋级，轮询确认直到大厅', 'info')
+                for _r in range(10):
                     img2 = capture()
-                    if is_levelup_screen(img2):
-                        self.log('升级/段位界面，点击确认', 'info')
-                        confirm_levelup_result()
-                    elif is_in_lobby(img2) or is_waiting_for_match(img2):
+                    if is_in_lobby(img2) or is_waiting_for_match(img2):
+                        self.log('已回到大厅', 'ok')
                         break
-                    else:
-                        self.log('中间界面，点击屏幕中心', 'info')
-                        click_result_unknown()
+                    self.log(f'  结算第{_r + 1}轮', 'info')
+                    confirm_battle_result()
+                    confirm_levelup_result()
+                    click_result_unknown()
                 return
 
             elif phase == 'lobby':

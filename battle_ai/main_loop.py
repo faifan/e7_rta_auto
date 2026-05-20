@@ -82,9 +82,6 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn) -> str:
                 return 'extra_turn'
         log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓")
         return 'success'
-    if get_extra_turn_skill(char_name) == skill:
-        log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓ (额外回合)")
-        return 'extra_turn'
     log_fn(f"[回合 {turn}] {char_name or '?'} {skill} 无响应")
     return 'failed'
 
@@ -124,10 +121,9 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
             time.sleep(POLL_INTERVAL)
             continue
 
-        # 队伍有烧魂角色时，等1秒让烧魂按钮出现后再采样
-        if team_has_soul_burn():
-            time.sleep(1.0)
-            img = capture()
+        # 每回合等1秒让烧魂按钮出现后再采样
+        time.sleep(1.0)
+        img = capture()
 
         # 采样烧魂帧（在0.5s确认延迟前，覆盖首回合快速闪烁窗口）
         _early_burn_avail = is_soul_burn_available(img)
@@ -238,11 +234,22 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
                             set_pending_extra_turn(char_name, 'normal')
                 else:
                     _log(f"[回合 {turn}] 角色={char_name or '未知'} 烧魂按钮未检测到")
+            elif not team_has_soul_burn():
+                # 队伍无烧魂配置 → 激活一次烧魂，逐个试 S3→S2→S1
+                burn_avail = _early_burn_avail or is_soul_burn_available(img) or is_soul_burn_available()
+                if burn_avail:
+                    _log(f"[回合 {turn}] {char_name or '未知'} 通用烧魂（逐个试）")
+                    executed = _execute_with_burn_try_all(turn, _log)
 
         # ── Step 3: 普通技能 ─────────────────────────────────────
         if not executed:
-            _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={_candidates}")
-            for skill in _candidates:
+            # 额外回合(normal模式)时跳过 extra_turn 技能，防止循环触发额外回合
+            if is_extra_turn and extra_turn_mode == 'normal' and _et_skill:
+                cands = [s for s in _candidates if s != _et_skill]
+            else:
+                cands = _candidates
+            _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={cands}")
+            for skill in cands:
                 result = _execute_skill(skill, char_name, turn, _log)
                 if result != 'failed':
                     if skill == 'S3':
