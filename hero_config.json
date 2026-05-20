@@ -1,4 +1,5 @@
 {
-  "unpracticed": ["战术型可丽"],
-  "priority": ["调香师维波里丝","诺托斯"]
+  "unpracticed": ["战术型可丽","赫卡特","亚澜"],
+  "priority": ["调香师维波里丝"],
+  "force_pick": ["诺托斯"]
 }

@@ -493,10 +493,11 @@ class AutoRunApp:
 
         focus_game_window()
 
-        preban_done      = False
-        draft_done       = False
-        postban_done     = False
-        force_burn_armed = False
+        preban_done        = False
+        draft_done         = False
+        postban_done       = False
+        battle_ready_done  = False
+        force_burn_armed   = False
         draft_result     = {'my_picks': [], 'enemy_picks': []}
         prev_phase       = 'wait'
         wait_count       = 0
@@ -619,17 +620,20 @@ class AutoRunApp:
                 time.sleep(1.0)
 
             elif phase == 'battle_ready':
-                arrange_yazuga_first(
-                    draft_result.get('my_picks', []),
-                    log_fn=lambda msg: self.log(msg, 'info'),
-                )
-                arrange_kris_not_last(
-                    draft_result.get('my_picks', []),
-                    log_fn=lambda msg: self.log(msg, 'info'),
-                )
-                self.log('点击战斗开始', 'info')
-                click_battle_start()
-                time.sleep(4.0)
+                if not battle_ready_done:
+                    arrange_yazuga_first(
+                        draft_result.get('my_picks', []),
+                        log_fn=lambda msg: self.log(msg, 'info'),
+                    )
+                    arrange_kris_not_last(
+                        draft_result.get('my_picks', []),
+                        log_fn=lambda msg: self.log(msg, 'info'),
+                    )
+                    self.log('点击战斗开始', 'info')
+                    click_battle_start()
+                    if draft_done:
+                        battle_ready_done = True
+                    time.sleep(4.0)
 
             elif phase == 'battle':
                 self.log('战斗AI运行中...', 'phase')

@@ -36,3 +36,9 @@ def is_priority(name: str) -> bool:
     cfg = _load()
     target = _n(name)
     return target in {_n(n) for n in cfg.get('priority', [])}
+
+
+def get_force_picks() -> set:
+    """返回强制选取角色名集合（简体），不管模型推不推、只要可用就排第一候选。"""
+    cfg = _load()
+    return {_n(name) for name in cfg.get('force_pick', [])}

@@ -1,4 +1,4 @@
-  [
+[
   {
     "code": "c0001",
     "grade": "4",
@@ -1099,6 +1099,20 @@
     "attribute_cd": "fire"
   },
   {
+    "code": "c1182",
+    "grade": "5",
+    "name": "伊凡娜",
+    "job_cd": "manauser",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1183",
+    "grade": "5",
+    "name": "艾丝黛",
+    "job_cd": "knight",
+    "attribute_cd": "wind"
+  },
+  {
     "code": "c2001",
     "grade": "5",
     "name": "起源拉斯",
@@ -1692,6 +1706,13 @@
     "name": "诺托斯",
     "job_cd": "knight",
     "attribute_cd": "light"
+  },
+  {
+    "code": "c2184",
+    "grade": "5",
+    "name": "萨洛美",
+    "job_cd": "warrior",
+    "attribute_cd": "dark"
   },
   {
     "code": "c3001",

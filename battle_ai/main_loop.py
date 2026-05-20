@@ -74,6 +74,12 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn) -> str:
     do_aoe(skill)
     time.sleep(_SKILL_POLL_SEC)
     if read_turn_badge() != 'my_turn':
+        # S3 动画可能 >1.3s，badge 短暂消失后再回来表示额外回合，补等一次
+        if get_extra_turn_skill(char_name) == skill:
+            time.sleep(1.5)
+            if read_turn_badge() == 'my_turn':
+                log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓ (额外回合)")
+                return 'extra_turn'
         log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓")
         return 'success'
     if get_extra_turn_skill(char_name) == skill:
@@ -210,8 +216,14 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
                     else:
                         _log(f"[回合 {turn}] 首回合强制烧魂：未检测到烧魂按钮")
 
+        # 候选列表只算一次（get_candidates 有副作用：递减 s3_skip）
+        _candidates   = get_candidates(char_name)
+        _et_skill     = get_extra_turn_skill(char_name)
+        _et_available = bool(_et_skill and _et_skill in _candidates)
+
         # ── Step 2: 普通烧魂 ─────────────────────────────────────
-        if not executed and not is_extra_turn:
+        # 若角色配置了 extra_turn 技能且该技能当前可用，跳过烧魂留给额外回合
+        if not executed and not is_extra_turn and not _et_available:
             soul_burn_skill = get_soul_burn_skill(char_name)
             if soul_burn_skill:
                 burn_avail = _early_burn_avail or is_soul_burn_available(img) or is_soul_burn_available()
@@ -229,9 +241,8 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
 
         # ── Step 3: 普通技能 ─────────────────────────────────────
         if not executed:
-            candidates = get_candidates(char_name)
-            _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={candidates}")
-            for skill in candidates:
+            _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={_candidates}")
+            for skill in _candidates:
                 result = _execute_skill(skill, char_name, turn, _log)
                 if result != 'failed':
                     if skill == 'S3':

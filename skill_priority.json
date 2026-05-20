@@ -9,7 +9,8 @@
   "兔菈玫": { "priority": ["S3", "S2", "S1"],"extra_turn": "S3", "soul_burn": "S1","s3_skip": 2 },
   "海上幽灵佛里蒂丝": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
   "旁观者和英": { "priority": ["S3", "S2", "S1"], "soul_burn": "S3","s3_skip": 2 },
-  "诺托斯": { "priority": ["S3", "S2", "S1"],"extra_turn": "S3", "soul_burn": "S2","s3_skip": 2 }
+  "诺托斯": { "priority": ["S3", "S2", "S1"],"extra_turn": "S3", "soul_burn": "S2","s3_skip": 2 },
+  "灵眼的瑟琳": { "priority": ["S3", "S2", "S1"], "soul_burn": "S1","s3_skip": 2 }
 }
 
 

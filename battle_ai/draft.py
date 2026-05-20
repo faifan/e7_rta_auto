@@ -9,7 +9,7 @@ import cv2
 from PIL import Image
 from battle_ai.executor import click_at, type_text_chinese
 from battle_ai.perception import capture
-from battle_ai.hero_config import is_unpracticed, is_priority
+from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks
 
 _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEBUG_DIR = os.path.join(_ROOT, 'debug')
@@ -820,13 +820,11 @@ def _ocr_region_robust(img, region) -> str:
 
 
 def _name_matches(hero_name: str, ocr_text: str) -> bool:
-    """名字字符匹配：2字需1+，3+字需 min(4, len-2) 个。"""
+    """名字字符匹配：至少50%的字出现在OCR结果中。"""
     if not ocr_text:
         return False
-    if len(hero_name) <= 2:
-        min_match = 1
-    else:
-        min_match = min(4, max(2, len(hero_name) - 2))
+    import math
+    min_match = max(1, math.ceil(len(hero_name) * 0.5))
     matched = sum(1 for ch in hero_name if ch in ocr_text)
     return matched >= min_match
 
@@ -1063,6 +1061,9 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             for slot_i in _new_slots:
                 code_s, score_s, gap_s = identify_slot_debug(img_scan, cur_opp_slots[slot_i], exclude=_my_set)
                 if code_s == 'unknown':
+                    log_fn(f"  扫描对手槽{slot_i+1}: 识别失败，占位 unknown")
+                    enemy_picks.append('unknown')
+                    enemy_pick_scores.append(0.0)
                     continue
                 name_s = _code_to_name.get(code_s, code_s)
                 if code_s in banned:
@@ -1118,8 +1119,18 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                     _rest.append(_rec)
             recs = _front + _rest
 
-            if recs:
-                candidates = list(prepend_candidates or [])
+            # 强制选取：不管模型推不推，只要可用就排第一
+            _force_names = get_force_picks()
+            _force_cands = []
+            for _fc, _fn in _code_to_name.items():
+                if _fn in _force_names:
+                    if (_fc not in my_picks and _fc not in enemy_picks
+                            and _fc not in banned and _fc not in unavailable_codes):
+                        _force_cands.append((_fc, _fn, 1.0))
+                        log_fn(f"  → 强制选取: {_fn}（{_fc}）")
+
+            if recs or _force_cands:
+                candidates = list(prepend_candidates or []) + _force_cands
                 for rec in recs[:5]:
                     code = rec['hero_code']
                     if code in unavailable_codes:
@@ -1136,6 +1147,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 picked_code, seen_selected, seen_banned = search_and_pick_candidates(
                     candidates, log_fn=log_fn, unavailable=unavailable_codes)
 
+                _enemy_corrected = False
                 for conf_code in seen_selected:
                     if (conf_code not in my_picks and conf_code not in banned
                             and conf_code not in enemy_picks):
@@ -1149,6 +1161,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                             enemy_picks[min_idx] = conf_code
                             enemy_pick_scores[min_idx] = 1.0
                             unavailable_codes.add(conf_code)
+                            _enemy_corrected = True
 
                 for conf_code in seen_banned:
                     if conf_code not in banned:
@@ -1162,6 +1175,49 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                             banned[min_idx] = conf_code
                             banned_scores[min_idx] = 1.0
                             unavailable_codes.add(conf_code)
+
+                # 未选上 + 有新对手信息 → 重调模型再搜一次
+                if not picked_code and _enemy_corrected:
+                    log_fn('  [重推] 对手信息已修正，重新推荐并搜索')
+                    _retry_recs = recommender.recommend(
+                        my_picks=my_picks, enemy_picks=enemy_picks,
+                        banned=banned, phase=phase, my_first=my_first, top_k=5)
+                    _front_r, _rest_r = [], []
+                    for _rec in _retry_recs:
+                        _rn = _code_to_name.get(_rec['hero_code'], '')
+                        if is_unpracticed(_rn):
+                            continue
+                        (_front_r if is_priority(_rn) else _rest_r).append(_rec)
+                    _retry_cands = list(prepend_candidates or [])
+                    for _rec in (_front_r + _rest_r)[:5]:
+                        _c = _rec['hero_code']
+                        if _c in unavailable_codes:
+                            continue
+                        _n = _code_to_name.get(_c, '')
+                        if not _n:
+                            continue
+                        _retry_cands.append((_c, _n, _rec['probability']))
+                        log_fn(f"  → [重推] {_n}（{_c}，{_rec['probability']:.3f}）")
+                    if _retry_cands:
+                        picked_code, _s2, _b2 = search_and_pick_candidates(
+                            _retry_cands, log_fn=log_fn, unavailable=unavailable_codes)
+                        for _cc in _s2:
+                            if (_cc not in my_picks and _cc not in banned
+                                    and _cc not in enemy_picks):
+                                _unc = [(i, s) for i, s in enumerate(enemy_pick_scores) if s < 1.0]
+                                if _unc:
+                                    _mi = min(_unc, key=lambda x: x[1])[0]
+                                    enemy_picks[_mi] = _cc
+                                    enemy_pick_scores[_mi] = 1.0
+                                    unavailable_codes.add(_cc)
+                        for _cc in _b2:
+                            if _cc not in banned:
+                                _unc = [(i, s) for i, s in enumerate(banned_scores) if s < 1.0]
+                                if _unc:
+                                    _mi = min(_unc, key=lambda x: x[1])[0]
+                                    banned[_mi] = _cc
+                                    banned_scores[_mi] = 1.0
+                                    unavailable_codes.add(_cc)
 
                 if picked_code:
                     time.sleep(1.0)
