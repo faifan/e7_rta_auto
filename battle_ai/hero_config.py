@@ -4,7 +4,7 @@ import os
 import zhconv
 
 _ROOT        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_CONFIG_FILE = os.path.join(_ROOT, 'hero_config.json')
+_CONFIG_FILE = os.path.join(_ROOT, 'config', 'hero_config.json')
 
 _config = None
 

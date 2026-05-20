@@ -323,7 +323,7 @@ class AutoRunApp:
         self._status_lbl.config(fg=color)
 
     # ── 预禁用配置持久化 ──────────────────────────────────────
-    _PREBAN_SAVE = os.path.join(_HERE, 'preban_save.json')
+    _PREBAN_SAVE = os.path.join(_HERE, 'config', 'preban_save.json')
 
     def _save_preban_config(self):
         data = {

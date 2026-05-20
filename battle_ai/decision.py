@@ -4,7 +4,7 @@ import difflib
 import zhconv
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_PRIORITY_FILE = os.path.join(_ROOT, 'skill_priority.json')
+_PRIORITY_FILE = os.path.join(_ROOT, 'config', 'skill_priority.json')
 
 _DEFAULT_PRIORITY = ['S3', 'S2', 'S1']
 _DEFAULT_S3_SKIP  = 2
