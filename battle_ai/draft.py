@@ -1344,6 +1344,7 @@ def _detect_current_turn(pos: int, timeout: int = 90, stop_event=None, log_fn=No
     _log = log_fn or (lambda m: None)
     deadline = time.time() + timeout
     last_log = 0
+    next_phase_count = 0  # 防抖：连续3次才确认是真实阶段切换，避免过渡帧噪声误触发
     while time.time() < deadline:
         if stop_event and stop_event.is_set():
             return 0, None
@@ -1362,8 +1363,13 @@ def _detect_current_turn(pos: int, timeout: int = 90, stop_event=None, log_fn=No
             _log(f'  [第{pos+1}步] 对手回合（OCR="{text}"）')
             return 2, img
         if _is_ban_kw(text) or _is_ready_kw(text):
-            _log(f'  [第{pos+1}步] 检测到下一阶段（OCR="{text}"），退出')
-            return 0, None
+            next_phase_count += 1
+            if next_phase_count >= 3:
+                _log(f'  [第{pos+1}步] 检测到下一阶段（OCR="{text}"），退出')
+                return 0, None
+            _log(f'  [第{pos+1}步] 疑似下一阶段（OCR="{text}"），确认中{next_phase_count}/3')
+        else:
+            next_phase_count = 0
         time.sleep(0.5)
     _log(f'  [第{pos+1}步] 回合检测超时')
     return 0, None

@@ -45,7 +45,9 @@ class DraftRecommender:
             self.model.load_state_dict(checkpoint['model_state_dict'])
             self.model.to(self.device)
             self.model.eval()
-            print(f"OK 模型加载成功 (验证准确率：{checkpoint.get('val_acc', 0):.4f})")
+            # 以 checkpoint 的 num_heroes 为准，防止 hero_list 文件和模型不同步
+            self.num_heroes = checkpoint['config']['num_heroes']
+            print(f"OK 模型加载成功 (验证准确率：{checkpoint.get('val_acc', 0):.4f}, 英雄数：{self.num_heroes})")
         else:
             print(f"W 找不到模型文件：{model_path}")
     
