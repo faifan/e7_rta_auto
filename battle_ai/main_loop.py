@@ -1,6 +1,7 @@
 import time
 from battle_ai.executor import focus_game_window, do_aoe, click_burn
-from battle_ai.perception import (capture, is_battle_over, read_turn_badge, read_char_name,
+from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
+                                   read_turn_badge, read_char_name,
                                    is_soul_burn_available, is_soul_burn_activated)
 from battle_ai.decision import (
     get_candidates, on_s3_success, on_s2_success, on_s2_fail,
@@ -108,9 +109,9 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
 
         img = capture()
 
-        if is_battle_over(img):
+        if is_battle_over(img) or is_intimacy_levelup(img):
             time.sleep(1.0)
-            if is_battle_over():
+            if is_battle_over() or is_intimacy_levelup():
                 _log(f"战斗结束！共行动 {turn} 次")
                 break
             continue
@@ -137,7 +138,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
         turn += 1
         char_name = read_char_name(img)
 
-        if is_battle_over(img):
+        if is_battle_over(img) or is_intimacy_levelup(img):
             _log(f"战斗结束！共行动 {turn - 1} 次")
             break
 

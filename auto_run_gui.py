@@ -477,10 +477,10 @@ class AutoRunApp:
 
     def _run_one_round(self):
         from battle_ai.executor   import focus_game_window, click_at
-        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen
+        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen, is_intimacy_levelup
         from battle_ai.lobby      import (confirm_battle_result, confirm_levelup_result,
                                           apply_for_battle, click_match_accept,
-                                          click_result_unknown,
+                                          click_result_unknown, dismiss_intimacy_dialog,
                                           is_in_lobby, is_waiting_for_match)
         from battle_ai.preban     import is_in_preban, do_preban, do_smart_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
@@ -505,7 +505,8 @@ class AutoRunApp:
         while not self._stop_event.is_set():
             img = capture()
 
-            if   is_battle_over(img):              phase = 'result'
+            if   is_intimacy_levelup(img):         phase = 'intimacy'
+            elif is_battle_over(img):              phase = 'result'
             elif is_levelup_screen(img):           phase = 'levelup'
             elif is_in_lobby(img):                 phase = 'lobby'
             elif is_in_preban(img):                phase = 'preban'
@@ -535,7 +536,12 @@ class AutoRunApp:
             h, w = img.shape[:2]
             self.log(f'[阶段] {phase}  ({w}x{h})', 'phase')
 
-            if phase in ('result', 'levelup'):
+            if phase == 'intimacy':
+                self.log('亲密度升级弹窗，点击关闭', 'info')
+                dismiss_intimacy_dialog()
+                # 弹窗消失后下一轮循环可正常检测底层胜利界面
+
+            elif phase in ('result', 'levelup'):
                 self.log('战斗结算/晋级，轮询确认直到大厅', 'info')
                 for _r in range(10):
                     img2 = capture()

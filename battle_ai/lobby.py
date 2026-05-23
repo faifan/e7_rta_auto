@@ -46,6 +46,14 @@ def _result_unknown_click():
     p = _lcfg()
     return tuple(p['result_unknown_click']) if 'result_unknown_click' in p else None
 
+_DEFAULT_INTIMACY_DISMISS = (1125, 839)  # 点此关闭亲密度弹窗，弹窗消失后可检测到底层胜利界面
+
+def _intimacy_dismiss_btn():
+    p = _lcfg()
+    return tuple(p['intimacy_dismiss_btn']) if 'intimacy_dismiss_btn' in p else _DEFAULT_INTIMACY_DISMISS
+
+
+
 def _btn_region():
     p = _lcfg()
     return tuple(p['btn_region']) if 'btn_region' in p else _DEFAULT_BTN_REGION
@@ -125,6 +133,10 @@ def confirm_battle_result():
 def confirm_levelup_result():
     click_at(*_confirm_btn_levelup())
     time.sleep(1.5)
+
+def dismiss_intimacy_dialog():
+    """关闭亲密度等级上升弹窗，弹窗消失后底层胜利界面可被正常检测。"""
+    click_at(*_intimacy_dismiss_btn(), delay=1.0)
 
 
 def apply_for_battle():

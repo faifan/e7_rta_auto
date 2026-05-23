@@ -228,6 +228,25 @@ def is_skill_ready(img: np.ndarray, skill: str) -> bool:
     return (skill_brightness(img, skill) / brightest) >= ratio
 
 
+# ── 亲密度等级上升弹窗检测 ────────────────────────────────────
+# 弹窗叠在胜利界面上方，会遮挡 vic_region 和结算确认按钮
+_DEFAULT_INTIMACY_REGION = (918, 205, 1361, 292)   # 标题"英雄亲密度等级上升"区域
+
+def _intimacy_region():
+    p = _pcfg()
+    return tuple(p['intimacy_region']) if 'intimacy_region' in p else _DEFAULT_INTIMACY_REGION
+
+def is_intimacy_levelup(img: np.ndarray = None) -> bool:
+    if img is None:
+        img = capture()
+    x1, y1, x2, y2 = _intimacy_region()
+    crop = img[y1:y2, x1:x2]
+    buf  = io.BytesIO()
+    Image.fromarray(crop).save(buf, format='PNG')
+    text = _get_ocr().classification(buf.getvalue())
+    return '亲密' in text
+
+
 # ── 段位结算检测 ──────────────────────────────────────────────
 _DEFAULT_LEVELUP_BTN = (785, 978, 1138, 1069)
 
