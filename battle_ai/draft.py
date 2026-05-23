@@ -539,14 +539,14 @@ _swap_btn_tmpl       = None
 def _get_yazuga_tmpl():
     global _yazuga_battle_tmpl
     if _yazuga_battle_tmpl is None:
-        _yazuga_battle_tmpl = cv2.imread(os.path.join(_TMPL_BASE, 'yazuga_battle.png'))
+        _yazuga_battle_tmpl = cv2.imdecode(np.fromfile(os.path.join(_TMPL_BASE, 'yazuga_battle.png'), dtype=np.uint8), cv2.IMREAD_COLOR)
     return _yazuga_battle_tmpl
 
 
 def _get_swap_btn_tmpl():
     global _swap_btn_tmpl
     if _swap_btn_tmpl is None:
-        _swap_btn_tmpl = cv2.imread(os.path.join(_TMPL_BASE, 'swap_btn.png'))
+        _swap_btn_tmpl = cv2.imdecode(np.fromfile(os.path.join(_TMPL_BASE, 'swap_btn.png'), dtype=np.uint8), cv2.IMREAD_COLOR)
     return _swap_btn_tmpl
 
 
@@ -628,7 +628,7 @@ _kris_battle_tmpl = None
 def _get_kris_tmpl():
     global _kris_battle_tmpl
     if _kris_battle_tmpl is None:
-        _kris_battle_tmpl = cv2.imread(os.path.join(_TMPL_BASE, 'kris_battle.png'))
+        _kris_battle_tmpl = cv2.imdecode(np.fromfile(os.path.join(_TMPL_BASE, 'kris_battle.png'), dtype=np.uint8), cv2.IMREAD_COLOR)
     return _kris_battle_tmpl
 
 
