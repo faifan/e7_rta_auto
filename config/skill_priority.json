@@ -12,7 +12,8 @@
   "诺托斯": { "priority": ["S3", "S2", "S1"],"extra_turn": "S3", "soul_burn": "S2","s3_skip": 2 },
   "灵眼的瑟琳": { "priority": ["S3", "S2", "S1"], "soul_burn": "S1","s3_skip": 2 },
   "狮心王洁若米亚": { "priority": ["S3", "S2", "S1"],"s3_skip": 0 },
-  "利纳柯": { "priority": ["S2", "S3", "S1"],"extra_turn": "S2","s3_skip": 2 }
+  "利纳柯": { "priority": ["S2", "S3", "S1"],"extra_turn": "S2","s3_skip": 2 },
+  "萨洛美": { "priority": ["S2", "S3", "S1"],"extra_turn": "S2", "soul_burn": "S3","s3_skip": 1 }
 }
 
 
