@@ -548,6 +548,10 @@ class AutoRunApp:
                     if is_in_lobby(img2) or is_waiting_for_match(img2):
                         self.log('已回到大厅', 'ok')
                         break
+                    if is_intimacy_levelup(img2):
+                        self.log('  结算中检测到亲密度弹窗，先关闭', 'info')
+                        dismiss_intimacy_dialog()
+                        continue
                     self.log(f'  结算第{_r + 1}轮', 'info')
                     confirm_battle_result()
                     confirm_levelup_result()

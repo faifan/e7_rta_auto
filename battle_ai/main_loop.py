@@ -74,9 +74,12 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn) -> str:
     """
     do_aoe(skill)
     time.sleep(_SKILL_POLL_SEC)
+    _is_et_skill = (get_extra_turn_skill(char_name) == skill)
+    # S3释放后约1s卡顿，1.3s内badge仍是my_turn属正常，补等2s再判
+    if read_turn_badge() == 'my_turn' and skill == 'S3':
+        time.sleep(1.0)
     if read_turn_badge() != 'my_turn':
-        # S3 动画可能 >1.3s，badge 短暂消失后再回来表示额外回合，补等一次
-        if get_extra_turn_skill(char_name) == skill:
+        if _is_et_skill:
             time.sleep(1.5)
             if read_turn_badge() == 'my_turn':
                 log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓ (额外回合)")
@@ -265,6 +268,17 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
                         else:
                             set_pending_extra_turn(char_name, 'normal')
                     break
+                # extra_turn技能失败时，回退烧魂
+                if skill == _et_skill and _et_available:
+                    _sb = get_soul_burn_skill(char_name)
+                    if _sb and _sb != skill:
+                        _burn_avail = _early_burn_avail or is_soul_burn_available()
+                        if _burn_avail:
+                            _log(f"[回合 {turn}] {char_name} extra_turn失败，回退烧魂→{_sb}")
+                            _r2 = _execute_with_burn(_sb, char_name, turn, _log)
+                            if _r2 != 'failed':
+                                executed = True
+                                break
                 if skill == 'S2':
                     on_s2_fail(char_name)
 
