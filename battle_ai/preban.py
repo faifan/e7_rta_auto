@@ -222,7 +222,7 @@ def _load_preban_hero_tmpls():
         if not fname.endswith('.png'):
             continue
         code = fname[:-4].split('_')[0]
-        img  = cv2.imread(os.path.join(tmpl_dir, fname), cv2.IMREAD_GRAYSCALE)
+        img  = cv2.imdecode(np.fromfile(os.path.join(tmpl_dir, fname), dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
         if img is None:
             continue
         tmpls.setdefault(code, []).append(
