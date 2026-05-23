@@ -571,6 +571,10 @@ class AutoRunApp:
                 if wait_count <= 3:
                     self.log(f'  [wait#{wait_count}] 尝试点击匹配确认按钮...', 'warn')
                     click_match_accept()
+                elif wait_count % 8 == 4:
+                    # 长时间未识别，盲点亲密度关闭按钮（弹窗遮住胜利界面导致所有检测失败时的兜底）
+                    self.log(f'  [wait] 长时间未识别，尝试关闭可能的弹窗', 'warn')
+                    dismiss_intimacy_dialog()
 
             elif phase == 'preban':
                 if not preban_done:

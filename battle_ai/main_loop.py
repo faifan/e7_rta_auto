@@ -238,8 +238,8 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
                             set_pending_extra_turn(char_name, 'normal')
                 else:
                     _log(f"[回合 {turn}] 角色={char_name or '未知'} 烧魂按钮未检测到")
-            elif not team_has_soul_burn():
-                # 队伍无烧魂配置 → 激活一次烧魂，逐个试 S3→S2→S1
+            elif not team_has_soul_burn() and '迪埃妮' not in (char_name or ''):
+                # 队伍无烧魂配置 → 激活一次烧魂，逐个试 S3→S2→S1（迪埃妮除外）
                 burn_avail = _early_burn_avail or is_soul_burn_available(img) or is_soul_burn_available()
                 if burn_avail:
                     _log(f"[回合 {turn}] {char_name or '未知'} 通用烧魂（逐个试）")
