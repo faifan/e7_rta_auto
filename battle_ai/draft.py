@@ -9,7 +9,7 @@ import cv2
 from PIL import Image
 from battle_ai.executor import click_at, type_text_chinese
 from battle_ai.perception import capture, is_battle_over
-from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks
+from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks, get_excluded_by_picks
 
 _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEBUG_DIR = os.path.join(_ROOT, 'debug')
@@ -500,6 +500,18 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
                 my_first=my_first,
                 top_k=5,
             )
+            # 本地统计调整 finalban 优先级
+            try:
+                from config_loader import cfg as _cfg
+                if _cfg.is_loaded() and getattr(_cfg, 'local_stats_enabled', False):
+                    from battle_ai.local_stats import get_finalban_adjustments
+                    _fadj = get_finalban_adjustments(enemy_picks)
+                    if _fadj:
+                        recs = [dict(r, probability=r['probability'] *
+                                    _fadj.get(r['hero_code'], 1.0)) for r in recs]
+                        recs.sort(key=lambda r: r['probability'], reverse=True)
+            except Exception:
+                pass
             for rec in recs:
                 code = rec['hero_code']
                 if code in enemy_picks:
@@ -524,6 +536,9 @@ def do_post_draft_ban(enemy_picks: list, recommender=None, my_picks=None,
     cx, cy = _opp_slot_centers()[ban_idx]
     click_at(cx, cy, delay=1.5)
     click_at(*_post_ban_btn(), delay=1.5)
+
+    banned_code = enemy_picks[ban_idx] if ban_idx < len(enemy_picks) else None
+    return banned_code
 
     # 亚露嘉阵容位置调整在 battle_ready 阶段由 arrange_yazuga_first 处理
 
@@ -917,7 +932,7 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         result_text = _ocr_region_robust(img, _search_result_region())
         _log(f'  [搜索] 结果OCR="{result_text}"')
 
-        if _name_matches(name, result_text):
+        if result_text.strip():
             click_at(*_first_result(), delay=2.0)
 
             img2 = capture()
@@ -993,6 +1008,8 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
     enemy_pick_scores = [0.5] * len(enemy_picks)
     banned_scores     = [0.5] * len(banned)
     start_pos         = len(my_picks) + len(enemy_picks)
+    my_preban         = []
+    enemy_preban      = []
 
     unavailable_codes: set = set(banned)
 
@@ -1022,6 +1039,9 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             time.sleep(4.5)
             ban_frame = capture()
             raw_bans, raw_ban_scores = identify_ban_slots(ban_frame)
+            # raw_bans 顺序固定：[我方ban1, 我方ban2, 对手ban1, 对手ban2]
+            my_preban    = [c for c in raw_bans[:2] if c != 'empty']
+            enemy_preban = [c for c in raw_bans[2:] if c != 'empty']
             detected = [(c, s) for c, s in zip(raw_bans, raw_ban_scores) if c != 'empty']
             if detected:
                 banned       = [c for c, s in detected]
@@ -1118,6 +1138,27 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 else:
                     _rest.append(_rec)
             recs = _front + _rest
+
+            # 本地统计调整（需开启开关且有足够数据才生效）
+            try:
+                from config_loader import cfg as _cfg
+                if _cfg.is_loaded() and getattr(_cfg, 'local_stats_enabled', False):
+                    from battle_ai.local_stats import get_pick_adjustments
+                    _adj = get_pick_adjustments([r['hero_code'] for r in recs])
+                    if _adj:
+                        recs = [dict(r, probability=r['probability'] *
+                                    _adj.get(r['hero_code'], 1.0)) for r in recs]
+                        recs.sort(key=lambda r: r['probability'], reverse=True)
+                        for r in recs:
+                            if r['hero_code'] in _adj:
+                                log_fn(f"  [本地] {_code_to_name.get(r['hero_code'], r['hero_code'])}"
+                                       f" ×{_adj[r['hero_code']]:.2f}")
+            except Exception:
+                pass
+
+            # 互斥组规则排除（只看我方已选）
+            _rule_excluded = get_excluded_by_picks(my_picks, _code_to_name, log_fn=log_fn)
+            unavailable_codes.update(_rule_excluded)
 
             # 强制选取：不管模型推不推，只要可用就排第一
             _force_names = get_force_picks()
@@ -1317,7 +1358,8 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
            f"对方: {[_code_to_name.get(c,c) for c in enemy_picks]}")
     _save_debug_slots()
     return {'my_picks': my_picks, 'enemy_picks': enemy_picks,
-            'my_first': my_first, 'banned': banned}
+            'my_first': my_first, 'banned': banned,
+            'my_preban': my_preban, 'enemy_preban': enemy_preban}
 
 
 def _save_debug_slots():

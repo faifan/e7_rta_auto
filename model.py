@@ -60,6 +60,15 @@ class DraftTransformer(nn.Module):
         # 阶段 Embedding (preban, pick1-5, finalban)
         self.phase_embedding = nn.Embedding(8, d_model)
 
+        # 每个 token 被选时所处的阶段 (0=preban, 1-6=各pick轮次)
+        self.token_phase_embedding = nn.Embedding(7, d_model)
+
+        # 当前预测的是哪方 (0=padding, 1=我方, 2=敌方)
+        self.prediction_side_embedding = nn.Embedding(3, d_model)
+
+        # 当前预测方是先手还是后手 (0=padding, 1=先手方, 2=后手方)
+        self.first_pick_embedding = nn.Embedding(3, d_model)
+
         # Transformer Encoder
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
@@ -90,7 +99,7 @@ class DraftTransformer(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, hero_ids, side_ids, phase_ids, src_mask=None):
+    def forward(self, hero_ids, side_ids, phase_ids, src_mask=None, token_phase_ids=None, prediction_side_ids=None, first_pick_ids=None):
         """
         前向传播
 
@@ -99,6 +108,9 @@ class DraftTransformer(nn.Module):
             side_ids: [batch, seq_len] - 阵营标记 (0=padding, 1=我方，2=敌方，3=ban 位)
             phase_ids: [batch] - 当前阶段 (0-7)
             src_mask: [batch, seq_len] - 源序列 padding 掩码 (1=真实数据，0=padding)
+            token_phase_ids: [batch, seq_len] - 每个 token 被选时的阶段 (0=preban, 1-6=pick轮次)
+            prediction_side_ids: [batch] - 当前预测的是哪方 (1=我方, 2=敌方)
+            first_pick_ids: [batch] - 当前预测方是先手还是后手 (1=先手, 2=后手)
 
         Returns:
             next_pick_logits: [batch, num_heroes] - 下一个选择的 logits
@@ -114,6 +126,10 @@ class DraftTransformer(nn.Module):
 
         # 组合 Embedding
         x = hero_emb + side_emb + phase_emb
+        if token_phase_ids is not None:
+            x = x + self.token_phase_embedding(token_phase_ids)
+        if first_pick_ids is not None:
+            x = x + self.first_pick_embedding(first_pick_ids).unsqueeze(1).expand(-1, seq_len, -1)
 
         # 添加位置编码
         pos_enc = self.pos_encoder.pe[:seq_len, :, :].transpose(0, 1)  # [1, seq, d_model]
@@ -135,12 +151,17 @@ class DraftTransformer(nn.Module):
         else:
             pooled = memory.mean(dim=1)
 
+        # 叠加预测方 embedding（明确告诉模型"现在是在替哪方选人"）
+        if prediction_side_ids is not None:
+            pred_side_emb = self.prediction_side_embedding(prediction_side_ids)  # [batch, d_model]
+            pooled = pooled + pred_side_emb
+
         next_pick_logits = self.hero_classifier(pooled)  # [batch, num_heroes]
         win_rate = self.win_rate_head(pooled)  # [batch, 1]
 
         return next_pick_logits, win_rate
 
-    def predict_next_pick(self, hero_sequence, side_sequence, phase_id, available_mask, top_k=10):
+    def predict_next_pick(self, hero_sequence, side_sequence, phase_id, available_mask, top_k=10, token_phase_sequence=None, prediction_side_id=1, is_first_pick=True):
         self.eval()
         device = next(self.parameters()).device
 
@@ -148,16 +169,20 @@ class DraftTransformer(nn.Module):
             hero_ids = torch.tensor([hero_sequence], dtype=torch.long, device=device)
             side_ids = torch.tensor([side_sequence], dtype=torch.long, device=device)
             src_mask = torch.ones(1, len(hero_sequence), dtype=torch.float, device=device)
+            token_phase_ids = torch.tensor([token_phase_sequence], dtype=torch.long, device=device) if token_phase_sequence is not None else None
         else:
             # 空序列（首次preban）用单个dummy token
             hero_ids = torch.tensor([[0]], dtype=torch.long, device=device)
             side_ids = torch.tensor([[0]], dtype=torch.long, device=device)
             src_mask = torch.ones(1, 1, dtype=torch.float, device=device)
+            token_phase_ids = None
 
         phase_ids = torch.tensor([phase_id], dtype=torch.long, device=device)
+        pred_side_ids = torch.tensor([prediction_side_id], dtype=torch.long, device=device)
+        first_pick_ids = torch.tensor([1 if is_first_pick else 2], dtype=torch.long, device=device)
 
         with torch.no_grad():
-            logits, win_rate = self.forward(hero_ids, side_ids, phase_ids, src_mask=src_mask)
+            logits, win_rate = self.forward(hero_ids, side_ids, phase_ids, src_mask=src_mask, token_phase_ids=token_phase_ids, prediction_side_ids=pred_side_ids, first_pick_ids=first_pick_ids)
 
             if available_mask is not None:
                 available_mask = available_mask.to(device)

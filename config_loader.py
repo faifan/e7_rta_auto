@@ -21,7 +21,8 @@ class _Cfg:
         self.window_title:  str  = _DEFAULT_TITLE
         self.profile_path:  str  = _DEFAULT_PROFILE
         self.lang_path:     str  = _DEFAULT_LANG
-        self.input_method:  str  = 'emulator'
+        self.input_method:        str  = 'emulator'
+        self.local_stats_enabled: bool = True
         self._loaded = False
 
     def load(self, window_title: str,

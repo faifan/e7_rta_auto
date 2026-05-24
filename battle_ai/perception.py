@@ -184,6 +184,17 @@ def _match(query: np.ndarray, tmpl: np.ndarray) -> float:
     return float(np.sum(a * b) / denom) if denom > 1e-6 else 0.0
 
 
+def is_battle_victory(img: np.ndarray = None) -> bool:
+    """单独检测胜利画面，用于战绩记录。"""
+    if img is None:
+        img = capture()
+    x1, y1, x2, y2 = _vic_region()
+    crop  = img[y1:y2, x1:x2]
+    gray  = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+    query = cv2.resize(gray, _RESULT_SIZE).astype(np.float32)
+    return _match(query, _vic_tmpl) >= _vic_threshold()
+
+
 def is_battle_over(img: np.ndarray = None) -> bool:
     if img is None:
         img = capture()

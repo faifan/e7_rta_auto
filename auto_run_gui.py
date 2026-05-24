@@ -141,10 +141,13 @@ class AutoRunApp:
         self.root.geometry('720x600')
         self.root.resizable(True, True)
 
-        self._stop_event  = threading.Event()
-        self._thread      = None
-        self._log_queue   = queue.Queue()
-        self._recommender = None
+        self._stop_event         = threading.Event()
+        self._thread             = None
+        self._log_queue          = queue.Queue()
+        self._recommender        = None
+        self._last_draft_result       = None
+        self._last_finalban_code      = None
+        self._last_enemy_finalban_code = None
 
         self._build_ui()
         self._poll_log()
@@ -204,6 +207,16 @@ class AutoRunApp:
                                         font=CN_FONT, width=14, state='readonly')
         self._client_cb['values'] = ['安卓模拟器', 'PC客户端']
         self._client_cb.pack(side=tk.LEFT, padx=(4, 0))
+
+        # 本地辅助开关
+        row3b = tk.Frame(cfg_frame, bg='#1e1e1e')
+        row3b.pack(fill=tk.X, padx=8, pady=(2, 2))
+        self._local_stats_var = tk.BooleanVar(value=True)
+        tk.Checkbutton(row3b, text='本地辅助（用历史战绩干预AI推荐）',
+                       variable=self._local_stats_var, font=CN_FONT,
+                       fg='#c9d1d9', bg='#1e1e1e',
+                       activebackground='#1e1e1e', activeforeground='#c9d1d9',
+                       selectcolor='#0d1117').pack(side=tk.LEFT)
 
         # 预禁用配置行
         row4 = tk.Frame(cfg_frame, bg='#1e1e1e')
@@ -363,8 +376,9 @@ class AutoRunApp:
         profile_name = self._profile_var.get()
         profile_path = os.path.join(_ROOT, 'profiles', profile_name)
         cfg.load(window_title, profile_path, lang_path)
-        cfg.input_method = 'pc' if self._client_var.get() == 'PC客户端' else 'emulator'
-        self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}  客户端={self._client_var.get()}', 'ok')
+        cfg.input_method        = 'pc' if self._client_var.get() == 'PC客户端' else 'emulator'
+        cfg.local_stats_enabled = self._local_stats_var.get()
+        self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}  客户端={self._client_var.get()}  本地辅助={"开" if cfg.local_stats_enabled else "关"}', 'ok')
 
         # 读取预禁用目标（英雄名 → code）
         self._first_ban_codes  = [cb.get_code() for cb in self._first_ban_cb  if cb.get_code()]
@@ -543,6 +557,22 @@ class AutoRunApp:
 
             elif phase in ('result', 'levelup'):
                 self.log('战斗结算/晋级，轮询确认直到大厅', 'info')
+                # 记录本局战绩（draft_result 跨轮次存在 self 上）
+                if self._last_draft_result and self._last_draft_result.get('my_picks'):
+                    try:
+                        from battle_ai.perception import is_battle_victory
+                        from battle_ai.local_stats import save_game
+                        iswin = 1 if is_battle_victory(img) else 2
+                        save_game(self._last_draft_result, iswin,
+                                  self._last_finalban_code,
+                                  self._last_enemy_finalban_code)
+                        self.log(f'  [战绩] 已记录（{"胜" if iswin == 1 else "负"}）', 'ok')
+                    except Exception as _se:
+                        self.log(f'  [战绩] 记录失败: {_se}', 'warn')
+                    finally:
+                        self._last_draft_result        = None
+                        self._last_finalban_code       = None
+                        self._last_enemy_finalban_code = None
                 for _r in range(10):
                     img2 = capture()
                     if is_in_lobby(img2) or is_waiting_for_match(img2):
@@ -607,6 +637,8 @@ class AutoRunApp:
                     )
                     self.log('选秀阶段结束', 'ok')
                     draft_done = True
+                    self._last_draft_result  = draft_result
+                    self._last_finalban_code = None
                     # 检查迪埃妮是否在我方阵容，有则开启首回合强制烧魂
                     from battle_ai.draft import _code_to_name
                     from battle_ai.decision import check_force_first_burn_pick
@@ -620,7 +652,7 @@ class AutoRunApp:
             elif phase == 'postban':
                 if not postban_done:
                     self.log('选秀后禁用，模型推荐禁用', 'info')
-                    do_post_draft_ban(
+                    _banned_code = do_post_draft_ban(
                         enemy_picks=draft_result['enemy_picks'],
                         recommender=self._recommender,
                         my_picks=draft_result['my_picks'],
@@ -628,6 +660,19 @@ class AutoRunApp:
                         my_first=draft_result.get('my_first', True),
                         log_fn=lambda msg: self.log(msg, 'info'),
                     )
+                    self._last_finalban_code = _banned_code
+                    # 用模型从对手视角预测对手的 finalban（我方最危险的英雄）
+                    try:
+                        _erecs = self._recommender.recommend_finalban(
+                            my_picks=draft_result['enemy_picks'],
+                            enemy_picks=draft_result['my_picks'],
+                            banned=draft_result.get('banned', []),
+                            my_first=not draft_result.get('my_first', True),
+                            top_k=1,
+                        )
+                        self._last_enemy_finalban_code = _erecs[0]['hero_code'] if _erecs else None
+                    except Exception:
+                        self._last_enemy_finalban_code = None
                     postban_done = True
                 time.sleep(1.0)
 

@@ -42,7 +42,11 @@ class DraftRecommender:
                 dropout=checkpoint['config']['dropout'],
                 dim_feedforward=checkpoint['config']['dim_feedforward']
             )
-            self.model.load_state_dict(checkpoint['model_state_dict'])
+            try:
+                self.model.load_state_dict(checkpoint['model_state_dict'])
+            except RuntimeError:
+                self.model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+                print("W 旧版pth不含token_phase_embedding，已跳过（重训后更新pth生效）")
             self.model.to(self.device)
             self.model.eval()
             # 以 checkpoint 的 num_heroes 为准，防止 hero_list 文件和模型不同步
@@ -91,7 +95,8 @@ class DraftRecommender:
                 my_banned=my_picks,  # 在 preban 阶段，my_picks 存储的是我方已 Ban 的英雄
                 enemy_banned=enemy_picks,  # enemy_picks 存储的是敌方已 Ban 的英雄
                 all_banned=banned,
-                top_k=top_k
+                top_k=top_k,
+                my_first=my_first
             )
 
         # ========== Pick 阶段 ==========
@@ -102,12 +107,14 @@ class DraftRecommender:
         # 构建选秀序列
         hero_seq = []
         side_seq = []
+        phase_seq = []
 
         # 1. 添加 ban 位
         for hero in banned:
             if hero in self.hero_to_idx:
                 hero_seq.append(self.hero_to_idx[hero])
                 side_seq.append(3)  # 3 = ban 位
+                phase_seq.append(0)  # preban token_phase=0
 
         # 2. 按实际选秀顺序添加已选英雄
         # 确定先手方和后手方
@@ -134,7 +141,7 @@ class DraftRecommender:
 
         first_offset = 0
         second_offset = 0
-        for picks, count, side_id in picks_order:
+        for round_idx, (picks, count, side_id) in enumerate(picks_order):
             if picks is first_side_picks:
                 segment = first_side_picks[first_offset:first_offset + count]
                 first_offset += count
@@ -145,6 +152,7 @@ class DraftRecommender:
                 if hero in self.hero_to_idx:
                     hero_seq.append(self.hero_to_idx[hero])
                     side_seq.append(side_id)
+                    phase_seq.append(round_idx + 1)  # pick token_phase: 轮次1-6
 
         # 3. 阶段映射
         phase_map = {'preban': 0, 'pick1': 1, 'pick2': 2, 'pick3': 3, 'pick4': 4, 'pick5': 5, 'finalban': 6}
@@ -154,9 +162,11 @@ class DraftRecommender:
         used = set(my_picks + enemy_picks)
         available_mask = self.get_available_mask(banned, list(used))
 
-        # 5. 预测
+        # 5. 预测（prediction_side_id=1：永远从我方视角推荐）
         recommendations = self.model.predict_next_pick(
-            hero_seq, side_seq, phase_id, available_mask, top_k
+            hero_seq, side_seq, phase_id, available_mask, top_k,
+            token_phase_sequence=phase_seq, prediction_side_id=1,
+            is_first_pick=my_first
         )
 
         # 6. 转换结果
@@ -171,7 +181,7 @@ class DraftRecommender:
 
         return result
 
-    def recommend_preban(self, my_banned, enemy_banned, all_banned, top_k=10):
+    def recommend_preban(self, my_banned, enemy_banned, all_banned, top_k=10, my_first=True):
         """
         Preban 阶段推荐
 
@@ -212,6 +222,7 @@ class DraftRecommender:
 
         # 构建 side_seq（都是 Ban）
         side_seq = [3] * len(ban_seq)
+        phase_seq = [0] * len(ban_seq)  # preban token_phase=0
 
         # 阶段 ID（Preban）
         phase_id = 0  # Preban 对应 phase=0
@@ -219,9 +230,12 @@ class DraftRecommender:
         # 生成可选掩码（Preban 可以重复 Ban，所以不用掩码）
         available_mask = torch.ones(self.num_heroes, dtype=torch.float)
 
-        # 预测
+        # 预测（preban：当前是哪方的视角就传哪方）
+        is_fp = my_first if current_side == 'my' else not my_first
         recommendations = self.model.predict_next_pick(
-            ban_seq, side_seq, phase_id, available_mask, top_k
+            ban_seq, side_seq, phase_id, available_mask, top_k,
+            token_phase_sequence=phase_seq, prediction_side_id=side_id,
+            is_first_pick=is_fp
         )
 
         # 转换结果
@@ -274,11 +288,12 @@ class DraftRecommender:
         if self.model is None or not enemy_picks:
             return []
 
-        hero_seq, side_seq = [], []
+        hero_seq, side_seq, phase_seq = [], [], []
         for hero in banned:
             if hero in self.hero_to_idx:
                 hero_seq.append(self.hero_to_idx[hero])
                 side_seq.append(3)
+                phase_seq.append(0)
 
         if my_first:
             first_picks, second_picks = my_picks, enemy_picks
@@ -289,14 +304,14 @@ class DraftRecommender:
 
         first_offset = 0
         second_offset = 0
-        for picks, count, side_id in [
+        for round_idx, (picks, count, side_id) in enumerate([
             (first_picks,  1, first_id),
             (second_picks, 2, second_id),
             (first_picks,  2, first_id),
             (second_picks, 2, second_id),
             (first_picks,  2, first_id),
             (second_picks, 1, second_id),
-        ]:
+        ]):
             if picks is first_picks:
                 segment = first_picks[first_offset:first_offset + count]
                 first_offset += count
@@ -307,14 +322,19 @@ class DraftRecommender:
                 if hero in self.hero_to_idx:
                     hero_seq.append(self.hero_to_idx[hero])
                     side_seq.append(side_id)
+                    phase_seq.append(round_idx + 1)
 
         import torch as _torch
         available_mask = _torch.zeros(self.num_heroes, dtype=_torch.float)
-        for hero in enemy_picks:
+        for i, hero in enumerate(enemy_picks):
+            if i == 2:
+                continue  # 对方第3选不可被ban（游戏规则）
             if hero in self.hero_to_idx:
                 available_mask[self.hero_to_idx[hero]] = 1.0
 
-        recs = self.model.predict_next_pick(hero_seq, side_seq, 6, available_mask, top_k)
+        recs = self.model.predict_next_pick(hero_seq, side_seq, 6, available_mask, top_k,
+                                            token_phase_sequence=phase_seq, prediction_side_id=1,
+                                            is_first_pick=my_first)
         return [{'hero_code': self.idx_to_hero.get(r['hero_idx'], 'unknown'),
                  'probability': r['probability']} for r in recs]
 
