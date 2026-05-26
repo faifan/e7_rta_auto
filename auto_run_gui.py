@@ -704,7 +704,10 @@ class AutoRunApp:
                     self.log('战斗结束', 'ok')
                 except Exception as e:
                     self.log(f'战斗异常: {e}', 'error')
-                return
+                # 重置本轮标志，继续外层循环直接检测结算/大厅
+                # 避免 _run_loop 2s 空窗期漏掉结算画面
+                preban_done = draft_done = postban_done = battle_ready_done = force_burn_armed = False
+                draft_result = {'my_picks': [], 'enemy_picks': []}
 
             time.sleep(1.0)
 

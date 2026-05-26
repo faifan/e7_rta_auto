@@ -3,6 +3,7 @@ from battle_ai.executor import focus_game_window, do_aoe, click_burn
 from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
                                    read_turn_badge, read_char_name,
                                    is_soul_burn_available, is_soul_burn_activated)
+from battle_ai.lobby import is_in_lobby, is_waiting_for_match
 from battle_ai.decision import (
     get_candidates, on_s3_success, on_s2_success, on_s2_fail,
     reset_battle, get_soul_burn_skill, get_extra_turn_skill,
@@ -118,6 +119,10 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None):
                 _log(f"战斗结束！共行动 {turn} 次")
                 break
             continue
+
+        if is_in_lobby(img) or is_waiting_for_match(img):
+            _log(f"检测到大厅，战斗已结束（共行动 {turn} 次）")
+            break
 
         badge = read_turn_badge(img)
 
