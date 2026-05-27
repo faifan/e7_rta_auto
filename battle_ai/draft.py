@@ -834,14 +834,29 @@ def _ocr_region_robust(img, region) -> str:
     return ''
 
 
+_OCR_SIMILAR = {
+    '人': '入',  '入': '人',
+    '末': '未',  '未': '末',
+    '莉': '利',  '利': '莉',
+    '丽': '俪',  '俪': '丽',
+    '亚': '芒',  '芒': '亚',
+    '尔': '示',  '示': '尔',
+    '己': '已',  '已': '己',
+    '土': '士',  '士': '土',
+}
+
+
 def _name_matches(hero_name: str, ocr_text: str) -> bool:
-    """名字字符匹配：至少50%的字出现在OCR结果中。"""
+    """任意一个字（或其相似字）出现在OCR结果中即算匹配。"""
     if not ocr_text:
         return False
-    import math
-    min_match = max(1, math.ceil(len(hero_name) * 0.5))
-    matched = sum(1 for ch in hero_name if ch in ocr_text)
-    return matched >= min_match
+    for ch in hero_name:
+        if ch in ocr_text:
+            return True
+        for similar in _OCR_SIMILAR.get(ch, ''):
+            if similar in ocr_text:
+                return True
+    return False
 
 
 def _is_search_popup_open(img=None) -> bool:
@@ -885,7 +900,7 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         _log('  [搜索] 超时：弹窗未打开，放弃本轮')
         return '', [], []
 
-    click_at(*_search_input(), delay=1.0)
+    click_at(*_search_input(), delay=1.5)
 
     picked_code = ''
     seen_selected = []
@@ -910,7 +925,8 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
 
         _log(f'  [搜索] 搜索: {name!r}（{code}）')
 
-        click_at(*_search_clear_btn(), delay=0.5)
+        click_at(*_search_clear_btn(), delay=0.3)
+        click_at(*_search_input(), delay=0.8)
         try:
             from config_loader import cfg
             if cfg.is_loaded() and getattr(cfg, 'input_method', 'emulator') == 'pc':
@@ -932,7 +948,7 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         result_text = _ocr_region_robust(img, _search_result_region())
         _log(f'  [搜索] 结果OCR="{result_text}"')
 
-        if result_text.strip():
+        if _name_matches(name, result_text):
             click_at(*_first_result(), delay=2.0)
 
             img2 = capture()
