@@ -739,49 +739,45 @@ def _read_clipboard() -> str:
 
 
 def _type_unicode(text: str):
-    """用 SendInput KEYEVENTF_UNICODE 逐字发送Unicode，不依赖剪贴板。"""
+    """用 PostMessage WM_CHAR 逐字发送Unicode，不依赖 SendInput/KEYEVENTF_UNICODE。"""
     import ctypes
+    from battle_ai.executor import _find_main_hwnd, get_window_title
 
-    KEYEVENTF_UNICODE = 0x0004
-    KEYEVENTF_KEYUP   = 0x0002
-
-    class KEYBDINPUT(ctypes.Structure):
-        _fields_ = [
-            ('wVk',         ctypes.c_ushort),
-            ('wScan',       ctypes.c_ushort),
-            ('dwFlags',     ctypes.c_ulong),
-            ('time',        ctypes.c_ulong),
-            ('dwExtraInfo', ctypes.c_size_t),
-        ]
-
-    class MOUSEINPUT(ctypes.Structure):
-        _fields_ = [
-            ('dx',          ctypes.c_long),
-            ('dy',          ctypes.c_long),
-            ('mouseData',   ctypes.c_ulong),
-            ('dwFlags',     ctypes.c_ulong),
-            ('time',        ctypes.c_ulong),
-            ('dwExtraInfo', ctypes.c_size_t),
-        ]
-
-    class _INPUT_UNION(ctypes.Union):
-        _fields_ = [('ki', KEYBDINPUT), ('mi', MOUSEINPUT)]
-
-    class INPUT(ctypes.Structure):
-        _fields_ = [('type', ctypes.c_ulong), ('_u', _INPUT_UNION)]
-
+    WM_CHAR = 0x0102
+    hwnd = _find_main_hwnd(get_window_title())
+    if not hwnd:
+        return
     user32 = ctypes.windll.user32
-    sz = ctypes.sizeof(INPUT)
-
     for ch in text:
-        for flag in (KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP):
-            inp = INPUT()
-            inp.type       = 1
-            inp._u.ki.wVk   = 0
-            inp._u.ki.wScan = ord(ch)
-            inp._u.ki.dwFlags = flag
-            user32.SendInput(1, ctypes.byref(inp), sz)
+        user32.PostMessageW(hwnd, WM_CHAR, ord(ch), 0)
         time.sleep(0.05)
+
+# 旧方法备用（SendInput KEYEVENTF_UNICODE），如需切回取消注释并替换上方函数体）
+# def _type_unicode(text: str):
+#     import ctypes
+#     KEYEVENTF_UNICODE = 0x0004
+#     KEYEVENTF_KEYUP   = 0x0002
+#     class KEYBDINPUT(ctypes.Structure):
+#         _fields_ = [('wVk', ctypes.c_ushort), ('wScan', ctypes.c_ushort),
+#                     ('dwFlags', ctypes.c_ulong), ('time', ctypes.c_ulong),
+#                     ('dwExtraInfo', ctypes.c_size_t)]
+#     class MOUSEINPUT(ctypes.Structure):
+#         _fields_ = [('dx', ctypes.c_long), ('dy', ctypes.c_long),
+#                     ('mouseData', ctypes.c_ulong), ('dwFlags', ctypes.c_ulong),
+#                     ('time', ctypes.c_ulong), ('dwExtraInfo', ctypes.c_size_t)]
+#     class _INPUT_UNION(ctypes.Union):
+#         _fields_ = [('ki', KEYBDINPUT), ('mi', MOUSEINPUT)]
+#     class INPUT(ctypes.Structure):
+#         _fields_ = [('type', ctypes.c_ulong), ('_u', _INPUT_UNION)]
+#     user32 = ctypes.windll.user32
+#     sz = ctypes.sizeof(INPUT)
+#     for ch in text:
+#         for flag in (KEYEVENTF_UNICODE, KEYEVENTF_UNICODE | KEYEVENTF_KEYUP):
+#             inp = INPUT()
+#             inp.type = 1; inp._u.ki.wVk = 0
+#             inp._u.ki.wScan = ord(ch); inp._u.ki.dwFlags = flag
+#             user32.SendInput(1, ctypes.byref(inp), sz)
+#         time.sleep(0.05)
 
 
 def _paste_via_keybd_event():

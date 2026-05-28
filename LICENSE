@@ -1,27 +1,63 @@
+知识共享 署名-非商业性使用-相同方式共享 4.0 国际许可协议
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+
 Copyright (c) 2025 e7_rta_auto 作者
 
-本许可证约束本仓库所有源代码、模型文件、模板图片及相关资源（以下统称"本项目"）。
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【中文简要说明】
 
-【允许的行为】
-- 个人学习、研究、参考本项目代码
-- 在非商业前提下修改、运行本项目
-- 在非商业前提下基于本项目进行二次开发，且须在显著位置注明来源
+你可以：
+  · 共享 — 以任何媒介或格式复制、发行本项目
+  · 演绎 — 修改、转换或以本项目为基础进行创作
 
-【禁止的行为】
-- 将本项目或其任何部分用于商业产品、付费服务或任何以盈利为目的的场景
-- 将本项目代码直接或经修改后作为商品出售或提供有偿服务
-- 在未注明来源的情况下对外发布、分发本项目的修改版本
+但须遵守以下条件：
+  · 署名   — 必须注明原作者及来源，并提供本许可协议链接
+  · 非商业 — 不得将本项目用于任何商业目的或盈利场景
+  · 相同方式共享 — 若你修改或基于本项目创作，
+                   必须以本协议（CC BY-NC-SA 4.0）
+                   公开发布你的修改版源代码
 
-【免责声明】
-本项目按"现状"提供，不提供任何明示或暗示的担保。作者不对使用本项目造成的任何损失或法律责任承担责任。使用本项目即表示你同意上述条款。
+违反上述任一条件，你的授权自动终止。
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
----
+This work is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License.
 
-Copyright (c) 2025 e7_rta_auto author
+You are free to:
+  · Share  — copy and redistribute the material in any medium or format
+  · Adapt  — remix, transform, and build upon the material
 
-This project is licensed for personal learning and non-commercial use only.
+Under the following terms:
+  · Attribution      — You must give appropriate credit, provide a link
+                       to the license, and indicate if changes were made.
+  · NonCommercial    — You may not use the material for commercial
+                       purposes.
+  · ShareAlike       — If you remix, transform, or build upon the
+                       material, you must distribute your contributions
+                       under the same license (CC BY-NC-SA 4.0) and
+                       make the source code publicly available.
 
-- Permitted: personal study, research, non-commercial modification and redistribution with attribution
-- Prohibited: any commercial use, selling, or incorporating this code into commercial products or paid services
+No additional restrictions — You may not apply legal terms or
+technological measures that legally restrict others from doing
+anything the license permits.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+Notices:
+  You do not have to comply with the license for elements of the
+  material in the public domain or where your use is permitted by an
+  applicable exception or limitation.
+
+  No warranties are given. The license may not give you all of the
+  permissions necessary for your intended use. Other rights such as
+  publicity, privacy, or moral rights may limit how you use the material.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Full license text:
+https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+License deed (human-readable summary):
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED. THE AUTHOR SHALL NOT BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM USE OF THIS PROJECT.
