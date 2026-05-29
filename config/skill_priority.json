@@ -55,7 +55,7 @@
   "最后的骑士克劳乌": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
   "孤狼沛伊拉": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S1","extra_turn":"S3","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
   "司令官帕贝尔": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":"S3","burn_timing":"first","priority":["S3","S1"],"s3_skip":2},
-  "未知可能性雅卡泰丝": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
+  "未知可能性雅卡泰丝": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S2","S1"],"s3_skip":2},
   "小恶魔路雅": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S3","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
   "丽希": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S3","extra_turn":"S3","burn_timing":"first","priority":["S3","S1"],"s3_skip":2},
   "迪埃妮": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S3","burn_timing":"second","priority":["S3","S2","S1"],"s3_skip":2},
