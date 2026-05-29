@@ -66,9 +66,9 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn,
     _do_skill(skill, target_idx)
     time.sleep(_SKILL_POLL_SEC)
     _is_et_skill = (get_extra_turn_skill(char_name) == skill)
-    # S3释放后约1s卡顿，1.3s内badge仍是my_turn属正常，补等2s再判
+    # S3释放后动画较长，最多等4s（1.3+2.7）再判
     if read_turn_badge() == 'my_turn' and skill == 'S3':
-        time.sleep(1.0)
+        time.sleep(2.7)
     if read_turn_badge() != 'my_turn':
         if _is_et_skill:
             time.sleep(1.5)
