@@ -1081,13 +1081,14 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             _my_set = set(my_picks)
             _new_slots = list(range(len(enemy_picks), min(_exp_enemy, 5)))
             if _new_slots:
-                # 等对方槽位渲染完成（最多8秒），防止对方光速选人动画未结束
-                for _scan_retry in range(16):
+                # 等对方槽位渲染完成，最多等8秒（时间控制，兼容ADB截图延迟）
+                _scan_deadline = time.time() + 8.0
+                while time.time() < _scan_deadline:
                     img_scan = capture()
                     if all(identify_slot_debug(img_scan, cur_opp_slots[si], exclude=_my_set)[0] != 'unknown'
                            for si in _new_slots):
                         break
-                    time.sleep(0.5)
+                    time.sleep(0.3)
             else:
                 img_scan = capture()
             for slot_i in _new_slots:

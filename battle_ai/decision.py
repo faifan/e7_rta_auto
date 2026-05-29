@@ -23,6 +23,7 @@ _s3_skip:            dict[str, int]  = {}
 _s2_fail_streak:     dict[str, int]  = {}   # S2 连续无响应次数
 _s2_disabled:        dict[str, bool] = {}   # 满2次后本场禁用S2
 _pending_extra_turn: dict[str, str]  = {}   # char_key -> 'force_burn'|'soul_burn'|'normal'
+_first_action_done:  set[str]        = set() # 已完成首次行动（burn_timing用）
 
 # 首回合强制烧魂（队伍含特定角色时触发）
 _FORCE_FIRST_BURN_CHARS  = {'黑暗牧者迪埃妮'}
@@ -87,18 +88,15 @@ def _norm(name: str | None) -> str | None:
         return None
     name_s = zhconv.convert(name, 'zh-hans')
 
-    # 优先在己方已知阵容（5人）里用编辑距离匹配
-    # 编辑距离比 SequenceMatcher 更能处理多字同时认错的情况
-    # 阈值0.75：最多允许75%字符需要更改（3字名最多2字错）
+    # 队伍已知：OCR结果必定是队伍中某一个，找字符重叠比例最高的
     if _my_team_names:
-        best_key, best_ratio = None, 1.0
+        best_key, best_ratio = None, 0.0
         for team_name in _my_team_names:
-            truncated = name_s[:len(team_name)]
-            dist = _edit_dist(truncated, team_name)
-            ratio = dist / max(len(truncated), len(team_name))
-            if ratio < best_ratio:
+            overlap = sum(1 for c in team_name if c in name_s)
+            ratio = overlap / len(team_name)
+            if ratio > best_ratio:
                 best_ratio, best_key = ratio, team_name
-        if best_key and best_ratio <= 0.75:
+        if best_key and best_ratio > 0:   # 有任意重叠即取最优
             return _fuzzy_key(best_key) or best_key
 
     # fallback: 全局 fuzzy match
@@ -124,9 +122,63 @@ def _get_s3_skip_cfg(key: str | None) -> int:
     return _DEFAULT_S3_SKIP
 
 
-def team_has_soul_burn() -> bool:
-    """队伍里是否有配置了烧魂技能的角色。"""
-    return any(get_soul_burn_skill(name) for name in _my_team_names)
+def get_skill_type(char_name: str | None, skill: str) -> str:
+    """返回技能类型 'single' 或 'aoe'。未配置角色默认 'aoe'（不需要点目标，更安全）。"""
+    key = _norm(char_name)
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return entry.get(skill, {}).get('type', 'aoe')
+    return 'aoe'
+
+
+_DEAD_HP_RATIO = 0.02  # 血量比例低于此视为已死亡
+
+
+def get_attack_target(hp_ratios: list[float], enemy_has_yazuga: bool,
+                      front_row_indices: list[int]) -> int:
+    """根据血量和亚露嘉状态，返回应攻击的目标索引。"""
+    n = len(hp_ratios)
+    if n == 0:
+        return 0
+
+    alive = [i for i in range(n) if hp_ratios[i] > _DEAD_HP_RATIO]
+    if not alive:
+        return 0
+
+    all_full = all(hp_ratios[i] > 0.95 for i in alive)
+
+    if enemy_has_yazuga:
+        front_alive = [i for i in front_row_indices if i in alive]
+        # 前排还有人且不全满血 → 打前排血量最低的
+        if front_alive and not all(hp_ratios[i] > 0.95 for i in front_alive):
+            return min(front_alive, key=lambda i: hp_ratios[i])
+
+    if all_full:
+        return alive[0]  # 全满血随便打第一个存活的
+
+    return min(alive, key=lambda i: hp_ratios[i])
+
+
+def get_burn_timing(char_name: str | None) -> str | None:
+    """返回角色配置的烧魂时机：'first'|'second'|None。"""
+    key = _norm(char_name)
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return entry.get('burn_timing')
+    return None
+
+
+def is_first_action_done(char_name: str | None) -> bool:
+    key = _norm(char_name) or char_name
+    return key in _first_action_done if key else True
+
+
+def mark_first_action_done(char_name: str | None):
+    key = _norm(char_name) or char_name
+    if key:
+        _first_action_done.add(key)
 
 
 def get_extra_turn_skill(char_name: str | None) -> str | None:
@@ -151,21 +203,38 @@ def get_soul_burn_skill(char_name: str | None) -> str | None:
     return None
 
 
+def _is_s2_passive(key: str | None) -> bool:
+    """已录入配置且S2为被动，返回True。"""
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return entry.get('S2', {}).get('type') == 'passive'
+    return False
+
+
 def get_candidates(char_name: str | None) -> list[str]:
-    """返回本回合候选技能有序列表（过滤 s3_skip 和 s2_disabled）。"""
+    """返回本回合候选技能有序列表（过滤 s3_skip、s2_disabled、被动S2）。
+    未配置角色返回默认 ['S3','S2','S1']。
+    """
     key = _norm(char_name)
+
+    # 未配置：S3→S1，不试S2
+    if not key or key not in _db:
+        return ['S3', 'S1']
+
     priority = _get_priority(key)
 
-    skip = _s3_skip.get(key or char_name or '', 0)
+    skip = _s3_skip.get(key, 0)
     s3_ready = (skip == 0)
-    if not s3_ready and (key or char_name):
-        _s3_skip[key or char_name] = skip - 1
+    if not s3_ready:
+        _s3_skip[key] = skip - 1
 
-    s2_off = _s2_disabled.get(key or char_name or '', False)
+    s2_off     = _s2_disabled.get(key, False)
+    s2_passive = _is_s2_passive(key)
 
     return [s for s in priority
             if not (s == 'S3' and not s3_ready)
-            and not (s == 'S2' and s2_off)]
+            and not (s == 'S2' and (s2_off or s2_passive))]
 
 
 def on_s3_success(char_name: str | None):
@@ -224,6 +293,7 @@ def reset_battle():
     _s2_fail_streak.clear()
     _s2_disabled.clear()
     _pending_extra_turn.clear()
+    _first_action_done.clear()
     global _force_first_burn_armed, _force_first_burn_done
     _force_first_burn_armed = False
     _force_first_burn_done  = False

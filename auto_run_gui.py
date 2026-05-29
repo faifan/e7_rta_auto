@@ -512,9 +512,11 @@ class AutoRunApp:
         postban_done       = False
         battle_ready_done  = False
         force_burn_armed   = False
+        enemy_has_yazuga   = False
         draft_result     = {'my_picks': [], 'enemy_picks': []}
         prev_phase       = 'wait'
         wait_count       = 0
+        _wait_start      = None
 
         while not self._stop_event.is_set():
             img = capture()
@@ -534,6 +536,8 @@ class AutoRunApp:
 
             if phase == 'wait':
                 wait_count += 1
+                if _wait_start is None:
+                    _wait_start = time.time()
                 if wait_count == 1 and prev_phase == 'waiting':
                     # waiting→wait 第一帧：极可能是匹配确认界面，保存截图
                     self.log('检测到 waiting→wait 过渡，可能是匹配确认界面', 'warn')
@@ -545,6 +549,7 @@ class AutoRunApp:
                     self._ocr_debug_regions(img)
             else:
                 wait_count = 0
+                _wait_start = None
             prev_phase = phase
 
             h, w = img.shape[:2]
@@ -597,14 +602,17 @@ class AutoRunApp:
                 time.sleep(2.0)
 
             elif phase == 'wait':
-                # 前3秒内尝试点击匹配确认按钮（处理waiting→确认界面的情况）
+                elapsed = time.time() - _wait_start if _wait_start else 0
+                if elapsed >= 20:
+                    self.log('未识别超过20秒，自动停止', 'error')
+                    self._stop_event.set()
+                    return
+                self.log(f'  [wait] 未识别 {elapsed:.0f}s', 'warn')
                 if wait_count <= 3:
-                    self.log(f'  [wait#{wait_count}] 尝试点击匹配确认按钮...', 'warn')
                     click_match_accept()
                 elif wait_count % 8 == 4:
-                    # 长时间未识别，盲点亲密度关闭按钮（弹窗遮住胜利界面导致所有检测失败时的兜底）
-                    self.log(f'  [wait] 长时间未识别，尝试关闭可能的弹窗', 'warn')
                     dismiss_intimacy_dialog()
+                time.sleep(1.0)
 
             elif phase == 'preban':
                 if not preban_done:
@@ -674,6 +682,14 @@ class AutoRunApp:
                     except Exception:
                         self._last_enemy_finalban_code = None
                     postban_done = True
+                    # 判断对面剩余4人里是否有亚露嘉
+                    from battle_ai.draft import _code_to_name
+                    _remaining_enemy = [c for c in draft_result.get('enemy_picks', [])
+                                        if c != _banned_code]
+                    enemy_has_yazuga = any('亚露嘉' in _code_to_name.get(c, '')
+                                          for c in _remaining_enemy)
+                    if enemy_has_yazuga:
+                        self.log('  对方阵容含亚露嘉，战斗将优先打前排', 'warn')
                 time.sleep(1.0)
 
             elif phase == 'battle_ready':
@@ -700,13 +716,14 @@ class AutoRunApp:
                     run_battle(stop_event=self._stop_event,
                                log_fn=lambda msg: self.log(msg, 'info'),
                                arm_force_burn=force_burn_armed,
-                               my_team_names=my_team_names)
+                               my_team_names=my_team_names,
+                               enemy_has_yazuga=enemy_has_yazuga)
                     self.log('战斗结束', 'ok')
                 except Exception as e:
                     self.log(f'战斗异常: {e}', 'error')
                 # 重置本轮标志，继续外层循环直接检测结算/大厅
                 # 避免 _run_loop 2s 空窗期漏掉结算画面
-                preban_done = draft_done = postban_done = battle_ready_done = force_burn_armed = False
+                preban_done = draft_done = postban_done = battle_ready_done = force_burn_armed = enemy_has_yazuga = False
                 draft_result = {'my_picks': [], 'enemy_picks': []}
 
             time.sleep(1.0)

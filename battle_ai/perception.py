@@ -447,17 +447,35 @@ def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
     )
     return float(mask.sum()) / max(mask.size, 1)
 
+_BURN_WHITE_RATIO = 0.02  # 白色像素占比 >= 2% 认为有文字
+
+def _burn_has_text(img: np.ndarray, region: tuple) -> bool:
+    """检测 burn 区域是否有白色文字（阈值后白像素占比，无需额外依赖）。"""
+    try:
+        x1, y1, x2, y2 = region
+        crop = img[y1:y2, x1:x2]
+        gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+        _, thresh = cv2.threshold(gray, 180, 255, cv2.THRESH_BINARY)
+        ratio = thresh.sum() / (255 * thresh.size)
+        return ratio >= _BURN_WHITE_RATIO
+    except Exception:
+        return True  # 出错时不拦截
+
+
 def is_soul_burn_available(img: np.ndarray = None) -> bool:
     """
-    检测"Burn!"按钮是否可用（HSV蓝色检测）。
+    检测"Burn!"按钮是否可用（HSV蓝色 + 白色文字双重校验）。
     传入img时单次检测；不传时连拍4帧取最大值，覆盖完整闪烁周期。
     """
     region = _burn_btn_region()
     if img is not None:
-        return _check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
+        return (_check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
+                and _burn_has_text(img, region))
     start = time.time()
     while time.time() - start < 2.0:
-        if _check_blue_ratio(capture(), region) >= _BURN_AVAILABLE_RATIO:
+        frame = capture()
+        if (_check_blue_ratio(frame, region) >= _BURN_AVAILABLE_RATIO
+                and _burn_has_text(frame, region)):
             return True
         time.sleep(0.1)
     return False
@@ -484,6 +502,34 @@ def is_soul_burn_activated(img: np.ndarray = None) -> bool:
             return True
         time.sleep(0.15)
     return False
+
+
+# ── 敌方血量检测 ──────────────────────────────────────────────
+_DEAD_RATIO = 0.02   # 绿色占比低于此视为已死亡/空槽
+
+def _enemy_hp_regions() -> list:
+    p = _pcfg()
+    return [tuple(r) for r in p['enemy_hp_regions']] if 'enemy_hp_regions' in p else []
+
+
+def get_enemy_hp_ratios(img: np.ndarray) -> list[float]:
+    """返回4个敌方目标的血量比例（0.0~1.0，越高血越多）。
+    检测血条区域内绿色像素占比：满血≈高比例，空血≈0。
+    """
+    ratios = []
+    for x1, y1, x2, y2 in _enemy_hp_regions():
+        crop = img[y1:y2, x1:x2]
+        if crop.size == 0:
+            ratios.append(0.0)
+            continue
+        hsv = cv2.cvtColor(crop, cv2.COLOR_RGB2HSV)
+        green = (
+            (hsv[:, :, 0] >= 25) & (hsv[:, :, 0] <= 90) &
+            (hsv[:, :, 1] >= 80) &
+            (hsv[:, :, 2] >= 60)
+        )
+        ratios.append(float(green.sum()) / max(green.size, 1))
+    return ratios
 
 
 # ── 调试工具 ──────────────────────────────────────────────────
