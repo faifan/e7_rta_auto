@@ -155,16 +155,22 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
         _hp_ratios = get_enemy_hp_ratios(img)
         try:
             from config_loader import cfg
-            _front_row = cfg.section('executor').get('front_row_indices', [2, 3])
+            _front_row = cfg.section('executor').get('front_row_indices', [2])
         except Exception:
-            _front_row = [2, 3]
+            _front_row = [2]
+
+        _slot_labels = {0: '中间上', 1: '后排', 2: '前排', 3: '中间下'}
+        _hp_str = ' '.join(f"{_slot_labels.get(i, f'槽{i}')}={round(_hp_ratios[i], 2)}" for i in range(len(_hp_ratios)))
+        _log(f"[回合 {turn}] HP: {_hp_str} yazuga={enemy_has_yazuga}")
 
         def _tgt(skill: str) -> 'int | None':
             if get_skill_type(char_name, skill) != 'single':
                 return None
             if not _hp_ratios:
                 return 0
-            return get_attack_target(_hp_ratios, enemy_has_yazuga, _front_row)
+            idx = get_attack_target(_hp_ratios, enemy_has_yazuga, _front_row)
+            _log(f"[回合 {turn}] 单体技能={skill} → 目标={_slot_labels.get(idx, f'槽{idx}')} 点击坐标={__import__('battle_ai.perception', fromlist=['get_dynamic_click_pos']).get_dynamic_click_pos(idx)}")
+            return idx
         _et_skill     = get_extra_turn_skill(char_name)
         _et_available = bool(_et_skill and _et_skill in _candidates)
 

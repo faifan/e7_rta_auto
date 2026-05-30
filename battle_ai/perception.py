@@ -644,11 +644,13 @@ def get_enemy_hp_ratios(img: np.ndarray) -> list[float]:
             continue
         hsv = cv2.cvtColor(crop, cv2.COLOR_RGB2HSV)
         green = (
-            (hsv[:, :, 0] >= 25) & (hsv[:, :, 0] <= 90) &
+            (hsv[:, :, 0] >= 35) & (hsv[:, :, 0] <= 90) &
             (hsv[:, :, 1] >= 80) &
             (hsv[:, :, 2] >= 60)
         )
-        ratios.append(float(green.sum()) / max(green.size, 1))
+        width = x2 - x1
+        row_max = float(green.sum(axis=1).max()) if green.shape[0] > 0 else 0.0
+        ratios.append(row_max / max(width, 1))
     return ratios
 
 

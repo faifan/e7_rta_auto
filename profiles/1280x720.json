@@ -35,7 +35,7 @@
       [849, 396],
       [1013, 474]
     ],
-    "front_row_indices": [2, 3]
+    "front_row_indices": [2]
   },
   "perception": {
     "s1_check_pos": [
