@@ -274,9 +274,13 @@ def click_skill(skill: str):
 
 
 def click_target(idx: int):
-    enemy_pos = _get_enemy_pos()
-    assert 0 <= idx < len(enemy_pos), f"目标索引超范围: {idx}"
-    _click(*enemy_pos[idx])
+    from battle_ai.perception import get_dynamic_click_pos
+    pos = get_dynamic_click_pos(idx)
+    if pos is None:
+        enemy_pos = _get_enemy_pos()
+        pos = enemy_pos[idx] if 0 <= idx < len(enemy_pos) else None
+    if pos:
+        _click(*pos)
 
 
 def click_burn():
@@ -284,10 +288,12 @@ def click_burn():
 
 
 def do_action(skill: str, target_idx: int, burn: bool = False):
-    """单体技能：双击技能图标（临时方案，同AOE）"""
+    """单体技能：(可选)烧魂 → 单击技能按钮激活瞄准 → 单击目标"""
     if burn:
         click_burn()
-    do_aoe(skill)
+    click_skill(skill)
+    time.sleep(0.2)
+    click_target(target_idx)
 
 
 def do_aoe(skill: str, burn: bool = False):

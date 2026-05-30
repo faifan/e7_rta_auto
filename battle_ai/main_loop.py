@@ -3,7 +3,7 @@ from battle_ai.executor import focus_game_window, do_aoe, do_action, click_burn
 from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
                                    read_turn_badge, read_char_name,
                                    is_soul_burn_available,
-                                   get_enemy_hp_ratios)
+                                   get_enemy_hp_ratios, reset_hp_regions)
 from battle_ai.lobby import is_in_lobby, is_waiting_for_match
 from battle_ai.decision import (
     get_candidates, on_s3_success, on_s2_success, on_s2_fail,
@@ -89,6 +89,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
     offset = focus_game_window()
     _log(f"[focus] 窗口偏移={offset}")
     reset_battle()
+    reset_hp_regions()
     if my_team_names:
         set_my_team(my_team_names)
         _log(f"己方阵容：{my_team_names}")

@@ -1,6 +1,7 @@
 import ctypes
 import io
 import os
+import random
 import time
 import numpy as np
 import pyautogui
@@ -447,6 +448,41 @@ def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
     )
     return float(mask.sum()) / max(mask.size, 1)
 
+
+# ── 烧魂按钮模板NCC检测 ───────────────────────────────────────
+_BURN_TMPL_SIZE = (157, 62)
+_burn_templates: list = []
+
+def _load_burn_templates():
+    global _burn_templates
+    if _burn_templates:
+        return
+    tmpl_dir = os.path.join(_ROOT, 'templates')
+    for i in range(1, 4):
+        path = os.path.join(tmpl_dir, f'burn_btn_{i}.png')
+        if os.path.exists(path):
+            img = np.array(Image.open(path).convert('L'))
+            tmpl = cv2.resize(img, _BURN_TMPL_SIZE).astype(np.float32)
+            _burn_templates.append(tmpl)
+
+def _ncc_burn(a: np.ndarray, b: np.ndarray) -> float:
+    a, b = a.flatten() - a.mean(), b.flatten() - b.mean()
+    denom = np.sqrt((a**2).sum() * (b**2).sum())
+    return float(np.dot(a, b) / denom) if denom > 1e-6 else 0.0
+
+_BURN_NCC_THRESHOLD = 0.65
+
+def _check_burn_ncc(img: np.ndarray) -> bool:
+    """用模板NCC检测烧魂按钮是否亮起。"""
+    _load_burn_templates()
+    if not _burn_templates:
+        return False
+    x1, y1, x2, y2 = _burn_btn_region()
+    crop = img[y1:y2, x1:x2]
+    gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+    query = cv2.resize(gray, _BURN_TMPL_SIZE).astype(np.float32)
+    return max(_ncc_burn(query, t) for t in _burn_templates) >= _BURN_NCC_THRESHOLD
+
 _BURN_WHITE_RATIO = 0.02  # 白色像素占比 >= 2% 认为有文字
 
 def _burn_has_text(img: np.ndarray, region: tuple) -> bool:
@@ -464,18 +500,27 @@ def _burn_has_text(img: np.ndarray, region: tuple) -> bool:
 
 def is_soul_burn_available(img: np.ndarray = None) -> bool:
     """
-    检测"Burn!"按钮是否可用（HSV蓝色检测）。
-    传入img时单次检测；不传时连拍轮询直到检测到或超时。
+    检测"Burn!"按钮是否可用。
+    有模板时用NCC匹配；无模板降级到HSV蓝色检测。
+    传入img时单次检测；不传时3秒内轮询，命中即返回True。
     """
+    _load_burn_templates()
+    use_ncc = bool(_burn_templates)
     region = _burn_btn_region()
+
     if img is not None:
-        return _check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
-    start = time.time()
-    while time.time() - start < 2.0:
-        frame = capture()
-        if _check_blue_ratio(frame, region) >= _BURN_AVAILABLE_RATIO:
-            return True
-        time.sleep(0.1)
+        return _check_burn_ncc(img) if use_ncc else _check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
+
+    deadline = time.time() + 3.0
+    while time.time() < deadline:
+        try:
+            frame = capture()
+            hit = _check_burn_ncc(frame) if use_ncc else _check_blue_ratio(frame, region) >= _BURN_AVAILABLE_RATIO
+            if hit:
+                return True
+        except Exception:
+            pass
+        time.sleep(random.uniform(0.05, 0.35))
     return False
 
 def is_soul_burn_activated(img: np.ndarray = None) -> bool:
@@ -504,18 +549,95 @@ def is_soul_burn_activated(img: np.ndarray = None) -> bool:
 
 # ── 敌方血量检测 ──────────────────────────────────────────────
 _DEAD_RATIO = 0.02   # 绿色占比低于此视为已死亡/空槽
+_SCAN_HALF  = 100    # 血条Y扫描范围 ±100px
 
 def _enemy_hp_regions() -> list:
-    p = _pcfg()
-    return [tuple(r) for r in p['enemy_hp_regions']] if 'enemy_hp_regions' in p else []
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            p = cfg.section('executor')
+            return [tuple(r) for r in p['enemy_hp_regions']] if 'enemy_hp_regions' in p else []
+    except Exception:
+        pass
+    return []
 
+def _enemy_pos_list() -> list:
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            p = cfg.section('executor')
+            return [tuple(r) for r in p.get('enemy_pos', [])]
+    except Exception:
+        pass
+    return []
+
+# ── 集火：回合开始扫一次血条，全场复用缓存 ────────────────────
+_detected_hp_regions: list = []   # [(x1,y1,x2,y2)] 实际血条框
+_detected_click_pos:  list = []   # [(x,y)] 动态攻击点位
+
+def reset_hp_regions():
+    """每场战斗开始调用，清空缓存，让下一回合重新扫。"""
+    global _detected_hp_regions, _detected_click_pos
+    _detected_hp_regions = []
+    _detected_click_pos  = []
+
+def _find_bar_y_sat(img: np.ndarray, x1: int, x2: int, y_min: int, y_max: int):
+    """在扫描区域内按行统计绿色像素数，最多的行即血条所在行。
+    只统计 H 35~90（绿色），排除蓝色buff等干扰。
+    返回 (bar_y, green_ratio)；绿色像素不足返回 (None, 0.0)。
+    """
+    y_min = max(0, y_min);  y_max = min(img.shape[0], y_max)
+    x1    = max(0, x1);     x2    = min(img.shape[1], x2)
+    if y_min >= y_max or x1 >= x2:
+        return None, 0.0
+    hsv   = cv2.cvtColor(img[y_min:y_max, x1:x2], cv2.COLOR_RGB2HSV)
+    green = (
+        (hsv[:, :, 0] >= 35) & (hsv[:, :, 0] <= 90) &
+        (hsv[:, :, 1] >= 80) & (hsv[:, :, 2] >= 60)
+    ).astype(np.float32)
+    row_counts = green.sum(axis=1)
+    best_row   = int(row_counts.argmax())
+    best_count = float(row_counts[best_row])
+    width      = x2 - x1
+    if best_count < max(5, width * 0.05):
+        return None, best_count / max(width, 1)
+    return y_min + best_row, best_count / width
+
+def _detect_and_cache_hp(img: np.ndarray):
+    """扫描所有槽位血条并缓存坐标和动态攻击点位。"""
+    global _detected_hp_regions, _detected_click_pos
+    hp_regs  = _enemy_hp_regions()
+    pos_list = _enemy_pos_list()
+    bars, clicks = [], []
+    for i, (x1, y1, x2, y2) in enumerate(hp_regs):
+        yc    = (y1 + y2) // 2
+        bar_y, _ = _find_bar_y_sat(img, x1, x2, yc - _SCAN_HALF, yc + _SCAN_HALF)
+        if bar_y is not None:
+            bars.append((x1, bar_y - 4, x2, bar_y + 4))
+            if i < len(pos_list):
+                ex, ey = pos_list[i]
+                # 攻击点Y = 检测到的血条Y + (profile攻击Y - profile血条中心Y)
+                clicks.append((ex, int(bar_y + (ey - yc))))
+            else:
+                clicks.append(((x1 + x2) // 2, bar_y + 180))
+        else:
+            # 扫描失败，fallback到profile坐标
+            bars.append((x1, y1, x2, y2))
+            clicks.append(tuple(pos_list[i]) if i < len(pos_list) else ((x1+x2)//2, yc+180))
+    _detected_hp_regions = bars
+    _detected_click_pos  = clicks
+
+def get_dynamic_click_pos(idx: int) -> 'tuple | None':
+    """返回动态攻击点位；未缓存时返回None（调用方fallback到profile）。"""
+    return _detected_click_pos[idx] if 0 <= idx < len(_detected_click_pos) else None
 
 def get_enemy_hp_ratios(img: np.ndarray) -> list[float]:
     """返回4个敌方目标的血量比例（0.0~1.0，越高血越多）。
-    检测血条区域内绿色像素占比：满血≈高比例，空血≈0。
+    每回合重新扫描血条坐标（约2~5ms），同时更新动态攻击点位。
     """
+    _detect_and_cache_hp(img)
     ratios = []
-    for x1, y1, x2, y2 in _enemy_hp_regions():
+    for x1, y1, x2, y2 in _detected_hp_regions:
         crop = img[y1:y2, x1:x2]
         if crop.size == 0:
             ratios.append(0.0)

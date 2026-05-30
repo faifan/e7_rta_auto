@@ -146,18 +146,12 @@ def get_attack_target(hp_ratios: list[float], enemy_has_yazuga: bool,
     if not alive:
         return 0
 
-    all_full = all(hp_ratios[i] > 0.95 for i in alive)
+    if enemy_has_yazuga:
+        front_alive = [i for i in front_row_indices if i in alive]
+        if front_alive:
+            return min(front_alive, key=lambda i: hp_ratios[i])
 
-    # if enemy_has_yazuga:
-    #     front_alive = [i for i in front_row_indices if i in alive]
-    #     if front_alive:
-    #         return min(front_alive, key=lambda i: hp_ratios[i])
-
-    # if all_full:
-    #     return alive[0]
-
-    # return min(alive, key=lambda i: hp_ratios[i])
-    return 0
+    return min(alive, key=lambda i: hp_ratios[i])
 
 
 def get_burn_timing(char_name: str | None) -> str | None:
