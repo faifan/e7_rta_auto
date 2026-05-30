@@ -284,11 +284,10 @@ def click_burn():
 
 
 def do_action(skill: str, target_idx: int, burn: bool = False):
-    """单体技能：(可选)烧魂 → 点技能 → 点目标"""
+    """单体技能：双击技能图标（临时方案，同AOE）"""
     if burn:
         click_burn()
-    click_skill(skill)
-    click_target(target_idx)
+    do_aoe(skill)
 
 
 def do_aoe(skill: str, burn: bool = False):

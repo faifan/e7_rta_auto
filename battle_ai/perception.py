@@ -464,18 +464,16 @@ def _burn_has_text(img: np.ndarray, region: tuple) -> bool:
 
 def is_soul_burn_available(img: np.ndarray = None) -> bool:
     """
-    检测"Burn!"按钮是否可用（HSV蓝色 + 白色文字双重校验）。
-    传入img时单次检测；不传时连拍4帧取最大值，覆盖完整闪烁周期。
+    检测"Burn!"按钮是否可用（HSV蓝色检测）。
+    传入img时单次检测；不传时连拍轮询直到检测到或超时。
     """
     region = _burn_btn_region()
     if img is not None:
-        return (_check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
-                and _burn_has_text(img, region))
+        return _check_blue_ratio(img, region) >= _BURN_AVAILABLE_RATIO
     start = time.time()
     while time.time() - start < 2.0:
         frame = capture()
-        if (_check_blue_ratio(frame, region) >= _BURN_AVAILABLE_RATIO
-                and _burn_has_text(frame, region)):
+        if _check_blue_ratio(frame, region) >= _BURN_AVAILABLE_RATIO:
             return True
         time.sleep(0.1)
     return False

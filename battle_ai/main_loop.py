@@ -211,7 +211,9 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                 soul_burn_skill = get_soul_burn_skill(char_name)
                 burn_avail = _burn_avail
 
-                if soul_burn_skill and burn_avail:
+                if soul_burn_skill:
+                    if not burn_avail:
+                        _log(f"[回合 {turn}] 团队强制烧魂：检测未命中，保底强制尝试")
                     if _et_available and _et_skill != soul_burn_skill:
                         # Case A: 先放额外回合技能，额外回合里烧魂
                         _log(f"[回合 {turn}] 团队强制：先放{_et_skill}，额外回合烧{soul_burn_skill}")
@@ -233,7 +235,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                             if result == 'extra_turn':
                                 set_pending_extra_turn(char_name, 'normal')
                 else:
-                    _log(f"[回合 {turn}] 团队强制烧魂：{'无烧魂配置' if not soul_burn_skill else '按钮未检测到'}，走普通技能")
+                    _log(f"[回合 {turn}] 团队强制烧魂：无烧魂配置，走普通技能")
 
         # ── Step 2: 角色自身烧魂逻辑 ─────────────────────────────
         if not executed and not is_extra_turn:
@@ -244,28 +246,28 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                 mark_first_action_done(char_name)
                 if soul_burn_skill:
                     burn_avail = _burn_avail
-                    if burn_avail:
-                        if _et_available and _et_skill != soul_burn_skill:
-                            # 先额外回合，额外回合再烧
-                            _log(f"[回合 {turn}] 首次：先放{_et_skill}，额外回合烧{soul_burn_skill}")
-                            result = _execute_skill(_et_skill, char_name, turn, _log, target_idx=_tgt(_et_skill))
-                            if result != 'failed':
-                                if _et_skill == 'S3':
-                                    on_s3_success(char_name)
-                                if result == 'extra_turn':
-                                    set_pending_extra_turn(char_name, 'soul_burn')
-                            executed = (result != 'failed')
-                        else:
-                            # 直接烧（含 extra_turn==soul_burn 或无 extra_turn）
-                            _log(f"[回合 {turn}] 首次：烧魂→{soul_burn_skill}")
-                            result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
-                            if result != 'failed':
-                                if soul_burn_skill == 'S3':
-                                    on_s3_success(char_name)
-                                executed = True
-                                if result == 'extra_turn':
-                                    set_pending_extra_turn(char_name, 'normal')
-                    # burn不可用：fall through 到 Step3 普通技能
+                    if not burn_avail:
+                        _log(f"[回合 {turn}] 首次烧魂：检测未命中，保底强制尝试")
+                    if _et_available and _et_skill != soul_burn_skill:
+                        # 先额外回合，额外回合再烧
+                        _log(f"[回合 {turn}] 首次：先放{_et_skill}，额外回合烧{soul_burn_skill}")
+                        result = _execute_skill(_et_skill, char_name, turn, _log, target_idx=_tgt(_et_skill))
+                        if result != 'failed':
+                            if _et_skill == 'S3':
+                                on_s3_success(char_name)
+                            if result == 'extra_turn':
+                                set_pending_extra_turn(char_name, 'soul_burn')
+                        executed = (result != 'failed')
+                    else:
+                        # 直接烧（含 extra_turn==soul_burn 或无 extra_turn）
+                        _log(f"[回合 {turn}] 首次：烧魂→{soul_burn_skill}")
+                        result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
+                        if result != 'failed':
+                            if soul_burn_skill == 'S3':
+                                on_s3_success(char_name)
+                            executed = True
+                            if result == 'extra_turn':
+                                set_pending_extra_turn(char_name, 'normal')
 
             elif burn_timing == 'second' and not is_first_action_done(char_name):
                 # 首次行动不烧，标记后走 Step3
@@ -315,8 +317,13 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             else:
                 cands = _candidates
             _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={cands}")
+            _soul_burn = get_soul_burn_skill(char_name)
+            _s3_failed = False
             for skill in cands:
-                result = _execute_skill(skill, char_name, turn, _log, target_idx=_tgt(skill))
+                if _s3_failed and skill == _soul_burn and _burn_avail:
+                    result = _execute_with_burn(skill, char_name, turn, _log, target_idx=_tgt(skill))
+                else:
+                    result = _execute_skill(skill, char_name, turn, _log, target_idx=_tgt(skill))
                 if result != 'failed':
                     if skill == 'S3':
                         on_s3_success(char_name)
@@ -330,6 +337,8 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                         else:
                             set_pending_extra_turn(char_name, 'normal')
                     break
+                if skill == 'S3':
+                    _s3_failed = True
                 if skill == 'S2':
                     on_s2_fail(char_name)
 

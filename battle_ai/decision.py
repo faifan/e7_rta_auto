@@ -148,16 +148,16 @@ def get_attack_target(hp_ratios: list[float], enemy_has_yazuga: bool,
 
     all_full = all(hp_ratios[i] > 0.95 for i in alive)
 
-    if enemy_has_yazuga:
-        front_alive = [i for i in front_row_indices if i in alive]
-        # 前排还有人且不全满血 → 打前排血量最低的
-        if front_alive and not all(hp_ratios[i] > 0.95 for i in front_alive):
-            return min(front_alive, key=lambda i: hp_ratios[i])
+    # if enemy_has_yazuga:
+    #     front_alive = [i for i in front_row_indices if i in alive]
+    #     if front_alive:
+    #         return min(front_alive, key=lambda i: hp_ratios[i])
 
-    if all_full:
-        return alive[0]  # 全满血随便打第一个存活的
+    # if all_full:
+    #     return alive[0]
 
-    return min(alive, key=lambda i: hp_ratios[i])
+    # return min(alive, key=lambda i: hp_ratios[i])
+    return 0
 
 
 def get_burn_timing(char_name: str | None) -> str | None:
@@ -229,12 +229,12 @@ def get_candidates(char_name: str | None) -> list[str]:
     if not s3_ready:
         _s3_skip[key] = skip - 1
 
-    s2_off     = _s2_disabled.get(key, False)
+    # s2_off     = _s2_disabled.get(key, False)
     s2_passive = _is_s2_passive(key)
 
     return [s for s in priority
             if not (s == 'S3' and not s3_ready)
-            and not (s == 'S2' and (s2_off or s2_passive))]
+            and not (s == 'S2' and s2_passive)]
 
 
 def on_s3_success(char_name: str | None):
@@ -248,23 +248,25 @@ def on_s3_success(char_name: str | None):
 
 def on_s2_success(char_name: str | None):
     """S2成功：重置连续失败计数，允许继续使用。"""
-    key = _norm(char_name)
-    target = key or char_name
-    if target:
-        _s2_fail_streak.pop(target, None)
-        _s2_disabled.pop(target, None)
+    # key = _norm(char_name)
+    # target = key or char_name
+    # if target:
+    #     _s2_fail_streak.pop(target, None)
+    #     _s2_disabled.pop(target, None)
+    pass
 
 
 def on_s2_fail(char_name: str | None):
     """S2无响应：累计次数，连续失败2次后本场禁用。"""
-    key = _norm(char_name)
-    target = key or char_name
-    if not target:
-        return
-    streak = _s2_fail_streak.get(target, 0) + 1
-    _s2_fail_streak[target] = streak
-    if streak >= 2:
-        _s2_disabled[target] = True
+    # key = _norm(char_name)
+    # target = key or char_name
+    # if not target:
+    #     return
+    # streak = _s2_fail_streak.get(target, 0) + 1
+    # _s2_fail_streak[target] = streak
+    # if streak >= 2:
+    #     _s2_disabled[target] = True
+    pass
 
 
 # ── 额外回合 pending 状态 ─────────────────────────────────────
