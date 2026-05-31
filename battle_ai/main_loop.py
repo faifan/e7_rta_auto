@@ -2,7 +2,7 @@ import time
 from battle_ai.executor import focus_game_window, do_aoe, do_action, click_burn
 from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
                                    read_turn_badge, read_char_name,
-                                   is_soul_burn_available,
+                                   sample_soul_burn_available,
                                    get_enemy_hp_ratios, reset_hp_regions)
 from battle_ai.lobby import is_in_lobby, is_waiting_for_match
 from battle_ai.decision import (
@@ -123,15 +123,11 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             time.sleep(POLL_INTERVAL)
             continue
 
-        # 每回合等1秒让烧魂按钮出现后再采样
+        # 等按钮开始出现，然后多帧OR采样覆盖完整闪烁周期
         time.sleep(1.0)
-        img = capture()
+        _burn_avail = sample_soul_burn_available(duration=1.5, interval=0.12)
 
-        # 采样烧魂帧（在0.5s确认延迟前，覆盖首回合快速闪烁窗口）
-        _early_burn_avail = is_soul_burn_available(img)
-
-        # 0.5秒二次确认，防止过渡帧误触
-        time.sleep(0.5)
+        # 确认帧：防止过渡帧误触
         img = capture()
         if read_turn_badge(img) != 'my_turn':
             continue
@@ -145,8 +141,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
 
         executed = False
 
-        # 烧魂按钮可用性：早采样 + 确认帧，算一次全程复用
-        _burn_avail = _early_burn_avail or is_soul_burn_available(img)
+        _log(f"[回合 {turn}] 烧魂可用={_burn_avail}")
 
         # 候选列表只算一次（get_candidates 有副作用：递减 s3_skip）
         _candidates   = get_candidates(char_name)

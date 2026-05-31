@@ -523,6 +523,33 @@ def is_soul_burn_available(img: np.ndarray = None) -> bool:
         time.sleep(random.uniform(0.05, 0.35))
     return False
 
+def sample_soul_burn_available(duration: float = 1.5, interval: float = 0.12) -> bool:
+    """多帧OR采样检测烧魂按钮（专为闪烁场景设计）。
+    duration秒内每隔interval截一帧，任意帧命中即返回True。
+    有模板用NCC，无模板用HSV+白字双校验。
+    """
+    _load_burn_templates()
+    use_ncc = bool(_burn_templates)
+    region  = _burn_btn_region()
+    deadline = time.time() + duration
+    while time.time() < deadline:
+        try:
+            frame = capture()
+            if use_ncc:
+                hit = _check_burn_ncc(frame)
+            else:
+                hit = (_check_blue_ratio(frame, region) >= _BURN_AVAILABLE_RATIO
+                       and _burn_has_text(frame, region))
+            if hit:
+                return True
+        except Exception:
+            pass
+        remaining = deadline - time.time()
+        if remaining > 0:
+            time.sleep(min(interval, remaining))
+    return False
+
+
 def is_soul_burn_activated(img: np.ndarray = None) -> bool:
     """检测烧魂已激活（Cancel按钮出现）。
     无参数时：OCR裁Cancel区域识别文字，每0.15s一帧，最多3秒。
