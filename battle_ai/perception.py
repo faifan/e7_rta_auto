@@ -1,5 +1,6 @@
 import ctypes
 import io
+import json
 import os
 import random
 import time
@@ -679,6 +680,111 @@ def get_enemy_hp_ratios(img: np.ndarray) -> list[float]:
         row_max = float(green.sum(axis=1).max()) if green.shape[0] > 0 else 0.0
         ratios.append(row_max / max(width, 1))
     return ratios
+
+
+# ── 敌方站位识别 ──────────────────────────────────────────────
+_HERO_BODIES_DIR  = os.path.join(_ROOT, 'templates', 'hero_bodies')
+_SLOT_NAMES       = ['中间上', '后排', '前排', '中间下']
+_BODY_OFFSET_Y    = 0
+_BODY_H           = 180
+_BODY_W           = 160
+_BODY_TMPL_SIZE   = (160, 180)
+
+
+def _ncc(a: np.ndarray, b: np.ndarray) -> float:
+    a = a.flatten().astype(np.float32); b = b.flatten().astype(np.float32)
+    a -= a.mean(); b -= b.mean()
+    denom = np.sqrt((a ** 2).sum() * (b ** 2).sum())
+    return float(np.dot(a, b) / denom) if denom > 1e-6 else 0.0
+
+
+def _crop_body_for_slot(img: np.ndarray, hp_region: tuple) -> 'np.ndarray | None':
+    x1, y1, x2, y2 = hp_region
+    yc = (y1 + y2) // 2
+    cx = (x1 + x2) // 2
+    bar_y, _ = _find_bar_y_sat(img, x1, x2, yc - _SCAN_HALF, yc + _SCAN_HALF)
+    if bar_y is None:
+        bar_y = yc
+    by1 = max(0, bar_y + _BODY_OFFSET_Y)
+    by2 = min(img.shape[0], by1 + _BODY_H)
+    bx1 = max(0, cx - _BODY_W // 2)
+    bx2 = min(img.shape[1], cx + _BODY_W // 2)
+    if by2 <= by1 or bx2 <= bx1:
+        return None
+    crop = cv2.cvtColor(img[by1:by2, bx1:bx2], cv2.COLOR_RGB2GRAY)
+    return cv2.resize(crop, _BODY_TMPL_SIZE).astype(np.float32)
+
+
+def detect_enemy_positions(img: np.ndarray, enemy_codes: list,
+                           log_fn=None) -> dict:
+    """识别敌方4个槽位各是哪个英雄，只需在战斗开始时调用一次。
+
+    enemy_codes: 选秀阶段已知的4个敌方英雄 code（顺序无关）
+    返回: {slot_idx: code}，识别失败返回空字典，调用方应兜底到血条逻辑
+    """
+    _log = log_fn or (lambda m: None)
+    try:
+        # 过滤掉 unknown 和无效 code
+        valid_codes = [c for c in enemy_codes if c and c != 'unknown']
+
+        # 加载模板：只加载这几个英雄的 hero_bodies 模板
+        templates: dict = {}   # code -> np.ndarray (gray, resized)
+        for code in valid_codes:
+            path = os.path.join(_HERO_BODIES_DIR, f'{code}.png')
+            if not os.path.exists(path):
+                continue
+            try:
+                arr = np.array(Image.open(path).convert('L'))
+                templates[code] = cv2.resize(arr, _BODY_TMPL_SIZE).astype(np.float32)
+            except Exception:
+                pass
+
+        hp_regs = _enemy_hp_regions()
+        n = min(len(hp_regs), len(_SLOT_NAMES))
+        result: dict = {}
+        used_codes: set = set()
+
+        if not templates:
+            _log('[站位] 无可用模板，跳过识别')
+            return result
+
+        for i in range(n):
+            query = _crop_body_for_slot(img, hp_regs[i])
+            if query is None:
+                continue
+            remaining = {c: t for c, t in templates.items() if c not in used_codes}
+            if not remaining:
+                break
+            best_code = max(remaining, key=lambda c: _ncc(query, remaining[c]))
+            result[i] = best_code
+            used_codes.add(best_code)
+
+        # 排除法补全缺失槽位（只用有效 code，不填 unknown）
+        missing_slots = [i for i in range(n) if i not in result]
+        missing_codes = [c for c in valid_codes if c not in used_codes]
+        for i, code in zip(missing_slots, missing_codes):
+            result[i] = code
+
+        # 只出一次日志
+        try:
+            e7_path = os.path.join(_ROOT, 'e7.json')
+            with open(e7_path, encoding='utf-8') as f:
+                _code_to_name = {h['code']: h['name'] for h in json.load(f)}
+        except Exception:
+            _code_to_name = {}
+
+        parts = []
+        for i in range(n):
+            slot_name = _SLOT_NAMES[i] if i < len(_SLOT_NAMES) else f'槽{i}'
+            hero_name = _code_to_name.get(result.get(i, ''), result.get(i, '?'))
+            parts.append(f'{slot_name}: {hero_name}')
+        _log('[站位] ' + ' | '.join(parts))
+
+        return result
+
+    except Exception as e:
+        _log(f'[站位] 识别异常，跳过: {e}')
+        return {}
 
 
 # ── 开局规则识别 ──────────────────────────────────────────────

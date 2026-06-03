@@ -154,6 +154,28 @@ def get_attack_target(hp_ratios: list[float], enemy_has_yazuga: bool,
     return min(alive, key=lambda i: hp_ratios[i])
 
 
+def get_attack_targets_ordered(hp_ratios: list[float], enemy_has_yazuga: bool,
+                               front_row_indices: list[int]) -> list[int]:
+    """返回所有存活目标按攻击优先级排序（血量从低到高），保留亚露嘉前排优先规则。"""
+    n = len(hp_ratios)
+    if n == 0:
+        return [0]
+    alive = [i for i in range(n) if hp_ratios[i] > _DEAD_HP_RATIO]
+    if not alive:
+        return [0]
+    if enemy_has_yazuga:
+        front_alive = sorted(
+            [i for i in front_row_indices if i in alive],
+            key=lambda i: hp_ratios[i]
+        )
+        back_alive = sorted(
+            [i for i in alive if i not in front_row_indices],
+            key=lambda i: hp_ratios[i]
+        )
+        return front_alive + back_alive
+    return sorted(alive, key=lambda i: hp_ratios[i])
+
+
 def get_burn_timing(char_name: str | None) -> str | None:
     """返回角色配置的烧魂时机：'first'|'second'|None。"""
     key = _norm(char_name)

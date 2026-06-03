@@ -3,12 +3,16 @@ import json
 import os
 import zhconv
 
-_ROOT        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_CONFIG_FILE = os.path.join(_ROOT, 'config', 'hero_config.json')
-_RULES_FILE  = os.path.join(_ROOT, 'config', 'pick_rules.json')
+_ROOT             = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_CONFIG_FILE      = os.path.join(_ROOT, 'config', 'hero_config.json')
+_RULES_FILE       = os.path.join(_ROOT, 'config', 'pick_rules.json')
+_COUNTER_FILE     = os.path.join(_ROOT, 'config', 'counter_picks.json')
+_ATK_PRIORITY_FILE = os.path.join(_ROOT, 'config', 'attack_priority.json')
 
-_config = None
-_rules  = None
+_config        = None
+_rules         = None
+_counter       = None
+_atk_priority  = None
 
 
 def _load() -> dict:
@@ -40,10 +44,40 @@ def is_priority(name: str) -> bool:
     return target in {_n(n) for n in cfg.get('priority', [])}
 
 
+def get_fallback_picks() -> list:
+    """返回兜底候选角色名列表，当模型推荐全部被未练跳过时按序搜索选人。"""
+    cfg = _load()
+    return [_n(name) for name in cfg.get('fallback_picks', [])]
+
+
 def get_force_picks() -> set:
     """返回强制选取角色名集合（简体），不管模型推不推、只要可用就排第一候选。"""
     cfg = _load()
     return {_n(name) for name in cfg.get('force_pick', [])}
+
+
+def _load_counter() -> dict:
+    global _counter
+    if _counter is None:
+        if os.path.exists(_COUNTER_FILE):
+            with open(_COUNTER_FILE, encoding='utf-8') as f:
+                _counter = json.load(f)
+        else:
+            _counter = {}
+    return _counter
+
+
+def get_counter_picks(enemy_names: list) -> list:
+    """根据对手已选英雄名列表，返回应对位必选的我方英雄名列表（简体，保持配置顺序）。"""
+    cfg = _load_counter()
+    if not cfg:
+        return []
+    enemy_set = {_n(name) for name in enemy_names if name}
+    result = []
+    for enemy_name, my_name in cfg.items():
+        if _n(enemy_name) in enemy_set:
+            result.append(_n(my_name))
+    return result
 
 
 def _load_rules() -> list:
@@ -98,3 +132,41 @@ def get_excluded_by_picks(my_pick_codes: list, code_to_name: dict, log_fn=None) 
                     excluded.add(code)
 
     return excluded
+
+
+def _load_atk_priority() -> list:
+    global _atk_priority
+    if _atk_priority is None:
+        if os.path.exists(_ATK_PRIORITY_FILE):
+            with open(_ATK_PRIORITY_FILE, encoding='utf-8') as f:
+                _atk_priority = json.load(f)
+        else:
+            _atk_priority = []
+    return _atk_priority
+
+
+def get_attack_priority() -> list:
+    """返回攻击优先级英雄名列表（简体，按配置顺序）。"""
+    return [_n(name) for name in _load_atk_priority()]
+
+
+def resolve_attack_target(pos_map: dict, code_to_name: dict,
+                          alive_slots: 'list | None' = None) -> 'int | None':
+    """根据攻击优先级配置和站位识别结果，返回应攻击的槽位 index。
+
+    pos_map:     detect_enemy_positions 的返回值 {slot_idx: code}
+    code_to_name: code → 英雄名（简体）
+    alive_slots: 当前存活的槽位列表，None 表示全部存活
+    返回目标槽位 index，无匹配返回 None（调用方走默认逻辑）。
+    """
+    priority = get_attack_priority()
+    if not priority or not pos_map:
+        return None
+    valid = set(alive_slots) if alive_slots is not None else set(pos_map.keys())
+    for name in priority:
+        for slot, code in pos_map.items():
+            if slot not in valid:
+                continue
+            if _n(code_to_name.get(code, '')) == name:
+                return slot
+    return None

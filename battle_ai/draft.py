@@ -9,7 +9,7 @@ import cv2
 from PIL import Image
 from battle_ai.executor import click_at, type_text_chinese
 from battle_ai.perception import capture, is_battle_over, detect_opening_rule
-from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks, get_excluded_by_picks
+from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks, get_excluded_by_picks, get_fallback_picks, get_counter_picks
 
 _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEBUG_DIR = os.path.join(_ROOT, 'debug')
@@ -1142,21 +1142,22 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 opening_rule_id=opening_rule_id,
             )
 
-            # 未练跳过 + 优先前移
-            _front, _rest = [], []
+            # 未练跳过 + 优先加权（系数叠加，统一排序）
+            _PRIORITY_BOOST = 5.0
+            _filtered = []
             for _rec in recs:
                 _rname = _code_to_name.get(_rec['hero_code'], '')
                 if is_unpracticed(_rname):
                     log_fn(f"  → 跳过未练: {_rname}（{_rec['hero_code']}）")
                     continue
                 if is_priority(_rname):
-                    log_fn(f"  → 优先前移: {_rname}（{_rec['hero_code']}）")
-                    _front.append(_rec)
+                    log_fn(f"  → 优先加权: {_rname}（×{_PRIORITY_BOOST}）")
+                    _filtered.append(dict(_rec, probability=_rec['probability'] * _PRIORITY_BOOST))
                 else:
-                    _rest.append(_rec)
-            recs = _front + _rest
+                    _filtered.append(_rec)
+            recs = _filtered
 
-            # 本地统计调整（需开启开关且有足够数据才生效）
+            # 本地统计调整（在优先系数基础上叠加）
             try:
                 from config_loader import cfg as _cfg
                 if _cfg.is_loaded() and getattr(_cfg, 'local_stats_enabled', False):
@@ -1165,7 +1166,6 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                     if _adj:
                         recs = [dict(r, probability=r['probability'] *
                                     _adj.get(r['hero_code'], 1.0)) for r in recs]
-                        recs.sort(key=lambda r: r['probability'], reverse=True)
                         for r in recs:
                             if r['hero_code'] in _adj:
                                 log_fn(f"  [本地] {_code_to_name.get(r['hero_code'], r['hero_code'])}"
@@ -1173,9 +1173,23 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
             except Exception:
                 pass
 
+            # 优先系数 × 本地系数叠加后统一排序
+            recs.sort(key=lambda r: r['probability'], reverse=True)
+
             # 互斥组规则排除（只看我方已选）
             _rule_excluded = get_excluded_by_picks(my_picks, _code_to_name, log_fn=log_fn)
             unavailable_codes.update(_rule_excluded)
+
+            # 对位必选：检测对手已选，触发 counter_picks 配置
+            _counter_names = get_counter_picks([_code_to_name.get(c, '') for c in enemy_picks])
+            _counter_cands = []
+            for _ct_name in _counter_names:
+                for _fc, _fn in _code_to_name.items():
+                    if _fn == _ct_name and (_fc not in my_picks and _fc not in enemy_picks
+                                             and _fc not in banned and _fc not in unavailable_codes):
+                        _counter_cands.append((_fc, _fn, 1.0))
+                        log_fn(f"  → 对位必选: {_fn}（因对手已选对应英雄）")
+                        break
 
             # 强制选取：不管模型推不推，只要可用就排第一
             _force_names = get_force_picks()
@@ -1187,8 +1201,8 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                         _force_cands.append((_fc, _fn, 1.0))
                         log_fn(f"  → 强制选取: {_fn}（{_fc}）")
 
-            if recs or _force_cands:
-                candidates = list(prepend_candidates or []) + _force_cands
+            if recs or _force_cands or _counter_cands:
+                candidates = list(prepend_candidates or []) + _counter_cands + _force_cands
                 for rec in recs[:5]:
                     code = rec['hero_code']
                     if code in unavailable_codes:
@@ -1241,14 +1255,18 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                         my_picks=my_picks, enemy_picks=enemy_picks,
                         banned=banned, phase=phase, my_first=my_first, top_k=5,
                         opening_rule_id=opening_rule_id)
-                    _front_r, _rest_r = [], []
+                    _retry_filtered = []
                     for _rec in _retry_recs:
                         _rn = _code_to_name.get(_rec['hero_code'], '')
                         if is_unpracticed(_rn):
                             continue
-                        (_front_r if is_priority(_rn) else _rest_r).append(_rec)
+                        if is_priority(_rn):
+                            _retry_filtered.append(dict(_rec, probability=_rec['probability'] * _PRIORITY_BOOST))
+                        else:
+                            _retry_filtered.append(_rec)
+                    _retry_filtered.sort(key=lambda r: r['probability'], reverse=True)
                     _retry_cands = list(prepend_candidates or [])
-                    for _rec in (_front_r + _rest_r)[:5]:
+                    for _rec in _retry_filtered[:5]:
                         _c = _rec['hero_code']
                         if _c in unavailable_codes:
                             continue
@@ -1286,10 +1304,29 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                     log_fn(f"  ⚠ 搜索全部失败，以 {_code_to_name.get(placeholder, placeholder)} 占位")
                     my_picks.append(placeholder)
             else:
+                # 模型推荐全部在未练名单，尝试 fallback_picks 配置
+                _fallback_names = get_fallback_picks()
+                _fallback_cands = []
                 all_used = set(my_picks + enemy_picks + banned)
-                fallback = next((h for h in recommender.hero_list if h not in all_used), 'unknown')
-                log_fn(f"  ⚠ 无推荐可用，以 {_code_to_name.get(fallback, fallback)} 兜底占位")
-                my_picks.append(fallback)
+                for _fb_name in _fallback_names:
+                    for _fc, _fn in _code_to_name.items():
+                        if _fn == _fb_name and _fc not in all_used and _fc not in unavailable_codes:
+                            _fallback_cands.append((_fc, _fn, 0.5))
+                            break
+                if _fallback_cands:
+                    log_fn(f"  → 推荐全为未练，走兜底配置: {[c[1] for c in _fallback_cands]}")
+                    picked_code, _, _ = search_and_pick_candidates(_fallback_cands, log_fn=log_fn, unavailable=unavailable_codes)
+                    if picked_code:
+                        time.sleep(1.0)
+                        my_picks.append(picked_code)
+                    else:
+                        fallback = next((h for h in recommender.hero_list if h not in all_used), 'unknown')
+                        log_fn(f"  ⚠ 兜底配置搜索失败，以 {_code_to_name.get(fallback, fallback)} 占位")
+                        my_picks.append(fallback)
+                else:
+                    fallback = next((h for h in recommender.hero_list if h not in all_used), 'unknown')
+                    log_fn(f"  ⚠ 无推荐可用，以 {_code_to_name.get(fallback, fallback)} 兜底占位")
+                    my_picks.append(fallback)
 
             time.sleep(1.5)
 

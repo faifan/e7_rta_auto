@@ -3,7 +3,8 @@ from battle_ai.executor import focus_game_window, do_aoe, do_action, click_burn
 from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
                                    read_turn_badge, read_char_name,
                                    sample_soul_burn_available,
-                                   get_enemy_hp_ratios, reset_hp_regions)
+                                   get_enemy_hp_ratios, reset_hp_regions,
+                                   detect_enemy_positions)
 from battle_ai.lobby import is_in_lobby, is_waiting_for_match
 from battle_ai.decision import (
     get_candidates, on_s3_success, on_s2_success, on_s2_fail,
@@ -11,9 +12,11 @@ from battle_ai.decision import (
     is_force_first_burn_pending, mark_force_first_burn_done,
     arm_force_first_burn, set_my_team,
     get_burn_timing, is_first_action_done, mark_first_action_done,
-    get_skill_type, get_attack_target,
+    get_skill_type, get_attack_target, get_attack_targets_ordered,
     set_pending_extra_turn, get_pending_extra_turn, clear_pending_extra_turn,
 )
+from battle_ai.hero_config import resolve_attack_target
+from battle_ai.draft import _code_to_name
 
 POLL_INTERVAL       = 1.0   # 主循环轮询间隔（秒）
 _SKILL_POLL_SEC     = 1.3   # 普通技能：单次等待后检测徽章（需覆盖技能动画延迟）
@@ -83,7 +86,7 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn,
 
 
 def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
-        enemy_has_yazuga=False):
+        enemy_has_yazuga=False, enemy_codes=None):
     _log = log_fn or print
     _log("切换到游戏窗口...")
     offset = focus_game_window()
@@ -99,6 +102,8 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
     _log("开始战斗循环")
 
     turn = 0
+    _pos_map: dict = {}
+    _pos_detected = False
     while True:
         if stop_event and stop_event.is_set():
             _log("战斗AI：收到停止信号，退出")
@@ -139,6 +144,10 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             _log(f"战斗结束！共行动 {turn - 1} 次")
             break
 
+        if not _pos_detected:
+            _pos_map = detect_enemy_positions(img, enemy_codes or [], log_fn=_log)
+            _pos_detected = True
+
         executed = False
 
         _log(f"[回合 {turn}] 烧魂可用={_burn_avail}")
@@ -153,19 +162,44 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             _front_row = cfg.section('executor').get('front_row_indices', [2])
         except Exception:
             _front_row = [2]
+        _ordered_targets = get_attack_targets_ordered(_hp_ratios, enemy_has_yazuga, _front_row)
+        _priority_tgt = resolve_attack_target(_pos_map, _code_to_name, _ordered_targets)
+        if _priority_tgt is not None:
+            _ordered_targets = [_priority_tgt] + [t for t in _ordered_targets if t != _priority_tgt]
 
         _slot_labels = {0: '中间上', 1: '后排', 2: '前排', 3: '中间下'}
         _hp_str = ' '.join(f"{_slot_labels.get(i, f'槽{i}')}={round(_hp_ratios[i], 2)}" for i in range(len(_hp_ratios)))
         _log(f"[回合 {turn}] HP: {_hp_str} yazuga={enemy_has_yazuga}")
 
-        def _tgt(skill: str) -> 'int | None':
+        def _exec_skill_targets(skill: str) -> str:
+            """单体技能带换目标重试：每个目标最多2次，失败换下一个。AOE直接执行。"""
             if get_skill_type(char_name, skill) != 'single':
-                return None
-            if not _hp_ratios:
-                return 0
-            idx = get_attack_target(_hp_ratios, enemy_has_yazuga, _front_row)
-            _log(f"[回合 {turn}] 单体技能={skill} → 目标={_slot_labels.get(idx, f'槽{idx}')} 点击坐标={__import__('battle_ai.perception', fromlist=['get_dynamic_click_pos']).get_dynamic_click_pos(idx)}")
-            return idx
+                return _execute_skill(skill, char_name, turn, _log, target_idx=None)
+            for tgt in _ordered_targets:
+                _log(f"[回合 {turn}] 单体={skill} 目标={_slot_labels.get(tgt, f'槽{tgt}')}")
+                for attempt in range(2):
+                    result = _execute_skill(skill, char_name, turn, _log, target_idx=tgt)
+                    if result != 'failed':
+                        return result
+                    if attempt == 0:
+                        _log(f"[回合 {turn}] {skill} 目标={_slot_labels.get(tgt, f'槽{tgt}')} 未命中，重试")
+                _log(f"[回合 {turn}] {skill} 目标={_slot_labels.get(tgt, f'槽{tgt}')} 2次失败，换目标")
+            return 'failed'
+
+        def _exec_burn_targets(skill: str) -> str:
+            """烧魂单体带换目标重试：每个目标最多2次，失败换下一个。AOE直接执行。"""
+            if get_skill_type(char_name, skill) != 'single':
+                return _execute_with_burn(skill, char_name, turn, _log, target_idx=None)
+            for tgt in _ordered_targets:
+                _log(f"[回合 {turn}] 烧魂单体={skill} 目标={_slot_labels.get(tgt, f'槽{tgt}')}")
+                for attempt in range(2):
+                    result = _execute_with_burn(skill, char_name, turn, _log, target_idx=tgt)
+                    if result != 'failed':
+                        return result
+                    if attempt == 0:
+                        _log(f"[回合 {turn}] {skill}烧魂 目标={_slot_labels.get(tgt, f'槽{tgt}')} 未命中，重试")
+                _log(f"[回合 {turn}] {skill}烧魂 目标={_slot_labels.get(tgt, f'槽{tgt}')} 2次失败，换目标")
+            return 'failed'
         _et_skill     = get_extra_turn_skill(char_name)
         _et_available = bool(_et_skill and _et_skill in _candidates)
 
@@ -180,7 +214,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             burn_avail = _burn_avail
             if soul_burn_skill and burn_avail:
                 _log(f"[回合 {turn}] 额外回合·强制烧魂→{soul_burn_skill}")
-                result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
+                result = _exec_burn_targets(soul_burn_skill)
                 if result != 'failed':
                     if soul_burn_skill == 'S3':
                         on_s3_success(char_name)
@@ -196,7 +230,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                 burn_avail = _burn_avail
                 if burn_avail:
                     _log(f"[回合 {turn}] 额外回合·烧魂→{soul_burn_skill}")
-                    result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
+                    result = _exec_burn_targets(soul_burn_skill)
                     if result != 'failed':
                         if soul_burn_skill == 'S3':
                             on_s3_success(char_name)
@@ -213,13 +247,11 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                 soul_burn_skill = get_soul_burn_skill(char_name)
                 burn_avail = _burn_avail
 
-                if soul_burn_skill:
-                    if not burn_avail:
-                        _log(f"[回合 {turn}] 团队强制烧魂：检测未命中，保底强制尝试")
+                if soul_burn_skill and burn_avail:
                     if _et_available and _et_skill != soul_burn_skill:
                         # Case A: 先放额外回合技能，额外回合里烧魂
                         _log(f"[回合 {turn}] 团队强制：先放{_et_skill}，额外回合烧{soul_burn_skill}")
-                        result = _execute_skill(_et_skill, char_name, turn, _log, target_idx=_tgt(_et_skill))
+                        result = _exec_skill_targets(_et_skill)
                         if result != 'failed':
                             if _et_skill == 'S3':
                                 on_s3_success(char_name)
@@ -229,7 +261,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                     else:
                         # Case B/C: 直接烧魂（含 extra_turn==soul_burn 或无 extra_turn）
                         _log(f"[回合 {turn}] 团队强制：烧魂→{soul_burn_skill}")
-                        result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
+                        result = _exec_burn_targets(soul_burn_skill)
                         if result != 'failed':
                             if soul_burn_skill == 'S3':
                                 on_s3_success(char_name)
@@ -248,28 +280,27 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                 mark_first_action_done(char_name)
                 if soul_burn_skill:
                     burn_avail = _burn_avail
-                    if not burn_avail:
-                        _log(f"[回合 {turn}] 首次烧魂：检测未命中，保底强制尝试")
-                    if _et_available and _et_skill != soul_burn_skill:
-                        # 先额外回合，额外回合再烧
-                        _log(f"[回合 {turn}] 首次：先放{_et_skill}，额外回合烧{soul_burn_skill}")
-                        result = _execute_skill(_et_skill, char_name, turn, _log, target_idx=_tgt(_et_skill))
-                        if result != 'failed':
-                            if _et_skill == 'S3':
-                                on_s3_success(char_name)
-                            if result == 'extra_turn':
-                                set_pending_extra_turn(char_name, 'soul_burn')
-                        executed = (result != 'failed')
-                    else:
-                        # 直接烧（含 extra_turn==soul_burn 或无 extra_turn）
-                        _log(f"[回合 {turn}] 首次：烧魂→{soul_burn_skill}")
-                        result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
-                        if result != 'failed':
-                            if soul_burn_skill == 'S3':
-                                on_s3_success(char_name)
-                            executed = True
-                            if result == 'extra_turn':
-                                set_pending_extra_turn(char_name, 'normal')
+                    if burn_avail:
+                        if _et_available and _et_skill != soul_burn_skill:
+                            # 先额外回合，额外回合再烧
+                            _log(f"[回合 {turn}] 首次：先放{_et_skill}，额外回合烧{soul_burn_skill}")
+                            result = _exec_skill_targets(_et_skill)
+                            if result != 'failed':
+                                if _et_skill == 'S3':
+                                    on_s3_success(char_name)
+                                if result == 'extra_turn':
+                                    set_pending_extra_turn(char_name, 'soul_burn')
+                            executed = (result != 'failed')
+                        else:
+                            # 直接烧（含 extra_turn==soul_burn 或无 extra_turn）
+                            _log(f"[回合 {turn}] 首次：烧魂→{soul_burn_skill}")
+                            result = _exec_burn_targets(soul_burn_skill)
+                            if result != 'failed':
+                                if soul_burn_skill == 'S3':
+                                    on_s3_success(char_name)
+                                executed = True
+                                if result == 'extra_turn':
+                                    set_pending_extra_turn(char_name, 'normal')
 
             elif burn_timing == 'second' and not is_first_action_done(char_name):
                 # 首次行动不烧，标记后走 Step3
@@ -284,7 +315,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                     if _et_available and _et_skill == soul_burn_skill:
                         # extra_turn == soul_burn：直接烧（修复原BUG）
                         _log(f"[回合 {turn}] 烧魂→{soul_burn_skill}（强化+额外回合）")
-                        result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
+                        result = _exec_burn_targets(soul_burn_skill)
                         if result != 'failed':
                             if soul_burn_skill == 'S3':
                                 on_s3_success(char_name)
@@ -294,7 +325,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                     elif _et_available and _et_skill != soul_burn_skill:
                         # 先放额外回合技能，额外回合再烧
                         _log(f"[回合 {turn}] 先放{_et_skill}，额外回合烧{soul_burn_skill}")
-                        result = _execute_skill(_et_skill, char_name, turn, _log, target_idx=_tgt(_et_skill))
+                        result = _exec_skill_targets(_et_skill)
                         if result != 'failed':
                             if _et_skill == 'S3':
                                 on_s3_success(char_name)
@@ -304,7 +335,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                     else:
                         # 无额外回合竞争，直接烧
                         _log(f"[回合 {turn}] 烧魂→{soul_burn_skill}")
-                        result = _execute_with_burn(soul_burn_skill, char_name, turn, _log, target_idx=_tgt(soul_burn_skill))
+                        result = _exec_burn_targets(soul_burn_skill)
                         if result != 'failed':
                             if soul_burn_skill == 'S3':
                                 on_s3_success(char_name)
@@ -323,9 +354,9 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             _s3_failed = False
             for skill in cands:
                 if _s3_failed and skill == _soul_burn and _burn_avail:
-                    result = _execute_with_burn(skill, char_name, turn, _log, target_idx=_tgt(skill))
+                    result = _exec_burn_targets(skill)
                 else:
-                    result = _execute_skill(skill, char_name, turn, _log, target_idx=_tgt(skill))
+                    result = _exec_skill_targets(skill)
                 if result != 'failed':
                     if skill == 'S3':
                         on_s3_success(char_name)
@@ -347,5 +378,4 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
         # ── Step 4: 兜底 ─────────────────────────────────────────
         if not executed:
             _log(f"[回合 {turn}] 兜底S1")
-            _do_skill('S1', _tgt('S1'))
-            time.sleep(_SKILL_POLL_SEC)
+            _exec_skill_targets('S1')
