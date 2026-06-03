@@ -78,6 +78,7 @@
     ],
     "s1_patch": 20,
     "my_turn_brightness": 60,
+    "opening_rule_region": [112, 967, 314, 1019],
     "vic_region": [
       656,
       259,

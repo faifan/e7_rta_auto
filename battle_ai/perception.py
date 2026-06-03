@@ -709,7 +709,7 @@ def detect_opening_rule(img: np.ndarray = None) -> int:
     """
     if img is None:
         img = capture()
-    x1, y1, x2, y2 = _DEFAULT_OPENING_RULE_REGION
+    x1, y1, x2, y2 = tuple(_pcfg().get('opening_rule_region', _DEFAULT_OPENING_RULE_REGION))
     crop = img[y1:y2, x1:x2]
     buf = io.BytesIO()
     Image.fromarray(crop).save(buf, format='PNG')
