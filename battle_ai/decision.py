@@ -176,12 +176,22 @@ def mark_first_action_done(char_name: str | None):
 
 
 def get_extra_turn_skill(char_name: str | None) -> str | None:
-    """返回该角色配置的额外回合技能代号，未配置返回None。"""
+    """返回该角色配置的额外回合技能代号（普通释放即触发），未配置返回None。"""
     key = _norm(char_name)
     if key and key in _db:
         entry = _db[key]
         if isinstance(entry, dict):
             return entry.get('extra_turn')
+    return None
+
+
+def get_burn_extra_turn_skill(char_name: str | None) -> str | None:
+    """返回仅烧魂时触发额外回合的技能代号（burn_extra_turn字段），未配置返回None。"""
+    key = _norm(char_name)
+    if key and key in _db:
+        entry = _db[key]
+        if isinstance(entry, dict):
+            return entry.get('burn_extra_turn')
     return None
 
 

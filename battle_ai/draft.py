@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 from PIL import Image
 from battle_ai.executor import click_at, type_text_chinese
-from battle_ai.perception import capture, is_battle_over
+from battle_ai.perception import capture, is_battle_over, detect_opening_rule
 from battle_ai.hero_config import is_unpracticed, is_priority, get_force_picks, get_excluded_by_picks
 
 _ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1025,6 +1025,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
     unavailable_codes: set = set(banned)
 
     my_first_locked = (start_pos > 0)
+    opening_rule_id = 0  # preban结束后由detect_opening_rule()赋值，pick阶段开始时已知
 
     label = f"（先后手待OCR确认）" if not my_first_locked else f"（{'先手' if my_first else '后手'}，中途接入）"
     if start_pos > 0:
@@ -1049,6 +1050,9 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
 
             time.sleep(4.5)
             ban_frame = capture()
+            opening_rule_id = detect_opening_rule(ban_frame)
+            _rule_names = {1: '攻击', 2: '防御', 3: '抵抗', 4: '支援'}
+            log_fn(f'  开局规则: {_rule_names.get(opening_rule_id, "未知")}（ID={opening_rule_id}）')
             raw_bans, raw_ban_scores = identify_ban_slots(ban_frame)
             # raw_bans 顺序固定：[我方ban1, 我方ban2, 对手ban1, 对手ban2]
             my_preban    = [c for c in raw_bans[:2] if c != 'empty']
@@ -1135,6 +1139,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 phase=phase,
                 my_first=my_first,
                 top_k=5,
+                opening_rule_id=opening_rule_id,
             )
 
             # 未练跳过 + 优先前移
@@ -1234,7 +1239,8 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                     log_fn('  [重推] 对手信息已修正，重新推荐并搜索')
                     _retry_recs = recommender.recommend(
                         my_picks=my_picks, enemy_picks=enemy_picks,
-                        banned=banned, phase=phase, my_first=my_first, top_k=5)
+                        banned=banned, phase=phase, my_first=my_first, top_k=5,
+                        opening_rule_id=opening_rule_id)
                     _front_r, _rest_r = [], []
                     for _rec in _retry_recs:
                         _rn = _code_to_name.get(_rec['hero_code'], '')
@@ -1340,7 +1346,8 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
         else:
             score = 0.0
             fb = recommender.recommend(my_picks=my_picks, enemy_picks=enemy_picks,
-                                       banned=banned, phase='pick5', my_first=my_first, top_k=1)
+                                       banned=banned, phase='pick5', my_first=my_first, top_k=1,
+                                       opening_rule_id=opening_rule_id)
             code_new = fb[0]['hero_code'] if fb else next(
                 (h for h in recommender.hero_list if h not in all_used), 'unknown')
             log_fn(f'  [过渡] 对手槽{slot_i+1} 识别失败，占位: {_code_to_name.get(code_new, code_new)}')
@@ -1359,7 +1366,8 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
         else:
             score = 0.0
             fb = recommender.recommend(my_picks=my_picks, enemy_picks=enemy_picks,
-                                       banned=banned, phase='pick5', my_first=my_first, top_k=1)
+                                       banned=banned, phase='pick5', my_first=my_first, top_k=1,
+                                       opening_rule_id=opening_rule_id)
             all_used = set(my_picks + enemy_picks + banned)
             code_new = fb[0]['hero_code'] if fb else next(
                 (h for h in recommender.hero_list if h not in all_used), 'unknown')

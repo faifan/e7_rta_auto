@@ -7,7 +7,7 @@ from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
 from battle_ai.lobby import is_in_lobby, is_waiting_for_match
 from battle_ai.decision import (
     get_candidates, on_s3_success, on_s2_success, on_s2_fail,
-    reset_battle, get_soul_burn_skill, get_extra_turn_skill,
+    reset_battle, get_soul_burn_skill, get_extra_turn_skill, get_burn_extra_turn_skill,
     is_force_first_burn_pending, mark_force_first_burn_done,
     arm_force_first_burn, set_my_team,
     get_burn_timing, is_first_action_done, mark_first_action_done,
@@ -47,7 +47,7 @@ def _execute_with_burn(skill: str, char_name: str | None, turn: int, log_fn,
             log_fn(f"[回合 {turn}] {char_name or '?'} {skill} 烧魂 ✓")
             return 'success'
 
-    if get_extra_turn_skill(char_name) == skill:
+    if get_extra_turn_skill(char_name) == skill or get_burn_extra_turn_skill(char_name) == skill:
         log_fn(f"[回合 {turn}] {char_name or '?'} {skill} 烧魂 ✓ (额外回合)")
         return 'extra_turn'
 

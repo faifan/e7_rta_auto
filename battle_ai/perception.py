@@ -681,6 +681,51 @@ def get_enemy_hp_ratios(img: np.ndarray) -> list[float]:
     return ratios
 
 
+# ── 开局规则识别 ──────────────────────────────────────────────
+_DEFAULT_OPENING_RULE_REGION = (112, 967, 314, 1019)
+
+_OPENING_RULE_SIMILAR = {
+    '攻': {'攻', '玫', '收', '改'},
+    '击': {'击', '古', '占'},
+    '防': {'防', '坊', '妨'},
+    '御': {'御', '卸', '驭'},
+    '抵': {'抵', '柢', '底'},
+    '抗': {'抗', '杭', '坑'},
+    '支': {'支', '枝'},
+    '援': {'援', '缓', '暖'},
+}
+
+_OPENING_RULE_CHARS = {
+    1: ['攻', '击'],  # 攻击
+    2: ['防', '御'],  # 防御
+    3: ['抵', '抗'],  # 抵抗
+    4: ['支', '援'],  # 支援
+}
+
+
+def detect_opening_rule(img: np.ndarray = None) -> int:
+    """识别开局规则，返回 1-4；识别失败随机返回。
+    1=攻击, 2=防御, 3=抵抗, 4=支援。preban结束、先手锁定后调用。
+    """
+    if img is None:
+        img = capture()
+    x1, y1, x2, y2 = _DEFAULT_OPENING_RULE_REGION
+    crop = img[y1:y2, x1:x2]
+    buf = io.BytesIO()
+    Image.fromarray(crop).save(buf, format='PNG')
+    text = _get_ocr().classification(buf.getvalue())
+
+    text_chars = set(text)
+    for rule_id, key_chars in _OPENING_RULE_CHARS.items():
+        for kc in key_chars:
+            if text_chars & _OPENING_RULE_SIMILAR.get(kc, {kc}):
+                return rule_id
+
+    result = random.randint(1, 4)
+    print(f'[开局规则] OCR未识别("{text}")，随机返回 {result}')
+    return result
+
+
 # ── 调试工具 ──────────────────────────────────────────────────
 def debug_thresholds():
     img    = capture()

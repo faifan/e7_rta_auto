@@ -63,7 +63,7 @@ class DraftRecommender:
                 mask[self.hero_to_idx[hero]] = 0
         return mask
     
-    def recommend(self, my_picks, enemy_picks, banned, phase='pick1', my_first=True, top_k=10):
+    def recommend(self, my_picks, enemy_picks, banned, phase='pick1', my_first=True, top_k=10, opening_rule_id=0):
         """
         推荐下一个英雄选择
 
@@ -97,6 +97,7 @@ class DraftRecommender:
                 all_banned=banned,
                 top_k=top_k,
                 my_first=my_first
+                # preban阶段场地未知，固定传0
             )
 
         # ========== Pick 阶段 ==========
@@ -166,7 +167,7 @@ class DraftRecommender:
         recommendations = self.model.predict_next_pick(
             hero_seq, side_seq, phase_id, available_mask, top_k,
             token_phase_sequence=phase_seq, prediction_side_id=1,
-            is_first_pick=my_first
+            is_first_pick=my_first, opening_rule_id=opening_rule_id
         )
 
         # 6. 转换结果
@@ -235,7 +236,7 @@ class DraftRecommender:
         recommendations = self.model.predict_next_pick(
             ban_seq, side_seq, phase_id, available_mask, top_k,
             token_phase_sequence=phase_seq, prediction_side_id=side_id,
-            is_first_pick=is_fp
+            is_first_pick=is_fp, opening_rule_id=0
         )
 
         # 转换结果
@@ -283,7 +284,7 @@ class DraftRecommender:
         
         return result
 
-    def recommend_finalban(self, my_picks, enemy_picks, banned, my_first=True, top_k=5):
+    def recommend_finalban(self, my_picks, enemy_picks, banned, my_first=True, top_k=5, opening_rule_id=0):
         """选秀后禁用推荐：序列上下文完整，available_mask 只开放 enemy_picks。"""
         if self.model is None or not enemy_picks:
             return []
@@ -334,7 +335,7 @@ class DraftRecommender:
 
         recs = self.model.predict_next_pick(hero_seq, side_seq, 6, available_mask, top_k,
                                             token_phase_sequence=phase_seq, prediction_side_id=1,
-                                            is_first_pick=my_first)
+                                            is_first_pick=my_first, opening_rule_id=opening_rule_id)
         return [{'hero_code': self.idx_to_hero.get(r['hero_idx'], 'unknown'),
                  'probability': r['probability']} for r in recs]
 
