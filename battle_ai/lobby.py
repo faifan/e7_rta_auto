@@ -59,8 +59,10 @@ def _btn_region():
     return tuple(p['btn_region']) if 'btn_region' in p else _DEFAULT_BTN_REGION
 
 
-_lobby_tmpl   = None
-_waiting_tmpl = None
+_lobby_tmpl      = None
+_waiting_tmpl    = None
+_main_menu_tmpl  = None
+_arena_menu_tmpl = None
 
 
 def _crop_btn(img_path: str) -> np.ndarray:
@@ -78,10 +80,48 @@ def _crop_btn(img_path: str) -> np.ndarray:
     return cv2.resize(crop, _TMPL_SIZE).astype(np.float32)
 
 
+_DEFAULT_MAIN_MENU_REGION  = (1744, 563, 1861, 608)
+_DEFAULT_ARENA_MENU_REGION = (1113, 978, 1320, 1030)
+_DEFAULT_MAIN_MENU_ARENA_BTN  = (1802, 585)
+_DEFAULT_ARENA_MENU_WORLD_BTN = (1216, 1004)
+_MENU_TMPL_SIZE = (128, 46)
+
+def _main_menu_region():
+    p = _lcfg()
+    return tuple(p['main_menu_region']) if 'main_menu_region' in p else _DEFAULT_MAIN_MENU_REGION
+
+def _arena_menu_region():
+    p = _lcfg()
+    return tuple(p['arena_menu_region']) if 'arena_menu_region' in p else _DEFAULT_ARENA_MENU_REGION
+
+def _main_menu_arena_btn():
+    p = _lcfg()
+    return tuple(p['main_menu_arena_btn']) if 'main_menu_arena_btn' in p else _DEFAULT_MAIN_MENU_ARENA_BTN
+
+def _arena_menu_world_btn():
+    p = _lcfg()
+    return tuple(p['arena_menu_world_btn']) if 'arena_menu_world_btn' in p else _DEFAULT_ARENA_MENU_WORLD_BTN
+
+def _crop_region(img_path: str, region_fn) -> np.ndarray:
+    img = np.array(Image.open(img_path).convert('L'))
+    tmpl_h, tmpl_w = img.shape[:2]
+    x1, y1, x2, y2 = region_fn()
+    try:
+        from config_loader import cfg
+        r = cfg._profile.get('resolution', [1922, 1115]) if cfg.is_loaded() else [1922, 1115]
+        ew, eh = int(r[0]), int(r[1])
+    except Exception:
+        ew, eh = 1922, 1115
+    sx, sy = tmpl_w / ew, tmpl_h / eh
+    crop = img[int(y1*sy):int(y2*sy), int(x1*sx):int(x2*sx)]
+    return cv2.resize(crop, _MENU_TMPL_SIZE).astype(np.float32)
+
 def _load_templates():
-    global _lobby_tmpl, _waiting_tmpl
-    _lobby_tmpl   = _crop_btn(os.path.join(_TMPL_DIR, 'lobby_apply.png'))
-    _waiting_tmpl = _crop_btn(os.path.join(_TMPL_DIR, 'lobby_waiting.png'))
+    global _lobby_tmpl, _waiting_tmpl, _main_menu_tmpl, _arena_menu_tmpl
+    _lobby_tmpl      = _crop_btn(os.path.join(_TMPL_DIR, 'lobby_apply.png'))
+    _waiting_tmpl    = _crop_btn(os.path.join(_TMPL_DIR, 'lobby_waiting.png'))
+    _main_menu_tmpl  = _crop_region(os.path.join(_TMPL_DIR, 'main_menu.png'),  _main_menu_region)
+    _arena_menu_tmpl = _crop_region(os.path.join(_TMPL_DIR, 'arena_menu.png'), _arena_menu_region)
 
 
 def _ncc(a: np.ndarray, b: np.ndarray) -> float:
@@ -96,6 +136,38 @@ def _btn_ncc(img: np.ndarray, tmpl: np.ndarray) -> float:
     gray  = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _TMPL_SIZE).astype(np.float32)
     return _ncc(query, tmpl)
+
+
+def _region_ncc(img: np.ndarray, region_fn, tmpl: np.ndarray) -> float:
+    x1, y1, x2, y2 = region_fn()
+    crop  = img[y1:y2, x1:x2]
+    gray  = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+    query = cv2.resize(gray, _MENU_TMPL_SIZE).astype(np.float32)
+    return _ncc(query, tmpl)
+
+
+def is_in_main_menu(img: np.ndarray = None) -> bool:
+    if _main_menu_tmpl is None:
+        _load_templates()
+    if img is None:
+        img = capture()
+    return _region_ncc(img, _main_menu_region, _main_menu_tmpl) >= 0.5
+
+
+def is_in_arena_menu(img: np.ndarray = None) -> bool:
+    if _arena_menu_tmpl is None:
+        _load_templates()
+    if img is None:
+        img = capture()
+    return _region_ncc(img, _arena_menu_region, _arena_menu_tmpl) >= 0.5
+
+
+def click_arena_btn():
+    click_at(*_main_menu_arena_btn(), delay=1.5)
+
+
+def click_world_arena_btn():
+    click_at(*_arena_menu_world_btn(), delay=2.0)
 
 
 def is_in_lobby(img: np.ndarray = None) -> bool:
