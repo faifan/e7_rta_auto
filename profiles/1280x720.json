@@ -422,6 +422,10 @@
     ]
   },
   "lobby": {
+    "main_menu_region":       [1163, 375, 1241, 405],
+    "main_menu_arena_btn":    [1201, 390],
+    "arena_menu_region":      [742, 652, 880, 687],
+    "arena_menu_world_btn":   [811, 669],
     "apply_btn": [
       863,
       652

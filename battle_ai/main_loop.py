@@ -1,4 +1,21 @@
 import time
+import os
+from PIL import Image as _PILImage
+
+# ── 收集战斗站位数据：1=开启  0=关闭 ─────────────────────────
+_COLLECT_BATTLE_CAPS = 1
+
+_CAPS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                         'data', 'battle_caps')
+
+def _save_battle_cap(img, turn: int):
+    try:
+        os.makedirs(_CAPS_DIR, exist_ok=True)
+        ts = time.strftime('%Y%m%d_%H%M%S')
+        _PILImage.fromarray(img).save(os.path.join(_CAPS_DIR, f'{ts}_t{turn}.png'))
+    except Exception:
+        pass
+
 from battle_ai.executor import focus_game_window, do_aoe, do_action, click_burn
 from battle_ai.perception import (capture, is_battle_over, is_intimacy_levelup,
                                    read_turn_badge, read_char_name,
@@ -138,6 +155,8 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
             continue
 
         turn += 1
+        if _COLLECT_BATTLE_CAPS and turn == 1:
+            _save_battle_cap(img, turn)
         char_name = read_char_name(img)
 
         if is_battle_over(img) or is_intimacy_levelup(img):

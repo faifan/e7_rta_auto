@@ -155,8 +155,8 @@ def _load_hero_names():
 _DRAFT_CARDS_DIR = os.path.join(_ROOT, 'templates', 'draft_cards')
 _TMPL_BASE       = os.path.join(_ROOT, 'templates')
 _TMPL_SIZE       = (96, 56)
-_NCC_THRESHOLD   = 0.5
-_NCC_GAP         = 0.02
+_NCC_THRESHOLD   = 0.35
+_NCC_GAP         = 0.03
 
 _draft_templates: dict = {}
 
