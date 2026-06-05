@@ -260,6 +260,24 @@ def is_intimacy_levelup(img: np.ndarray = None) -> bool:
     return '亲密' in text
 
 
+# ── 签到奖励弹窗检测 ────────────────────────────────────────────
+_DEFAULT_SIGNIN_REGION = (370, 70, 990, 160)   # "梅露铃的签到奖励"标题区域
+
+def _signin_region():
+    p = _pcfg()
+    return tuple(p['signin_region']) if 'signin_region' in p else _DEFAULT_SIGNIN_REGION
+
+def is_signin_reward(img: np.ndarray = None) -> bool:
+    if img is None:
+        img = capture()
+    x1, y1, x2, y2 = _signin_region()
+    crop = img[y1:y2, x1:x2]
+    buf  = io.BytesIO()
+    Image.fromarray(crop).save(buf, format='PNG')
+    text = _get_ocr().classification(buf.getvalue())
+    return '签到' in text
+
+
 # ── 段位结算检测 ──────────────────────────────────────────────
 _DEFAULT_LEVELUP_BTN = (785, 978, 1138, 1069)
 

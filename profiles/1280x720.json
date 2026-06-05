@@ -121,7 +121,8 @@
       623,
       791,
       704
-    ]
+    ],
+    "signin_region": [247, 47, 660, 107]
   },
   "draft": {
     "search_open": [
@@ -444,6 +445,7 @@
     ],
     "intimacy_region": [612, 137, 907, 195],
     "intimacy_dismiss_btn": [750, 559],
+    "signin_confirm_btn":   [1073, 665],
     "btn_region": [
       747,
       611,

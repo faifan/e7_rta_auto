@@ -80,6 +80,13 @@ def _crop_btn(img_path: str) -> np.ndarray:
     return cv2.resize(crop, _TMPL_SIZE).astype(np.float32)
 
 
+_DEFAULT_SIGNIN_CONFIRM_BTN = (1609, 998)
+
+def _signin_confirm_btn():
+    p = _lcfg()
+    return tuple(p['signin_confirm_btn']) if 'signin_confirm_btn' in p else _DEFAULT_SIGNIN_CONFIRM_BTN
+
+
 _DEFAULT_MAIN_MENU_REGION  = (1744, 563, 1861, 608)
 _DEFAULT_ARENA_MENU_REGION = (1113, 978, 1320, 1030)
 _DEFAULT_MAIN_MENU_ARENA_BTN  = (1802, 585)
@@ -144,6 +151,11 @@ def _region_ncc(img: np.ndarray, region_fn, tmpl: np.ndarray) -> float:
     gray  = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _MENU_TMPL_SIZE).astype(np.float32)
     return _ncc(query, tmpl)
+
+
+def dismiss_signin_reward():
+    """关闭签到奖励弹窗，点击确认按钮。"""
+    click_at(*_signin_confirm_btn(), delay=1.0)
 
 
 def is_in_main_menu(img: np.ndarray = None) -> bool:

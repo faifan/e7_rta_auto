@@ -12,7 +12,6 @@ import queue
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
-
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
@@ -492,13 +491,14 @@ class AutoRunApp:
 
     def _run_one_round(self):
         from battle_ai.executor   import focus_game_window, click_at
-        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen, is_intimacy_levelup
+        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen, is_intimacy_levelup, is_signin_reward
         from battle_ai.lobby      import (confirm_battle_result, confirm_levelup_result,
                                           apply_for_battle, click_match_accept,
                                           click_result_unknown, dismiss_intimacy_dialog,
                                           is_in_lobby, is_waiting_for_match,
                                           is_in_main_menu, is_in_arena_menu,
-                                          click_arena_btn, click_world_arena_btn)
+                                          click_arena_btn, click_world_arena_btn,
+                                          dismiss_signin_reward)
         from battle_ai.preban     import is_in_preban, do_preban, do_smart_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
                                           is_in_draft,
@@ -526,6 +526,7 @@ class AutoRunApp:
             img = capture()
 
             if   is_intimacy_levelup(img):         phase = 'intimacy'
+            elif is_signin_reward(img):            phase = 'signin_reward'
             elif is_battle_over(img):              phase = 'result'
             elif is_levelup_screen(img):           phase = 'levelup'
             elif is_in_main_menu(img):             phase = 'main_menu'
@@ -566,6 +567,10 @@ class AutoRunApp:
                 dismiss_intimacy_dialog()
                 # 弹窗消失后下一轮循环可正常检测底层胜利界面
 
+            elif phase == 'signin_reward':
+                self.log('签到奖励弹窗，点击确认', 'info')
+                dismiss_signin_reward()
+
             elif phase in ('result', 'levelup'):
                 self.log('战斗结算/晋级，轮询确认直到大厅', 'info')
                 # 记录本局战绩（draft_result 跨轮次存在 self 上）
@@ -592,6 +597,10 @@ class AutoRunApp:
                     if is_intimacy_levelup(img2):
                         self.log('  结算中检测到亲密度弹窗，先关闭', 'info')
                         dismiss_intimacy_dialog()
+                        continue
+                    if is_signin_reward(img2):
+                        self.log('  结算中检测到签到奖励弹窗，点击确认', 'info')
+                        dismiss_signin_reward()
                         continue
                     self.log(f'  结算第{_r + 1}轮', 'info')
                     confirm_battle_result()
