@@ -491,14 +491,15 @@ class AutoRunApp:
 
     def _run_one_round(self):
         from battle_ai.executor   import focus_game_window, click_at
-        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen, is_intimacy_levelup, is_signin_reward
+        from battle_ai.perception import capture, is_battle_over, is_in_battle, is_levelup_screen, is_intimacy_levelup, is_signin_reward, is_in_summon_page
         from battle_ai.lobby      import (confirm_battle_result, confirm_levelup_result,
                                           apply_for_battle, click_match_accept,
                                           click_result_unknown, dismiss_intimacy_dialog,
                                           is_in_lobby, is_waiting_for_match,
                                           is_in_main_menu, is_in_arena_menu,
                                           click_arena_btn, click_world_arena_btn,
-                                          dismiss_signin_reward)
+                                          dismiss_signin_reward,
+                                          click_summon_back)
         from battle_ai.preban     import is_in_preban, do_preban, do_smart_preban
         from battle_ai.draft      import (run_draft, scan_existing_picks,
                                           is_in_draft,
@@ -531,6 +532,7 @@ class AutoRunApp:
             elif is_levelup_screen(img):           phase = 'levelup'
             elif is_in_main_menu(img):             phase = 'main_menu'
             elif is_in_arena_menu(img):            phase = 'arena_menu'
+            elif is_in_summon_page(img):           phase = 'summon_page'
             elif is_in_lobby(img):                 phase = 'lobby'
             elif is_in_preban(img):                phase = 'preban'
             elif is_waiting_for_match(img):        phase = 'waiting'
@@ -601,7 +603,7 @@ class AutoRunApp:
                     if is_signin_reward(img2):
                         self.log('  结算中检测到签到奖励弹窗，点击确认', 'info')
                         dismiss_signin_reward()
-                        continue
+                        break
                     self.log(f'  结算第{_r + 1}轮', 'info')
                     confirm_battle_result()
                     confirm_levelup_result()
@@ -615,6 +617,10 @@ class AutoRunApp:
             elif phase == 'arena_menu':
                 self.log('竞技场界面，点击世界竞技场', 'info')
                 click_world_arena_btn()
+
+            elif phase == 'summon_page':
+                self.log('召唤页面，点击返回', 'info')
+                click_summon_back()
 
             elif phase == 'lobby':
                 self.log('大厅，点击申请战斗', 'info')

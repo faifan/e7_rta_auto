@@ -278,6 +278,24 @@ def is_signin_reward(img: np.ndarray = None) -> bool:
     return '签到' in text
 
 
+# ── 召唤页面检测 ────────────────────────────────────────────────
+_DEFAULT_SUMMON_REGION = (93, 26, 185, 75)   # 左上角"← 召唤"返回标题区域
+
+def _summon_region():
+    p = _pcfg()
+    return tuple(p['summon_region']) if 'summon_region' in p else _DEFAULT_SUMMON_REGION
+
+def is_in_summon_page(img: np.ndarray = None) -> bool:
+    if img is None:
+        img = capture()
+    x1, y1, x2, y2 = _summon_region()
+    crop = img[y1:y2, x1:x2]
+    buf  = io.BytesIO()
+    Image.fromarray(crop).save(buf, format='PNG')
+    text = _get_ocr().classification(buf.getvalue())
+    return '召唤' in text
+
+
 # ── 段位结算检测 ──────────────────────────────────────────────
 _DEFAULT_LEVELUP_BTN = (785, 978, 1138, 1069)
 

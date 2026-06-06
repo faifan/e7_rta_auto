@@ -158,6 +158,17 @@ def dismiss_signin_reward():
     click_at(*_signin_confirm_btn(), delay=1.0)
 
 
+_DEFAULT_SUMMON_BACK_BTN = (139, 50)
+
+def _summon_back_btn():
+    p = _lcfg()
+    return tuple(p['summon_back_btn']) if 'summon_back_btn' in p else _DEFAULT_SUMMON_BACK_BTN
+
+def click_summon_back():
+    """召唤页面左上角返回按钮，点击后回到主界面。"""
+    click_at(*_summon_back_btn(), delay=1.5)
+
+
 def is_in_main_menu(img: np.ndarray = None) -> bool:
     if _main_menu_tmpl is None:
         _load_templates()
