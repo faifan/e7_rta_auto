@@ -32,7 +32,7 @@
   "苍穹伊莉娜芙": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":"S1","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
   "雪花": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S1","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
   "战术型可丽": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S1","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
-  "风纪委员艾莉雅": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":"S3","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
+  "风纪委员艾莉雅": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":"S3","burn_timing":"first","priority":["S3","S1"],"s3_skip":1},
   "丽迪卡": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":"S2","burn_timing":"first","priority":["S2","S3","S1"],"s3_skip":2},
   "魔勒": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S1","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
   "仆人克萝爱": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},

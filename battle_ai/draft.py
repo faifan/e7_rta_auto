@@ -156,7 +156,6 @@ _DRAFT_CARDS_DIR = os.path.join(_ROOT, 'templates', 'draft_cards')
 _TMPL_BASE       = os.path.join(_ROOT, 'templates')
 _TMPL_SIZE       = (96, 56)
 _NCC_THRESHOLD   = 0.35
-_NCC_GAP         = 0.03
 
 _draft_templates: dict = {}
 
@@ -210,7 +209,7 @@ def identify_slot_debug(img: np.ndarray, region: tuple, exclude: set = None) -> 
         elif s > second_score:
             second_score = s
     gap = best_score - second_score
-    if best_score >= _NCC_THRESHOLD and gap >= _NCC_GAP:
+    if best_score >= _NCC_THRESHOLD:
         return best_code, best_score, gap
     return 'unknown', best_score, gap
 
