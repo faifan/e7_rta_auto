@@ -496,9 +496,14 @@ class AutoRunApp:
             args_file = os.path.join(tempfile.gettempdir(), 'e7rta_resize_args.json')
             with open(args_file, 'w', encoding='utf-8') as f:
                 json.dump({'hwnd': hwnd, 'w': target_w, 'h': target_h}, f)
-            script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  'tools', 'resize_window_admin.py')
-            cmd_args = f'/c ""{sys.executable}" "{script}" "{args_file}""'
+            if getattr(sys, 'frozen', False):
+                # PyInstaller 打包后：用自身 exe + --resize-admin 参数提权重启
+                cmd_args = f'/c ""{sys.executable}" "--resize-admin" "{args_file}""'
+            else:
+                # 开发环境：用独立脚本
+                script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      'tools', 'resize_window_admin.py')
+                cmd_args = f'/c ""{sys.executable}" "{script}" "{args_file}""'
             result = ctypes.windll.shell32.ShellExecuteW(
                 None, 'runas', 'cmd.exe', cmd_args, None, 1)
             if result > 32:
@@ -878,7 +883,78 @@ class _StopLoop(Exception):
     pass
 
 
+def _resize_admin_mode():
+    """以管理员权限执行窗口调整（PyInstaller 打包后由 --resize-admin 触发）。"""
+    import json, ctypes, ctypes.wintypes, time as _time
+
+    if len(sys.argv) < 3:
+        sys.exit(1)
+    try:
+        with open(sys.argv[2], encoding='utf-8') as f:
+            args = json.load(f)
+    except Exception:
+        sys.exit(1)
+
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(0)
+    except Exception:
+        pass
+
+    class _RECT(ctypes.Structure):
+        _fields_ = [('left',ctypes.c_long),('top',ctypes.c_long),
+                    ('right',ctypes.c_long),('bottom',ctypes.c_long)]
+
+    hwnd     = args['hwnd']
+    target_w = args['w']
+    target_h = args['h']
+    u32 = ctypes.windll.user32
+    k32 = ctypes.windll.kernel32
+
+    if not u32.IsWindow(hwnd):
+        sys.exit(2)
+    if u32.IsIconic(hwnd):
+        u32.ShowWindow(hwnd, 9)
+        _time.sleep(0.5)
+
+    wr = _RECT(); u32.GetWindowRect(hwnd, ctypes.byref(wr))
+    cr = _RECT(); u32.GetClientRect(hwnd, ctypes.byref(cr))
+    if cr.right == 0:
+        sys.exit(5)
+
+    hdc = ctypes.windll.gdi32.CreateDCW('DISPLAY', None, None, None)
+    phys_sw = ctypes.windll.gdi32.GetDeviceCaps(hdc, 118)
+    ctypes.windll.gdi32.DeleteDC(hdc)
+    logical_sw = u32.GetSystemMetrics(0)
+    dpi_scale  = phys_sw / logical_sw if logical_sw else 1.0
+
+    virt_w = round(target_w / dpi_scale)
+    virt_h = round(target_h / dpi_scale)
+    deco_w = (wr.right - wr.left) - cr.right
+    deco_h = (wr.bottom - wr.top) - cr.bottom
+
+    u32.keybd_event(0x12, 0, 0, 0)
+    u32.SetForegroundWindow(hwnd)
+    u32.keybd_event(0x12, 0, 0x0002, 0)
+    _time.sleep(0.3)
+
+    ret = u32.SetWindowPos(hwnd, 0, 0, 0, virt_w + deco_w, virt_h + deco_h, 0x0002 | 0x0004)
+    if not ret:
+        sys.exit(3)
+
+    _time.sleep(0.3)
+    cr2 = _RECT(); u32.GetClientRect(hwnd, ctypes.byref(cr2))
+    diff_w = virt_w - cr2.right
+    diff_h = virt_h - cr2.bottom
+    if diff_w != 0 or diff_h != 0:
+        u32.SetWindowPos(hwnd, 0, 0, 0,
+                         virt_w + deco_w + diff_w, virt_h + deco_h + diff_h,
+                         0x0002 | 0x0004)
+    sys.exit(0)
+
+
 if __name__ == '__main__':
+    if len(sys.argv) >= 2 and sys.argv[1] == '--resize-admin':
+        _resize_admin_mode()
     root = tk.Tk()
     AutoRunApp(root)
     root.mainloop()
