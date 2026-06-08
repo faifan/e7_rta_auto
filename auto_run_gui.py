@@ -476,7 +476,9 @@ class AutoRunApp:
         outer_w = virt_target_w + os_deco_w
         outer_h = virt_target_h + os_deco_h + drawn_h
 
+        import os, json, tempfile
         ret = u32.SetWindowPos(hwnd, 0, 0, 0, outer_w, outer_h, 0x0002 | 0x0004)
+        err = ctypes.windll.kernel32.GetLastError()  # 紧跟 SetWindowPos，避免其他操作污染 error code
         if ret:
             # 修正 DPI 非整数缩放（如 1.5×）导致的 ±1 像素舍入误差
             time.sleep(0.3)
@@ -489,9 +491,6 @@ class AutoRunApp:
                                  0x0002 | 0x0004)
             self._set_status(f'窗口已调整至 {target_w}×{target_h}', '#3fb950')
             return
-
-        import os, json, tempfile
-        err = ctypes.windll.kernel32.GetLastError()
         if err == 5:  # ERROR_ACCESS_DENIED：游戏以管理员权限运行，需提权
             args_file = os.path.join(tempfile.gettempdir(), 'e7rta_resize_args.json')
             with open(args_file, 'w', encoding='utf-8') as f:
