@@ -254,6 +254,11 @@ class AutoRunApp:
         btn_frame = tk.Frame(self.root, bg='#1e1e1e')
         btn_frame.pack(pady=8)
 
+        self._resize_btn = tk.Button(
+            btn_frame, text='⚙  设置窗口', font=CN_FONT,
+            bg='#1f6feb', fg='white', width=14, height=2,
+            relief=tk.FLAT, cursor='hand2', command=self._on_resize_window)
+
         self._start_btn = tk.Button(
             btn_frame, text='▶  开始', font=CN_FONT,
             bg='#2ea043', fg='white', width=14, height=2,
@@ -266,6 +271,9 @@ class AutoRunApp:
             relief=tk.FLAT, cursor='hand2', state=tk.DISABLED,
             command=self._on_stop)
         self._stop_btn.pack(side=tk.LEFT, padx=12)
+
+        self._client_var.trace_add('write', lambda *_: self._update_resize_btn_visibility())
+        self._update_resize_btn_visibility()
 
         # ── 日志区 ────────────────────────────────────────────
         log_frame = tk.Frame(self.root, bg='#1e1e1e')
@@ -406,6 +414,112 @@ class AutoRunApp:
         self._start_btn.config(state=tk.NORMAL)
         self._stop_btn.config(state=tk.DISABLED)
         self._set_status('已停止 — 点击"开始"继续', '#d29922')
+
+    def _update_resize_btn_visibility(self):
+        if self._client_var.get() == 'PC客户端':
+            self._resize_btn.pack(side=tk.LEFT, padx=12, before=self._start_btn)
+        else:
+            self._resize_btn.pack_forget()
+
+    def _on_resize_window(self):
+        window_title = self._window_var.get().strip()
+        if not window_title:
+            self._set_status('请先选择游戏窗口！', '#f85149')
+            return
+
+        profile_name = self._profile_var.get()
+        try:
+            w, h = profile_name.replace('.json', '').split('x')
+            target_w, target_h = int(w), int(h)
+        except Exception:
+            self._set_status('无法解析分辨率', '#f85149')
+            return
+
+        from battle_ai import executor as _ex  # 触发 SetProcessDpiAwareness(0)
+        import ctypes, time
+
+        u32 = _ex._u32
+        hwnd = u32.FindWindowW(None, window_title)
+        if not hwnd:
+            self._set_status(f'未找到窗口: {window_title}', '#f85149')
+            return
+
+        # Alt 键技巧强制激活窗口
+        u32.keybd_event(0x12, 0, 0, 0)
+        u32.SetForegroundWindow(hwnd)
+        u32.keybd_event(0x12, 0, 0x0002, 0)
+        time.sleep(0.3)
+
+        # 计算真实 DPI 缩放（GetDeviceCaps 返回物理像素，不受 DPI-unaware 影响）
+        hdc = ctypes.windll.gdi32.CreateDCW('DISPLAY', None, None, None)
+        phys_sw = ctypes.windll.gdi32.GetDeviceCaps(hdc, 118)  # DESKTOPHORZRES
+        ctypes.windll.gdi32.DeleteDC(hdc)
+        logical_sw = u32.GetSystemMetrics(0)
+        dpi_scale  = phys_sw / logical_sw if logical_sw else 1.0
+
+        # 检查物理目标是否超出屏幕
+        if target_w > phys_sw:
+            self._set_status(
+                f'{target_w}×{target_h} 超出物理屏幕宽度 {phys_sw}px，无法设置。', '#f85149')
+            return
+
+        # 测量窗口装饰（DPI-unaware 坐标系）
+        wr = _ex._RECT(); u32.GetWindowRect(hwnd, ctypes.byref(wr))
+        cr = _ex._RECT(); u32.GetClientRect(hwnd, ctypes.byref(cr))
+        os_deco_w = (wr.right - wr.left) - cr.right
+        os_deco_h = (wr.bottom - wr.top) - cr.bottom
+        drawn_h   = _ex._drawn_title_h(hwnd, cr.bottom)
+
+        # 物理目标 = profile 尺寸，DPI-unaware 目标 = profile ÷ dpi_scale（任意 DPI 通用）
+        virt_target_w = round(target_w / dpi_scale)
+        virt_target_h = round(target_h / dpi_scale)
+        outer_w = virt_target_w + os_deco_w
+        outer_h = virt_target_h + os_deco_h + drawn_h
+
+        ret = u32.SetWindowPos(hwnd, 0, 0, 0, outer_w, outer_h, 0x0002 | 0x0004)
+        if ret:
+            # 修正 DPI 非整数缩放（如 1.5×）导致的 ±1 像素舍入误差
+            time.sleep(0.3)
+            cr2 = _ex._RECT(); u32.GetClientRect(hwnd, ctypes.byref(cr2))
+            diff_w = virt_target_w - cr2.right
+            diff_h = virt_target_h - cr2.bottom
+            if diff_w != 0 or diff_h != 0:
+                u32.SetWindowPos(hwnd, 0, 0, 0,
+                                 outer_w + diff_w, outer_h + diff_h,
+                                 0x0002 | 0x0004)
+            self._set_status(f'窗口已调整至 {target_w}×{target_h}', '#3fb950')
+            return
+
+        import os, json, tempfile
+        err = ctypes.windll.kernel32.GetLastError()
+        if err == 5:  # ERROR_ACCESS_DENIED：游戏以管理员权限运行，需提权
+            args_file = os.path.join(tempfile.gettempdir(), 'e7rta_resize_args.json')
+            with open(args_file, 'w', encoding='utf-8') as f:
+                json.dump({'hwnd': hwnd, 'w': target_w, 'h': target_h}, f)
+            script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'tools', 'resize_window_admin.py')
+            cmd_args = f'/c ""{sys.executable}" "{script}" "{args_file}""'
+            result = ctypes.windll.shell32.ShellExecuteW(
+                None, 'runas', 'cmd.exe', cmd_args, None, 1)
+            if result > 32:
+                self._set_status(f'已提权，正在设置为 {target_w}×{target_h}…', '#d29922')
+                # 后台等 helper 完成后更新状态（helper 成功后 sleep 3 秒）
+                def _poll_result(hwnd=hwnd, tw=target_w, th=target_h,
+                                 ds=dpi_scale, vw=virt_target_w, vh=virt_target_h):
+                    time.sleep(4)
+                    cr_r = _ex._RECT()
+                    u32.GetClientRect(hwnd, ctypes.byref(cr_r))
+                    phys_w = round(cr_r.right * ds)
+                    phys_h = round(cr_r.bottom * ds)
+                    if phys_w == tw and phys_h == th:
+                        self._set_status(f'窗口已调整至 {tw}×{th}', '#3fb950')
+                    else:
+                        self._set_status(f'实际尺寸 {phys_w}×{phys_h}（目标 {tw}×{th}）', '#d29922')
+                threading.Thread(target=_poll_result, daemon=True).start()
+            else:
+                self._set_status(f'提权失败（已取消或被拒绝）', '#f85149')
+        else:
+            self._set_status(f'调整失败 error={err}', '#f85149')
 
     # ── 等待辅助 ─────────────────────────────────────────────
     def _wait_for(self, check_fn, timeout: int, label: str) -> bool:
