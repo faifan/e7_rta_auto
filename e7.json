@@ -1612,7 +1612,7 @@
   {
     "code": "c2110",
     "grade": "5",
-    "name": "海洋猎手芙兰",
+    "name": "海盗船长芙兰",
     "job_cd": "ranger",
     "attribute_cd": "dark"
   },
@@ -1712,6 +1712,13 @@
     "grade": "5",
     "name": "萨洛美",
     "job_cd": "warrior",
+    "attribute_cd": "dark"
+  },
+  {
+    "code": "c2185",
+    "grade": "5",
+    "name": "里安娜路西艾拉",
+    "job_cd": "assassin",
     "attribute_cd": "dark"
   },
   {
@@ -2503,6 +2510,13 @@
     "grade": "5",
     "name": "童话泰妮布里雅",
     "job_cd": "mage",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c5069",
+    "grade": "5",
+    "name": "黎明序曲鲁特比",
+    "job_cd": "ranger",
     "attribute_cd": "ice"
   },
   {

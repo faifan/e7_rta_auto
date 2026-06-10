@@ -13,24 +13,16 @@ MATCH_SIZE = (64, 64)
 MIN_SCORE  = 0.05   # 第一名最低分（过滤完全错误）
 MIN_GAP    = 0.05   # 第一名比第二名至少高出这么多才认为识别成功
 
-_DEFAULT_BATTLE_CROPS = {
-    'S1': (1455, 945,  1611, 1110),
-    'S2': (1611, 945,  1755, 1110),
-    'S3': (1755, 945,  1911, 1110),
-}
-
 def _get_battle_crops() -> dict:
     try:
         from config_loader import cfg
         if cfg.is_loaded():
-            raw = cfg.section('recognition').get('battle_crops', {})
-            if raw:
-                return {k: tuple(v) for k, v in raw.items()}
+            return {k: tuple(v) for k, v in cfg.section('recognition')['battle_crops'].items()}
     except ImportError:
         pass
-    return _DEFAULT_BATTLE_CROPS
+    return {}
 
-BATTLE_CROPS = _DEFAULT_BATTLE_CROPS  # 向后兼容
+BATTLE_CROPS = {}  # 向后兼容占位
 SKILLS = ['S1', 'S2', 'S3']
 
 

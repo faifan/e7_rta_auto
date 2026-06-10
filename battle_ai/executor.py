@@ -8,15 +8,8 @@ try:
 except Exception:
     pass
 
-# 默认值（cfg 未加载时使用）
 _DEFAULT_TITLE = '第七史诗'
-_DEFAULT_SKILL_POS = {'S1': (1543, 1029), 'S2': (1685, 1027), 'S3': (1836, 1029)}
-_DEFAULT_BURN_POS  = (1021, 1020)
-_DEFAULT_ENEMY_POS = [(1280, 619), (1479, 486), (1525, 770), (1711, 594)]
-
-# 向后兼容：其他模块可能直接 import WINDOW_TITLE / SKILL_POS
-WINDOW_TITLE = _DEFAULT_TITLE
-SKILL_POS    = _DEFAULT_SKILL_POS
+WINDOW_TITLE   = _DEFAULT_TITLE
 
 
 def _get_cfg_exec() -> dict:
@@ -40,20 +33,13 @@ def get_window_title() -> str:
 
 
 def _get_skill_pos() -> dict:
-    sec = _get_cfg_exec()
-    if 'skill_pos' in sec:
-        return {k: tuple(v) for k, v in sec['skill_pos'].items()}
-    return _DEFAULT_SKILL_POS
-
+    return {k: tuple(v) for k, v in _get_cfg_exec()['skill_pos'].items()}
 
 def _get_burn_pos() -> tuple:
-    sec = _get_cfg_exec()
-    return tuple(sec['burn_pos']) if 'burn_pos' in sec else _DEFAULT_BURN_POS
-
+    return tuple(_get_cfg_exec()['burn_pos'])
 
 def _get_enemy_pos() -> list:
-    sec = _get_cfg_exec()
-    return [tuple(p) for p in sec['enemy_pos']] if 'enemy_pos' in sec else _DEFAULT_ENEMY_POS
+    return [tuple(p) for p in _get_cfg_exec()['enemy_pos']]
 
 
 _u32 = ctypes.windll.user32

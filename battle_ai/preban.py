@@ -19,16 +19,6 @@ _HERO_IMAGES_DIR_PREBAN = os.path.join(_ROOT, 'templates', 'hero_images')
 _PREBAN_FILL_PCTS = [0.65, 0.72, 0.80, 0.88, 0.95, 0.98]
 _PREBAN_THRESHOLD = 0.40   # 多尺度 RGB matchTemplate，最低约 0.40
 
-_DEFAULT_REGION   = (181, 137, 505, 203)
-_DEFAULT_HERO_1   = (1695, 609)
-_DEFAULT_HERO_2   = (1695, 759)
-_DEFAULT_CONFIRM  = (1624, 945)
-
-_DEFAULT_CANDIDATE_SLOTS  = [(1634,210,1762,338),(1634,362,1762,490),(1634,512,1762,640),(1634,664,1762,792)]
-_DEFAULT_CANDIDATE_CLICKS = [(1690,274),(1694,428),(1690,577),(1695,725)]
-_DEFAULT_FIRST_PICK_REGION = (1508,802,1736,861)
-
-
 def _pcfg() -> dict:
     try:
         from config_loader import cfg
@@ -56,47 +46,13 @@ def _resolution():
         pass
     return [1920, 1080]
 
-def _scale():
-    r = _resolution()
-    return r[0] / 1920, r[1] / 1080
-
-def _region():
-    p = _pcfg()
-    return tuple(p['region']) if 'region' in p else _DEFAULT_REGION
-
-def _hero1():
-    p = _pcfg()
-    return tuple(p['ban_hero_1']) if 'ban_hero_1' in p else _DEFAULT_HERO_1
-
-def _hero2():
-    p = _pcfg()
-    return tuple(p['ban_hero_2']) if 'ban_hero_2' in p else _DEFAULT_HERO_2
-
-def _confirm():
-    p = _pcfg()
-    return tuple(p['ban_confirm']) if 'ban_confirm' in p else _DEFAULT_CONFIRM
-
-def _candidate_slots():
-    p = _pcfg()
-    if 'candidate_slots' in p:
-        return [tuple(s) for s in p['candidate_slots']]
-    sx, sy = _scale()
-    return [(round(x1*sx),round(y1*sy),round(x2*sx),round(y2*sy)) for x1,y1,x2,y2 in _DEFAULT_CANDIDATE_SLOTS]
-
-def _candidate_clicks():
-    p = _pcfg()
-    if 'candidate_clicks' in p:
-        return [tuple(c) for c in p['candidate_clicks']]
-    sx, sy = _scale()
-    return [(round(x*sx),round(y*sy)) for x,y in _DEFAULT_CANDIDATE_CLICKS]
-
-def _first_pick_region():
-    p = _pcfg()
-    if 'first_pick_region' in p:
-        return tuple(p['first_pick_region'])
-    sx, sy = _scale()
-    x1,y1,x2,y2 = _DEFAULT_FIRST_PICK_REGION
-    return (round(x1*sx),round(y1*sy),round(x2*sx),round(y2*sy))
+def _region():          return tuple(_pcfg()['region'])
+def _hero1():           return tuple(_pcfg()['ban_hero_1'])
+def _hero2():           return tuple(_pcfg()['ban_hero_2'])
+def _confirm():         return tuple(_pcfg()['ban_confirm'])
+def _candidate_slots():  return [tuple(s) for s in _pcfg()['candidate_slots']]
+def _candidate_clicks(): return [tuple(c) for c in _pcfg()['candidate_clicks']]
+def _first_pick_region(): return tuple(_pcfg()['first_pick_region'])
 
 
 # ── NCC 工具 ──────────────────────────────────────────────────

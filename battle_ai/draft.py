@@ -36,80 +36,31 @@ def _dlang(key: str, default=None):
     return default
 
 
-# ── 坐标默认值 ────────────────────────────────────────────────
-_DEFAULT_SEARCH_OPEN          = (1820, 173)
-_DEFAULT_SEARCH_INPUT         = (1073, 269)
-_DEFAULT_SEARCH_BTN           = (1437, 264)
-_DEFAULT_FIRST_RESULT         = (1010, 443)
-_DEFAULT_CONFIRM_BTN          = (1274, 1029)
-_DEFAULT_POST_BAN_BTN         = (1282, 1027)
-_DEFAULT_OPP_TURN_REGION      = (679, 65, 823, 115)
-_DEFAULT_BANNER_REGION        = (550, 3, 950, 55)
-_DEFAULT_LABEL_REGION         = (632, 53, 862, 127)
-_DEFAULT_SEARCH_RESULT_REGION = (855, 402, 1264, 469)
-_DEFAULT_SELECTED_HERO_REGION = (1541, 389, 1699, 458)
-_DEFAULT_SEARCH_STATE_REGION  = (1747, 142, 1897, 197)
-_DEFAULT_SEARCH_EXEC_REGION   = (1341, 227, 1538, 300)
-_DEFAULT_SEARCH_CLEAR_BTN     = (1284, 264)
-_DEFAULT_PREBAN_REGION        = (181, 137, 505, 203)
-
-_DEFAULT_MY_SLOTS = [
-    ( 37, 216, 461, 343),
-    ( 34, 367, 361, 491),
-    ( 37, 520, 318, 638),
-    ( 35, 668, 314, 788),
-    ( 41, 819, 359, 937),
-]
-_DEFAULT_OPP_SLOTS = [
-    (1033, 219, 1456, 337),
-    (1133, 367, 1456, 487),
-    (1175, 518, 1453, 638),
-    (1177, 668, 1463, 790),
-    (1136, 818, 1462, 937),
-]
-_DEFAULT_MY_BAN_SLOTS  = [(565, 1010, 646, 1096), (646, 1010, 741, 1096)]
-_DEFAULT_OPP_BAN_SLOTS = [(753, 1006, 842, 1095), (842, 1006, 937, 1095)]
-
-_DEFAULT_BATTLE_SLOT_CENTERS = [(735, 618), (587, 728), (767, 817), (909, 708)]
-_DEFAULT_BATTLE_SWAP_REGIONS = [
-    (687, 484, 775, 573),
-    (544, 594, 628, 676),
-    (875, 583, 963, 665),
-    (727, 673, 798, 750),
-]
-_DEFAULT_BATTLE_DESELECT     = (744, 916)
-_DEFAULT_BATTLE_YAZUGA_DETECT = (847, 373, 1078, 754)
-
-# 向后兼容模块级常量
-MY_SLOTS  = _DEFAULT_MY_SLOTS
-OPP_SLOTS = _DEFAULT_OPP_SLOTS
-
-
-# ── 坐标访问（懒加载，cfg 未加载时用默认值）──────────────────
-def _search_open():           return tuple(_dcfg().get('search_open',          _DEFAULT_SEARCH_OPEN))
-def _search_input():          return tuple(_dcfg().get('search_input',         _DEFAULT_SEARCH_INPUT))
-def _search_btn():            return tuple(_dcfg().get('search_btn',           _DEFAULT_SEARCH_BTN))
-def _first_result():          return tuple(_dcfg().get('first_result',         _DEFAULT_FIRST_RESULT))
-def _confirm_btn():           return tuple(_dcfg().get('confirm_btn',          _DEFAULT_CONFIRM_BTN))
-def _post_ban_btn():          return tuple(_dcfg().get('post_ban_btn',         _DEFAULT_POST_BAN_BTN))
-def _banner_region():         return tuple(_dcfg().get('banner_region',        _DEFAULT_BANNER_REGION))
-def _label_region():          return tuple(_dcfg().get('label_region',         _DEFAULT_LABEL_REGION))
-def _search_result_region():  return tuple(_dcfg().get('search_result_region', _DEFAULT_SEARCH_RESULT_REGION))
-def _selected_hero_region():  return tuple(_dcfg().get('selected_hero_region', _DEFAULT_SELECTED_HERO_REGION))
-def _search_exec_region():    return tuple(_dcfg().get('search_exec_region',   _DEFAULT_SEARCH_EXEC_REGION))
-def _search_clear_btn():      return tuple(_dcfg().get('search_clear_btn',     _DEFAULT_SEARCH_CLEAR_BTN))
-def _preban_region_draft():   return tuple(_dcfg().get('preban_region',        _DEFAULT_PREBAN_REGION))
-def _my_slots():   return [tuple(v) for v in _dcfg().get('my_slots',   _DEFAULT_MY_SLOTS)]
-def _opp_slots():  return [tuple(v) for v in _dcfg().get('opp_slots',  _DEFAULT_OPP_SLOTS)]
-def _my_ban_slots():  return [tuple(v) for v in _dcfg().get('my_ban_slots',  _DEFAULT_MY_BAN_SLOTS)]
-def _opp_ban_slots(): return [tuple(v) for v in _dcfg().get('opp_ban_slots', _DEFAULT_OPP_BAN_SLOTS)]
+# ── 坐标访问（从 cfg JSON 读取）──────────────────────────────
+def _search_open():           return tuple(_dcfg()['search_open'])
+def _search_input():          return tuple(_dcfg()['search_input'])
+def _search_btn():            return tuple(_dcfg()['search_btn'])
+def _first_result():          return tuple(_dcfg()['first_result'])
+def _confirm_btn():           return tuple(_dcfg()['confirm_btn'])
+def _post_ban_btn():          return tuple(_dcfg()['post_ban_btn'])
+def _banner_region():         return tuple(_dcfg()['banner_region'])
+def _label_region():          return tuple(_dcfg()['label_region'])
+def _search_result_region():  return tuple(_dcfg()['search_result_region'])
+def _selected_hero_region():  return tuple(_dcfg()['selected_hero_region'])
+def _search_exec_region():    return tuple(_dcfg()['search_exec_region'])
+def _search_clear_btn():      return tuple(_dcfg()['search_clear_btn'])
+def _preban_region_draft():   return tuple(_dcfg()['preban_region'])
+def _my_slots():   return [tuple(v) for v in _dcfg()['my_slots']]
+def _opp_slots():  return [tuple(v) for v in _dcfg()['opp_slots']]
+def _my_ban_slots():  return [tuple(v) for v in _dcfg()['my_ban_slots']]
+def _opp_ban_slots(): return [tuple(v) for v in _dcfg()['opp_ban_slots']]
 def _opp_slot_centers():
     return [((x1 + x2) // 2, (y1 + y2) // 2) for x1, y1, x2, y2 in _opp_slots()]
-def _battle_slot_centers(): return [tuple(v) for v in _dcfg().get('battle_slot_centers', _DEFAULT_BATTLE_SLOT_CENTERS)]
-def _battle_swap_regions():  return [tuple(v) for v in _dcfg().get('battle_swap_regions',  _DEFAULT_BATTLE_SWAP_REGIONS)]
+def _battle_slot_centers(): return [tuple(v) for v in _dcfg()['battle_slot_centers']]
+def _battle_swap_regions():  return [tuple(v) for v in _dcfg()['battle_swap_regions']]
 def _battle_swap_centers():  return [(int((r[0]+r[2])/2), int((r[1]+r[3])/2)) for r in _battle_swap_regions()]
-def _battle_deselect():      return tuple(_dcfg().get('battle_deselect',      _DEFAULT_BATTLE_DESELECT))
-def _battle_yazuga_detect(): return tuple(_dcfg().get('battle_yazuga_detect', _DEFAULT_BATTLE_YAZUGA_DETECT))
+def _battle_deselect():      return tuple(_dcfg()['battle_deselect'])
+def _battle_yazuga_detect(): return tuple(_dcfg()['battle_yazuga_detect'])
 
 
 # ── 文字匹配辅助（通过 lang 文件支持多语言）──────────────────
@@ -899,11 +850,11 @@ def _get_kris_tmpl():
 
 
 def _last_detect_region():
-    return tuple(_dcfg().get('battle_last_detect', [482, 377, 648, 743]))
+    return tuple(_dcfg()['battle_last_detect'])
 
 
 def _last_swap_point():
-    return tuple(_dcfg().get('battle_last_swap', [729, 489]))
+    return tuple(_dcfg()['battle_last_swap'])
 
 
 def _slot_last_kris_score(img=None) -> float:

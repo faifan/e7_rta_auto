@@ -9,12 +9,8 @@ from battle_ai.perception import capture
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-_DEFAULT_APPLY_BTN          = (1292, 1009)
-_DEFAULT_CONFIRM_BTN        = (1755, 1026)
-_DEFAULT_CONFIRM_BTN_LEVELUP = (961,  1023)
-_DEFAULT_BTN_REGION         = (1120, 947, 1464, 1072)
-_TMPL_SIZE                  = (128, 46)
-_TMPL_DIR                   = os.path.join(_ROOT, 'templates', 'phase')
+_TMPL_SIZE = (128, 46)
+_TMPL_DIR  = os.path.join(_ROOT, 'templates', 'phase')
 
 
 def _lcfg() -> dict:
@@ -26,17 +22,11 @@ def _lcfg() -> dict:
         pass
     return {}
 
-def _apply_btn():
-    p = _lcfg()
-    return tuple(p['apply_btn']) if 'apply_btn' in p else _DEFAULT_APPLY_BTN
-
-def _confirm_btn():
-    p = _lcfg()
-    return tuple(p['confirm_btn']) if 'confirm_btn' in p else _DEFAULT_CONFIRM_BTN
-
-def _confirm_btn_levelup():
-    p = _lcfg()
-    return tuple(p['confirm_btn_levelup']) if 'confirm_btn_levelup' in p else _DEFAULT_CONFIRM_BTN_LEVELUP
+def _apply_btn():           return tuple(_lcfg()['apply_btn'])
+def _confirm_btn():         return tuple(_lcfg()['confirm_btn'])
+def _confirm_btn_levelup(): return tuple(_lcfg()['confirm_btn_levelup'])
+def _intimacy_dismiss_btn(): return tuple(_lcfg()['intimacy_dismiss_btn'])
+def _btn_region():          return tuple(_lcfg()['btn_region'])
 
 def _match_accept_btn():
     p = _lcfg()
@@ -45,18 +35,6 @@ def _match_accept_btn():
 def _result_unknown_click():
     p = _lcfg()
     return tuple(p['result_unknown_click']) if 'result_unknown_click' in p else None
-
-_DEFAULT_INTIMACY_DISMISS = (1125, 839)  # 点此关闭亲密度弹窗，弹窗消失后可检测到底层胜利界面
-
-def _intimacy_dismiss_btn():
-    p = _lcfg()
-    return tuple(p['intimacy_dismiss_btn']) if 'intimacy_dismiss_btn' in p else _DEFAULT_INTIMACY_DISMISS
-
-
-
-def _btn_region():
-    p = _lcfg()
-    return tuple(p['btn_region']) if 'btn_region' in p else _DEFAULT_BTN_REGION
 
 
 _lobby_tmpl      = None
@@ -80,34 +58,13 @@ def _crop_btn(img_path: str) -> np.ndarray:
     return cv2.resize(crop, _TMPL_SIZE).astype(np.float32)
 
 
-_DEFAULT_SIGNIN_CONFIRM_BTN = (1609, 998)
-
-def _signin_confirm_btn():
-    p = _lcfg()
-    return tuple(p['signin_confirm_btn']) if 'signin_confirm_btn' in p else _DEFAULT_SIGNIN_CONFIRM_BTN
-
-
-_DEFAULT_MAIN_MENU_REGION  = (1744, 563, 1861, 608)
-_DEFAULT_ARENA_MENU_REGION = (1113, 978, 1320, 1030)
-_DEFAULT_MAIN_MENU_ARENA_BTN  = (1802, 585)
-_DEFAULT_ARENA_MENU_WORLD_BTN = (1216, 1004)
 _MENU_TMPL_SIZE = (128, 46)
 
-def _main_menu_region():
-    p = _lcfg()
-    return tuple(p['main_menu_region']) if 'main_menu_region' in p else _DEFAULT_MAIN_MENU_REGION
-
-def _arena_menu_region():
-    p = _lcfg()
-    return tuple(p['arena_menu_region']) if 'arena_menu_region' in p else _DEFAULT_ARENA_MENU_REGION
-
-def _main_menu_arena_btn():
-    p = _lcfg()
-    return tuple(p['main_menu_arena_btn']) if 'main_menu_arena_btn' in p else _DEFAULT_MAIN_MENU_ARENA_BTN
-
-def _arena_menu_world_btn():
-    p = _lcfg()
-    return tuple(p['arena_menu_world_btn']) if 'arena_menu_world_btn' in p else _DEFAULT_ARENA_MENU_WORLD_BTN
+def _signin_confirm_btn():   return tuple(_lcfg()['signin_confirm_btn'])
+def _main_menu_region():     return tuple(_lcfg()['main_menu_region'])
+def _arena_menu_region():    return tuple(_lcfg()['arena_menu_region'])
+def _main_menu_arena_btn():  return tuple(_lcfg()['main_menu_arena_btn'])
+def _arena_menu_world_btn(): return tuple(_lcfg()['arena_menu_world_btn'])
 
 def _crop_region(img_path: str, region_fn) -> np.ndarray:
     img = np.array(Image.open(img_path).convert('L'))
@@ -158,11 +115,7 @@ def dismiss_signin_reward():
     click_at(*_signin_confirm_btn(), delay=1.0)
 
 
-_DEFAULT_SUMMON_BACK_BTN = (139, 50)
-
-def _summon_back_btn():
-    p = _lcfg()
-    return tuple(p['summon_back_btn']) if 'summon_back_btn' in p else _DEFAULT_SUMMON_BACK_BTN
+def _summon_back_btn(): return tuple(_lcfg()['summon_back_btn'])
 
 def click_summon_back():
     """召唤页面左上角返回按钮，点击后回到主界面。"""

@@ -155,7 +155,9 @@
       935,
       1187,
       1056
-    ]
+    ],
+    "signin_region": [371, 71, 990, 161],
+    "summon_region": [93, 26, 185, 75]
   },
   "draft": {
     "search_open": [

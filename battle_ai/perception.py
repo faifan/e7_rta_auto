@@ -125,21 +125,13 @@ def capture() -> np.ndarray:
 
 
 # ── 我的回合检测（亮度，向后兼容保留）────────────────────────
-_DEFAULT_S1_POS  = (1543, 1029)
-_DEFAULT_PATCH   = 20
+_DEFAULT_PATCH      = 20
 _DEFAULT_BRIGHTNESS = 60
 
-def _s1_pos():
-    p = _pcfg()
-    return tuple(p['s1_check_pos']) if 's1_check_pos' in p else _DEFAULT_S1_POS
+def _s1_pos():              return tuple(_pcfg()['s1_check_pos'])
+def _s1_patch():            return _pcfg().get('s1_patch', _DEFAULT_PATCH)
+def _brightness_threshold(): return _pcfg().get('my_turn_brightness', _DEFAULT_BRIGHTNESS)
 
-def _s1_patch():
-    return _pcfg().get('s1_patch', _DEFAULT_PATCH)
-
-def _brightness_threshold():
-    return _pcfg().get('my_turn_brightness', _DEFAULT_BRIGHTNESS)
-
-# 向后兼容常量
 MY_TURN_THRESHOLD = _DEFAULT_BRIGHTNESS
 _PATCH            = _DEFAULT_PATCH
 
@@ -161,16 +153,11 @@ def is_in_battle(img: np.ndarray = None) -> bool:
 
 
 # ── 结算检测（模板匹配）──────────────────────────────────────
-_DEFAULT_VIC_REGION    = (660, 292, 1246, 500)
 _DEFAULT_VIC_THRESHOLD = 0.7
 _RESULT_SIZE           = (256, 90)
 
-def _vic_region():
-    p = _pcfg()
-    return tuple(p['vic_region']) if 'vic_region' in p else _DEFAULT_VIC_REGION
-
-def _vic_threshold():
-    return _pcfg().get('vic_threshold', _DEFAULT_VIC_THRESHOLD)
+def _vic_region():    return tuple(_pcfg()['vic_region'])
+def _vic_threshold(): return _pcfg().get('vic_threshold', _DEFAULT_VIC_THRESHOLD)
 
 
 def _load_tmpl(path):
@@ -213,20 +200,12 @@ def is_battle_over(img: np.ndarray = None) -> bool:
 
 
 # ── 技能图标亮度 ──────────────────────────────────────────────
-_DEFAULT_ICON_CROPS = {
-    'S1': (1490, 960, 1595, 1095),
-    'S2': (1635, 960, 1740, 1095),
-    'S3': (1780, 960, 1885, 1095),
-}
 _DEFAULT_COOLDOWN_RATIO = 0.70
 
 def _icon_crops() -> dict:
-    p = _pcfg()
-    if 'skill_icon_crops' in p:
-        return {k: tuple(v) for k, v in p['skill_icon_crops'].items()}
-    return _DEFAULT_ICON_CROPS
+    return {k: tuple(v) for k, v in _pcfg()['skill_icon_crops'].items()}
 
-_SKILL_ICON_CROPS = _DEFAULT_ICON_CROPS  # 向后兼容
+_SKILL_ICON_CROPS = {}  # 向后兼容占位
 
 def skill_brightness(img: np.ndarray, skill: str) -> float:
     crops = _icon_crops()
@@ -243,11 +222,14 @@ def is_skill_ready(img: np.ndarray, skill: str) -> bool:
 
 # ── 亲密度等级上升弹窗检测 ────────────────────────────────────
 # 弹窗叠在胜利界面上方，会遮挡 vic_region 和结算确认按钮
-_DEFAULT_INTIMACY_REGION = (918, 205, 1361, 292)   # 标题"英雄亲密度等级上升"区域
-
 def _intimacy_region():
-    p = _pcfg()
-    return tuple(p['intimacy_region']) if 'intimacy_region' in p else _DEFAULT_INTIMACY_REGION
+    try:
+        from config_loader import cfg
+        if cfg.is_loaded():
+            return tuple(cfg.section('lobby')['intimacy_region'])
+    except ImportError:
+        pass
+    raise RuntimeError("cfg not loaded")
 
 def is_intimacy_levelup(img: np.ndarray = None) -> bool:
     if img is None:
@@ -261,11 +243,7 @@ def is_intimacy_levelup(img: np.ndarray = None) -> bool:
 
 
 # ── 签到奖励弹窗检测 ────────────────────────────────────────────
-_DEFAULT_SIGNIN_REGION = (370, 70, 990, 160)   # "梅露铃的签到奖励"标题区域
-
-def _signin_region():
-    p = _pcfg()
-    return tuple(p['signin_region']) if 'signin_region' in p else _DEFAULT_SIGNIN_REGION
+def _signin_region(): return tuple(_pcfg()['signin_region'])
 
 def is_signin_reward(img: np.ndarray = None) -> bool:
     if img is None:
@@ -279,11 +257,7 @@ def is_signin_reward(img: np.ndarray = None) -> bool:
 
 
 # ── 召唤页面检测 ────────────────────────────────────────────────
-_DEFAULT_SUMMON_REGION = (93, 26, 185, 75)   # 左上角"← 召唤"返回标题区域
-
-def _summon_region():
-    p = _pcfg()
-    return tuple(p['summon_region']) if 'summon_region' in p else _DEFAULT_SUMMON_REGION
+def _summon_region(): return tuple(_pcfg()['summon_region'])
 
 def is_in_summon_page(img: np.ndarray = None) -> bool:
     if img is None:
@@ -297,11 +271,7 @@ def is_in_summon_page(img: np.ndarray = None) -> bool:
 
 
 # ── 段位结算检测 ──────────────────────────────────────────────
-_DEFAULT_LEVELUP_BTN = (785, 978, 1138, 1069)
-
-def _levelup_btn_region():
-    p = _pcfg()
-    return tuple(p['levelup_btn_region']) if 'levelup_btn_region' in p else _DEFAULT_LEVELUP_BTN
+def _levelup_btn_region(): return tuple(_pcfg()['levelup_btn_region'])
 
 
 def is_levelup_screen(img: np.ndarray = None) -> bool:
@@ -317,18 +287,10 @@ def is_levelup_screen(img: np.ndarray = None) -> bool:
 
 
 # ── OCR 冷却检测 ──────────────────────────────────────────────
-_DEFAULT_COOLDOWN_CROPS = {
-    'S2': (1644, 1002, 1731, 1051),
-    'S3': (1790, 1003, 1882, 1059),
-}
-
 def _cooldown_crops() -> dict:
-    p = _pcfg()
-    if 'cooldown_text_crops' in p:
-        return {k: tuple(v) for k, v in p['cooldown_text_crops'].items()}
-    return _DEFAULT_COOLDOWN_CROPS
+    return {k: tuple(v) for k, v in _pcfg()['cooldown_text_crops'].items()}
 
-_COOLDOWN_TEXT_CROPS = _DEFAULT_COOLDOWN_CROPS  # 向后兼容
+_COOLDOWN_TEXT_CROPS = {}  # 向后兼容占位
 
 _ocr_inst = None
 def _get_ocr():
@@ -353,26 +315,14 @@ def is_skill_on_cooldown(img: np.ndarray, skill: str) -> bool:
 
 
 # ── 回合徽章模板匹配 + 角色名 OCR ────────────────────────────
-_DEFAULT_BADGE_REGION = (889, 233, 1026, 293)
-_DEFAULT_NAME_REGION  = (376, 971, 665, 1033)
-_DEFAULT_BADGE_SIZE   = (137, 60)
-_DEFAULT_BADGE_THR    = 0.7
-_BATTLE_TMPL_DIR      = os.path.join(_ROOT, 'templates', 'battle')
+_DEFAULT_BADGE_SIZE = (137, 60)
+_DEFAULT_BADGE_THR  = 0.7
+_BATTLE_TMPL_DIR    = os.path.join(_ROOT, 'templates', 'battle')
 
-def _badge_region():
-    p = _pcfg()
-    return tuple(p['badge_region']) if 'badge_region' in p else _DEFAULT_BADGE_REGION
-
-def _badge_size():
-    p = _pcfg()
-    return tuple(p['badge_size']) if 'badge_size' in p else _DEFAULT_BADGE_SIZE
-
-def _badge_threshold():
-    return _pcfg().get('badge_threshold', _DEFAULT_BADGE_THR)
-
-def _name_region():
-    p = _pcfg()
-    return tuple(p['name_region']) if 'name_region' in p else _DEFAULT_NAME_REGION
+def _badge_region():    return tuple(_pcfg()['badge_region'])
+def _badge_size():      return tuple(_pcfg().get('badge_size', _DEFAULT_BADGE_SIZE))
+def _badge_threshold(): return _pcfg().get('badge_threshold', _DEFAULT_BADGE_THR)
+def _name_region():     return tuple(_pcfg()['name_region'])
 
 
 def _load_badge_tmpl(name: str):
@@ -461,17 +411,10 @@ def img_similarity(img_a: np.ndarray, img_b: np.ndarray) -> float:
 
 
 # ── 烧魂检测 ──────────────────────────────────────────────────
-_DEFAULT_BURN_BTN_REGION    = (878, 961, 1212, 1092)
-_DEFAULT_CANCEL_BTN_REGION  = (899, 981, 1171, 1070)   # 1922×1115 默认值
 _BURN_AVAILABLE_RATIO       = 0.05   # 蓝色像素占比 ≥ 5% → Burn可用
 
-def _burn_btn_region() -> tuple:
-    p = _pcfg()
-    return tuple(p['burn_btn_region']) if 'burn_btn_region' in p else _DEFAULT_BURN_BTN_REGION
-
-def _cancel_btn_region() -> tuple:
-    p = _pcfg()
-    return tuple(p['cancel_btn_region']) if 'cancel_btn_region' in p else _DEFAULT_CANCEL_BTN_REGION
+def _burn_btn_region() -> tuple:   return tuple(_pcfg()['burn_btn_region'])
+def _cancel_btn_region() -> tuple: return tuple(_pcfg()['cancel_btn_region'])
 
 def _check_blue_ratio(img: np.ndarray, region: tuple) -> float:
     """返回region内HSV蓝色像素占比。"""
@@ -824,8 +767,6 @@ def detect_enemy_positions(img: np.ndarray, enemy_codes: list,
 
 
 # ── 开局规则识别 ──────────────────────────────────────────────
-_DEFAULT_OPENING_RULE_REGION = (112, 967, 314, 1019)
-
 _OPENING_RULE_SIMILAR = {
     '攻': {'攻', '玫', '收', '改'},
     '击': {'击', '古', '占'},
@@ -851,7 +792,7 @@ def detect_opening_rule(img: np.ndarray = None) -> int:
     """
     if img is None:
         img = capture()
-    x1, y1, x2, y2 = tuple(_pcfg().get('opening_rule_region', _DEFAULT_OPENING_RULE_REGION))
+    x1, y1, x2, y2 = tuple(_pcfg()['opening_rule_region'])
     crop = img[y1:y2, x1:x2]
     buf = io.BytesIO()
     Image.fromarray(crop).save(buf, format='PNG')
