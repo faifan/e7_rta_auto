@@ -183,50 +183,289 @@ def _ncc_flat(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / denom) if denom > 1e-6 else 0.0
 
 
+# ── 合成模板识别（新方法：合成立绘 + 职业/属性过滤 + NCC）─────────────────
+# 覆盖 380+ 英雄，自动适配 1920×1080 / 1280×720 分辨率
+_NEW_THRESHOLD   = 0.45
+_NEW_CROP_LEFT   = 0.33     # 跳过左侧 UI 区（Lv.60/星级/图标），只比较右侧立绘
+_REF_SLOT_H      = 125      # 1080p 基准槽高，用于计算分辨率缩放系数
+
+_CARD_ASSETS_NEW = os.path.join(_ROOT, 'templates', 'card')
+_ZYSX_DIR_NEW    = os.path.join(_CARD_ASSETS_NEW, 'zysx')
+_L_CODE_RE_NEW   = _re.compile(r'^(.+?)(?:_s\d+)?_l(?:_\w+)?$')
+
+_ATTR_BG_NEW = {
+    'fire':  (150, 44,  38),
+    'ice':   (139, 34,  32),
+    'dark':  (151, 41,  41),
+    'light': (152, 51,  39),
+    'wind':  (149, 70,  50),
+}
+_ATTR_ICON_FILES = {
+    'fire':  'cm_icon_profire.png',
+    'ice':   'cm_icon_proice.png',
+    'dark':  'cm_icon_promdark.png',
+    'light': 'cm_icon_promlight.png',
+    'wind':  'cm_icon_prowind.png',
+}
+_JOB_ICON_FILES = {
+    'assassin': 'cm_icon_role_assassin.png',
+    'knight':   'cm_icon_role_knight.png',
+    'mage':     'cm_icon_role_mage.png',
+    'manauser': 'cm_icon_role_manauser.png',
+    'ranger':   'cm_icon_role_ranger.png',
+    'warrior':  'cm_icon_role_warrior.png',
+}
+
+_E7_ATTRS: dict = {}          # code → (job_cd, attribute_cd)
+_new_tmpls_cache: dict = {}   # (slot_w, slot_h) → {code: [gray ndarray]}
+_JOB_ICON_RGB_NEW:  dict = {} # job_cd  → uint8 (44, 44, 3) @1080p 基准尺寸
+_ATTR_ICON_RGB_NEW: dict = {} # attr_cd → uint8 (32, 32, 3) @1080p 基准尺寸
+
+
+def _load_e7_attrs():
+    if _E7_ATTRS:
+        return
+    try:
+        with open(_E7_JSON, 'r', encoding='utf-8') as f:
+            for h in json.load(f):
+                _E7_ATTRS[h['code']] = (h.get('job_cd'), h.get('attribute_cd'))
+    except Exception:
+        pass
+
+
+def _alpha_paste_new(canvas, icon_rgba, x, y):
+    ih, iw = icon_rgba.shape[:2]
+    ch, cw = canvas.shape[:2]
+    x2, y2 = min(x + iw, cw), min(y + ih, ch)
+    iw2, ih2 = x2 - x, y2 - y
+    if iw2 <= 0 or ih2 <= 0:
+        return
+    src   = icon_rgba[:ih2, :iw2]
+    alpha = src[:, :, 3:].astype(np.float32) / 255.0
+    bg    = canvas[y:y2, x:x2].astype(np.float32)
+    fg    = src[:, :, :3].astype(np.float32)
+    canvas[y:y2, x:x2] = (bg * (1 - alpha) + fg * alpha).astype(np.uint8)
+
+
+def _build_card_new(tp_path, attribute_cd, slot_w=426, slot_h=_REF_SLOT_H):
+    bg     = _ATTR_BG_NEW.get(attribute_cd, (145, 43, 37))
+    canvas = np.zeros((slot_h, slot_w, 3), dtype=np.uint8)
+    canvas[:] = bg
+    tpc    = Image.open(tp_path).convert('RGBA')
+    arr    = np.array(tpc)
+    scale  = slot_h / arr.shape[0]
+    char_w = max(1, int(arr.shape[1] * scale))
+    rgb_s  = cv2.resize(arr[:, :, :3], (char_w, slot_h), interpolation=cv2.INTER_LINEAR)
+    alp_s  = cv2.resize(arr[:, :, 3],  (char_w, slot_h), interpolation=cv2.INTER_LINEAR)
+    if char_w <= slot_w:
+        x0   = slot_w - char_w
+        mask = alp_s[:, :, np.newaxis].astype(np.float32) / 255.0
+        reg  = canvas[:, x0:x0 + char_w].astype(np.float32)
+        canvas[:, x0:x0 + char_w] = (reg * (1 - mask) + rgb_s.astype(np.float32) * mask).astype(np.uint8)
+    else:
+        crop_x   = char_w - slot_w
+        rgb_crop = rgb_s[:, crop_x:]
+        alp_crop = alp_s[:, crop_x:]
+        mask     = alp_crop[:, :, np.newaxis].astype(np.float32) / 255.0
+        reg      = canvas.astype(np.float32)
+        canvas[:] = (reg * (1 - mask) + rgb_crop.astype(np.float32) * mask).astype(np.uint8)
+    return canvas
+
+
+def _get_new_templates(slot_w: int, slot_h: int) -> dict:
+    dim = (slot_w, slot_h)
+    if dim in _new_tmpls_cache:
+        return _new_tmpls_cache[dim]
+    _load_e7_attrs()
+    tmpls = {}
+    if not os.path.exists(_CARD_ASSETS_NEW):
+        _new_tmpls_cache[dim] = tmpls
+        return tmpls
+    for fname in os.listdir(_CARD_ASSETS_NEW):
+        if not fname.endswith('.png'):
+            continue
+        m = _L_CODE_RE_NEW.match(fname[:-4])
+        if not m:
+            continue
+        code = m.group(1)
+        if code not in _E7_ATTRS:
+            continue
+        _, attr_cd = _E7_ATTRS[code]
+        try:
+            rgb  = _build_card_new(
+                os.path.join(_CARD_ASSETS_NEW, fname),
+                attr_cd, slot_w=426, slot_h=slot_h)
+            rgb  = rgb[:, (426 - slot_w):]          # 右对齐裁剪到槽宽
+            lx   = int(slot_w * _NEW_CROP_LEFT)
+            gray = cv2.cvtColor(rgb[:, lx:], cv2.COLOR_RGB2GRAY)
+            tmpls.setdefault(code, []).append(
+                cv2.resize(gray, _TMPL_SIZE).astype(np.float32))
+        except Exception:
+            pass
+    _new_tmpls_cache[dim] = tmpls
+    return tmpls
+
+
+def _load_icon_rgb_new():
+    if _JOB_ICON_RGB_NEW and _ATTR_ICON_RGB_NEW:
+        return
+    _bg = np.array([147, 42, 38], dtype=np.uint8)
+    if not os.path.exists(_ZYSX_DIR_NEW):
+        return
+    for jcd, fname in _JOB_ICON_FILES.items():
+        p = os.path.join(_ZYSX_DIR_NEW, fname)
+        if os.path.exists(p):
+            icon = np.array(Image.open(p).convert('RGBA').resize((44, 44)))
+            mini = np.full((44, 44, 3), _bg, dtype=np.uint8)
+            _alpha_paste_new(mini, icon, 0, 0)
+            _JOB_ICON_RGB_NEW[jcd] = mini
+    for acd, fname in _ATTR_ICON_FILES.items():
+        p = os.path.join(_ZYSX_DIR_NEW, fname)
+        if os.path.exists(p):
+            icon = np.array(Image.open(p).convert('RGBA').resize((32, 32)))
+            mini = np.full((32, 32, 3), _bg, dtype=np.uint8)
+            _alpha_paste_new(mini, icon, 0, 0)
+            _ATTR_ICON_RGB_NEW[acd] = mini
+
+
+def _detect_job_attr_new(img_rgb, region):
+    _load_icon_rgb_new()
+    x1, y1, x2, y2 = region
+    sh = y2 - y1
+    sc = sh / _REF_SLOT_H   # 分辨率缩放系数（1080p=1.0，720p≈0.67）
+
+    # ── 职业：3通道 NCC，图标按 sc 缩放 ──
+    job_cd = None
+    job_sz = max(4, int(44 * sc))
+    job_sw = min(max(job_sz + 1, int(120 * sc)), x2 - x1)
+    if job_sw >= job_sz and sh >= job_sz and _JOB_ICON_RGB_NEW:
+        area = img_rgb[y1:y2, x1:x1 + job_sw].astype(np.float32)
+        jsc  = {}
+        for jcd_k, base in _JOB_ICON_RGB_NEW.items():
+            tmpl = cv2.resize(base, (job_sz, job_sz)).astype(np.float32)
+            jsc[jcd_k] = float(np.mean([
+                cv2.matchTemplate(area[:, :, c], tmpl[:, :, c],
+                                  cv2.TM_CCOEFF_NORMED).max()
+                for c in range(3)]))
+        best_j = max(jsc, key=jsc.get)
+        if jsc[best_j] >= 0.40:
+            job_cd = best_j
+
+    # ── 属性：像素特征色计数，搜索区域按 sc 缩放 ──
+    attr_cd = None
+    ax1 = x1 + int(48 * sc)
+    ax2 = min(ax1 + int(52 * sc), x2)
+    ay2 = min(y1 + int(45 * sc), y2)
+    if ax2 - ax1 >= 5 and ay2 > y1:
+        af   = img_rgb[y1:ay2, ax1:ax2].astype(np.float32)
+        R, G, B = af[:, :, 0], af[:, :, 1], af[:, :, 2]
+        sc_a = {
+            'fire':  int(np.sum((R > 175) & (G > 50)  & (R > 2.2*G) & (R > 3.0*B))),
+            'ice':   int(np.sum((B > 170) & (B > 2.0*R) & (B > G))),
+            'dark':  int(np.sum((R > 60)  & (B > 60)   & (G < 50))),
+            'light': int(np.sum((R > 180) & (G > 150)  & (B < 80))),
+            'wind':  int(np.sum((G > 130) & (G > R+30) & (G > B+30))),
+        }
+        best_a = max(sc_a, key=sc_a.get)
+        if sc_a[best_a] >= 5:
+            attr_cd = best_a
+
+    return job_cd, attr_cd
+
+
 def identify_slot(img: np.ndarray, region: tuple, exclude: set = None) -> str:
     code, _, _ = identify_slot_debug(img, region, exclude=exclude)
     return code
 
 
 def identify_slot_debug(img: np.ndarray, region: tuple, exclude: set = None) -> tuple:
-    """返回 (code, best_score, gap)，方便日志排查。exclude 中的 code 跳过，自动取次高分。"""
-    if not _draft_templates:
-        _load_draft_templates()
-    if not _draft_templates:
-        return 'unknown', 0.0, 0.0
+    """返回 (code, best_score, gap)；合成模板 NCC + 职业/属性过滤，覆盖 380+ 英雄。"""
+    # ── 旧方法（仅 84 英雄实拍模板，已停用）──
+    # if not _draft_templates:
+    #     _load_draft_templates()
+    # if not _draft_templates:
+    #     return 'unknown', 0.0, 0.0
+    # x1, y1, x2, y2 = region
+    # crop = img[y1:y2, x1:x2]
+    # gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+    # query = cv2.resize(gray, _TMPL_SIZE).astype(np.float32)
+    # best_code, best_score, second_score = 'unknown', -1.0, -1.0
+    # for code, tmpls in _draft_templates.items():
+    #     if exclude and code in exclude:
+    #         continue
+    #     s = max(_ncc_flat(query, t) for t in tmpls)
+    #     if s > best_score:
+    #         second_score = best_score
+    #         best_score, best_code = s, code
+    #     elif s > second_score:
+    #         second_score = s
+    # gap = best_score - second_score
+    # if best_score >= _NCC_THRESHOLD:
+    #     return best_code, best_score, gap
+    # return 'unknown', best_score, gap
+
+    # ── 新方法：合成立绘模板 + 职业/属性过滤 ──
+    _load_e7_attrs()
     x1, y1, x2, y2 = region
-    crop = img[y1:y2, x1:x2]
-    gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+    slot_w, slot_h  = x2 - x1, y2 - y1
+
+    all_t = _get_new_templates(slot_w, slot_h)
+    if not all_t:
+        return 'unknown', 0.0, 0.0
+
+    det_job, det_attr = _detect_job_attr_new(img, region)
+    if det_job or det_attr:
+        filtered = {
+            code: ts for code, ts in all_t.items()
+            if (exclude is None or code not in exclude)
+            and (det_job  is None or _E7_ATTRS.get(code, (None, None))[0] == det_job)
+            and (det_attr is None or _E7_ATTRS.get(code, (None, None))[1] == det_attr)
+        }
+        tmpls = filtered if filtered else {
+            code: ts for code, ts in all_t.items()
+            if exclude is None or code not in exclude
+        }
+    else:
+        tmpls = {code: ts for code, ts in all_t.items()
+                 if exclude is None or code not in exclude}
+
+    if not tmpls:
+        return 'unknown', 0.0, 0.0
+
+    lx    = int(slot_w * _NEW_CROP_LEFT)
+    crop  = img[y1:y2, x1:x2]
+    gray  = cv2.cvtColor(crop[:, lx:], cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _TMPL_SIZE).astype(np.float32)
-    best_code, best_score, second_score = 'unknown', -1.0, -1.0
-    for code, tmpls in _draft_templates.items():
-        if exclude and code in exclude:
-            continue
-        s = max(_ncc_flat(query, t) for t in tmpls)
-        if s > best_score:
-            second_score = best_score
-            best_score, best_code = s, code
-        elif s > second_score:
-            second_score = s
+
+    scores = [(max(_ncc_flat(query, t) for t in ts), code)
+              for code, ts in tmpls.items()]
+    scores.sort(reverse=True)
+
+    best_score, best_code = scores[0]
+    second_score = scores[1][0] if len(scores) > 1 else -1.0
     gap = best_score - second_score
-    if best_score >= _NCC_THRESHOLD:
+
+    if best_score >= _NEW_THRESHOLD:
         return best_code, best_score, gap
     return 'unknown', best_score, gap
 
 
 # ── 禁用槽识别 ────────────────────────────────────────────────
-# ban_images/ 优先（实际游戏截图），没有时回退到 hero_images/ CDN头像
+# 多尺度 matchTemplate + hero_images（CDN头像，灰度，覆盖 380+ 英雄）
 _HERO_IMAGES_DIR = os.path.join(_ROOT, 'templates', 'hero_images')
-_BAN_IMAGES_DIR  = os.path.join(_ROOT, 'templates', 'ban_images')
-_BAN_TMPL_SIZE   = (64, 64)
-_BAN_THRESHOLD   = 0.50   # ban_images 实拍模板匹配分更高，可收紧阈值
+# _BAN_IMAGES_DIR  = os.path.join(_ROOT, 'templates', 'ban_images')  # 旧：实拍模板
+# _BAN_TMPL_SIZE   = (64, 64)   # 旧：NCC resize 尺寸
+# _BAN_SCALES    = [0.45, 0.52, 0.60, 0.68, 0.75]  # 旧：固定比例，720p 槽位小时大量 scale 被跳过
+# 新：fill_pcts 表示模板占搜索区的比例，自动适配任意分辨率（1920/720 均有 6 个有效 scale）
+_BAN_FILL_PCTS = [0.58, 0.66, 0.74, 0.82, 0.90, 0.97]
+_BAN_THRESHOLD = 0.55   # 多尺度 matchTemplate 分数区间约 0.60~0.87，空槽 < 0.40
 
-# code -> list of templates（支持同一英雄多张）
+# code -> uint8 gray (112×112)，单张 CDN 头像
 _ban_templates: dict = {}
 
 
 def _load_ban_templates():
-    # 先从 hero_images 加载所有英雄（CDN头像，作为兜底）
+    # hero_images：RGBA→黑底→灰度，保持原始 112×112 供多尺度搜索
     if os.path.exists(_HERO_IMAGES_DIR):
         for fname in os.listdir(_HERO_IMAGES_DIR):
             if not fname.endswith('.png'):
@@ -234,37 +473,50 @@ def _load_ban_templates():
             code = fname[:-4]
             path = os.path.join(_HERO_IMAGES_DIR, fname)
             try:
-                img = np.array(Image.open(path).convert('L'))
-                _ban_templates[code] = [cv2.resize(img, _BAN_TMPL_SIZE).astype(np.float32)]
+                h = Image.open(path).convert('RGBA')
+                bg = Image.new('RGB', h.size, (0, 0, 0))
+                bg.paste(h.convert('RGB'), mask=h.split()[3])
+                _ban_templates[code] = np.array(bg.convert('L'))
             except Exception:
                 pass
-    # 再从 ban_images 追加实拍模板（覆盖/补充，文件名 code.png 或 code_N.png）
-    if os.path.exists(_BAN_IMAGES_DIR):
-        for fname in sorted(os.listdir(_BAN_IMAGES_DIR)):
-            if not fname.endswith('.png'):
-                continue
-            stem = fname[:-4]
-            # 去掉 _2 / _3 等后缀，得到 code
-            code = stem.rsplit('_', 1)[0] if '_' in stem and stem.rsplit('_', 1)[1].isdigit() else stem
-            path = os.path.join(_BAN_IMAGES_DIR, fname)
-            try:
-                img = np.array(Image.open(path).convert('L'))
-                tmpl = cv2.resize(img, _BAN_TMPL_SIZE).astype(np.float32)
-                if code not in _ban_templates:
-                    _ban_templates[code] = []
-                _ban_templates[code].append(tmpl)
-            except Exception:
-                pass
+    # 旧：ban_images 实拍模板（NCC 方案）
+    # _BAN_IMAGES_DIR = os.path.join(_ROOT, 'templates', 'ban_images')
+    # if os.path.exists(_BAN_IMAGES_DIR):
+    #     for fname in sorted(os.listdir(_BAN_IMAGES_DIR)):
+    #         if not fname.endswith('.png'): continue
+    #         stem = fname[:-4]
+    #         code = stem.rsplit('_',1)[0] if '_' in stem and stem.rsplit('_',1)[1].isdigit() else stem
+    #         img = np.array(Image.open(os.path.join(_BAN_IMAGES_DIR, fname)).convert('L'))
+    #         tmpl = cv2.resize(img, (64,64)).astype(np.float32)
+    #         _ban_templates.setdefault(code, []).append(tmpl)
+
+
+def _ms_ban_score(search_gray: np.ndarray, tmpl_gray: np.ndarray) -> float:
+    """多尺度 matchTemplate，ban 槽专用（灰度）。模板尺寸按搜索区比例计算，自适应分辨率。"""
+    best = -1.0
+    sh, sw = search_gray.shape
+    for pct in _BAN_FILL_PCTS:
+        tw = int(sw * pct)
+        th = int(sh * pct)
+        if tw >= sw or th >= sh or tw < 8 or th < 8:
+            continue
+        t = cv2.resize(tmpl_gray, (tw, th))
+        r = cv2.matchTemplate(search_gray, t, cv2.TM_CCOEFF_NORMED)
+        best = max(best, float(r.max()))
+    return best
 
 
 def _identify_ban_slot(crop_gray: np.ndarray) -> tuple:
-    query = cv2.resize(crop_gray, _BAN_TMPL_SIZE).astype(np.float32)
+    # 旧：NCC 64×64
+    # query = cv2.resize(crop_gray, (64,64)).astype(np.float32)
+    # for code, tmpls in _ban_templates.items():
+    #     for tmpl in tmpls:
+    #         s = _ncc_flat(query, tmpl)
     best_code, best_score = 'empty', -1.0
-    for code, tmpls in _ban_templates.items():
-        for tmpl in tmpls:
-            s = _ncc_flat(query, tmpl)
-            if s > best_score:
-                best_score, best_code = s, code
+    for code, tmpl in _ban_templates.items():
+        s = _ms_ban_score(crop_gray, tmpl)
+        if s > best_score:
+            best_score, best_code = s, code
     if best_score >= _BAN_THRESHOLD:
         return best_code, best_score
     return 'empty', best_score

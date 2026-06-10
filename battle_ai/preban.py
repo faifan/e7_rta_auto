@@ -10,16 +10,21 @@ from battle_ai.perception import capture
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _PREBAN_NCC_SIZE  = (80, 16)
-_HERO_TMPL_SIZE   = (80, 80)
+# _HERO_TMPL_SIZE   = (80, 80)   # 旧：NCC resize 尺寸
+# _NCC_THRESHOLD    = 0.50       # 旧：NCC 阈值
 _FIRST_PICK_SIZE  = (80, 20)
-_NCC_THRESHOLD    = 0.50
+_HERO_IMAGES_DIR_PREBAN = os.path.join(_ROOT, 'templates', 'hero_images')
+# _PREBAN_MS_SCALES = [0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.03, 1.05]  # 旧：固定比例，720p 只有 0.75 有效
+# 新：fill_pcts 按搜索区比例，自适应分辨率（1080p 128px / 720p 86px 均有 6 个有效 scale）
+_PREBAN_FILL_PCTS = [0.65, 0.72, 0.80, 0.88, 0.95, 0.98]
+_PREBAN_THRESHOLD = 0.40   # 多尺度 RGB matchTemplate，最低约 0.40
 
 _DEFAULT_REGION   = (181, 137, 505, 203)
 _DEFAULT_HERO_1   = (1695, 609)
 _DEFAULT_HERO_2   = (1695, 759)
 _DEFAULT_CONFIRM  = (1624, 945)
 
-_DEFAULT_CANDIDATE_SLOTS  = [(1614,208,1767,340),(1610,362,1778,495),(1604,515,1777,639),(1607,658,1784,792)]
+_DEFAULT_CANDIDATE_SLOTS  = [(1634,210,1762,338),(1634,362,1762,490),(1634,512,1762,640),(1634,664,1762,792)]
 _DEFAULT_CANDIDATE_CLICKS = [(1690,274),(1694,428),(1690,577),(1695,725)]
 _DEFAULT_FIRST_PICK_REGION = (1508,802,1736,861)
 
@@ -208,26 +213,49 @@ def is_first_pick(img=None) -> bool:
 
 
 # ── 候选格识别 ────────────────────────────────────────────────
+# 多尺度 RGB matchTemplate + hero_images，覆盖 380+ 英雄
 
-_preban_hero_tmpls: dict = {}   # code -> list[np.ndarray]
+_preban_hero_tmpls: dict = {}   # code -> uint8 RGB (112×112)
+
+
+def _ms_preban_score(search_rgb: np.ndarray, tmpl_rgb: np.ndarray) -> float:
+    """多尺度 matchTemplate，preban 候选槽专用（RGB）。模板尺寸按搜索区比例计算，自适应分辨率。"""
+    best = -1.0
+    sh, sw = search_rgb.shape[:2]
+    for pct in _PREBAN_FILL_PCTS:
+        tw = int(sw * pct)
+        th = int(sh * pct)
+        if tw >= sw or th >= sh or tw < 8 or th < 8:
+            continue
+        t = cv2.resize(tmpl_rgb, (tw, th))
+        r = cv2.matchTemplate(search_rgb, t, cv2.TM_CCOEFF_NORMED)
+        best = max(best, float(r.max()))
+    return best
 
 
 def _load_preban_hero_tmpls():
     global _preban_hero_tmpls
-    tmpl_dir = os.path.join(_ROOT, 'templates', 'preban_heroes')
-    if not os.path.exists(tmpl_dir):
+    # 旧：preban_heroes/ 实拍模板（仅约20英雄，NCC 80×80 灰度）
+    # tmpl_dir = os.path.join(_ROOT, 'templates', 'preban_heroes')
+    # for fname in os.listdir(tmpl_dir):
+    #     code = fname[:-4].split('_')[0]
+    #     img = cv2.imdecode(np.fromfile(...), cv2.IMREAD_GRAYSCALE)
+    #     tmpls.setdefault(code, []).append(cv2.resize(img, (80,80)).astype(np.float32))
+    if not os.path.exists(_HERO_IMAGES_DIR_PREBAN):
         return
     tmpls: dict = {}
-    for fname in os.listdir(tmpl_dir):
+    for fname in os.listdir(_HERO_IMAGES_DIR_PREBAN):
         if not fname.endswith('.png'):
             continue
-        code = fname[:-4].split('_')[0]
-        img  = cv2.imdecode(np.fromfile(os.path.join(tmpl_dir, fname), dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            continue
-        tmpls.setdefault(code, []).append(
-            cv2.resize(img, _HERO_TMPL_SIZE).astype(np.float32)
-        )
+        code = fname[:-4]
+        path = os.path.join(_HERO_IMAGES_DIR_PREBAN, fname)
+        try:
+            h = Image.open(path).convert('RGBA')
+            bg = Image.new('RGB', h.size, (0, 0, 0))
+            bg.paste(h.convert('RGB'), mask=h.split()[3])
+            tmpls[code] = np.array(bg)
+        except Exception:
+            pass
     _preban_hero_tmpls = tmpls
 
 
@@ -237,16 +265,17 @@ def identify_preban_candidates(img) -> list:
         _load_preban_hero_tmpls()
     results = []
     for x1, y1, x2, y2 in _candidate_slots():
-        crop  = img[y1:y2, x1:x2]
-        gray  = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
-        query = cv2.resize(gray, _HERO_TMPL_SIZE).astype(np.float32)
+        crop = img[y1:y2, x1:x2]   # RGB
+        # 旧：gray = cv2.cvtColor(crop, cv2.COLOR_RGB2GRAY)
+        # 旧：query = cv2.resize(gray, (80,80)).astype(np.float32)
+        # 旧：for code, tmpl_list in _preban_hero_tmpls.items():
+        # 旧：    for tmpl in tmpl_list: s = _ncc(query, tmpl)
         best_code, best_score = None, 0.0
-        for code, tmpl_list in _preban_hero_tmpls.items():
-            for tmpl in tmpl_list:
-                s = _ncc(query, tmpl)
-                if s > best_score:
-                    best_score, best_code = s, code
-        results.append(best_code if best_score >= _NCC_THRESHOLD else None)
+        for code, tmpl in _preban_hero_tmpls.items():
+            s = _ms_preban_score(crop, tmpl)
+            if s > best_score:
+                best_score, best_code = s, code
+        results.append(best_code if best_score >= _PREBAN_THRESHOLD else None)
     return results
 
 
