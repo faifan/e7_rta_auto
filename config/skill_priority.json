@@ -88,5 +88,7 @@
   "济纽亚": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"single","extra_turn":false},"soul_burn":"S1","burn_timing":"second","priority":["S3","S1"],"s3_skip":2},
   "支配者莉莉亚斯": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S2","extra_turn":"S3","burn_timing":"second","priority":["S3","S2","S1"],"s3_skip":2},
   "红焰亚敏": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
-  "落月": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S3","extra_turn":"S3","burn_timing":"first","priority":["S3","S2","S1"],"s3_skip":2}
+  "落月": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S3","extra_turn":"S3","burn_timing":"first","priority":["S3","S2","S1"],"s3_skip":2},
+  "伊凡娜": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
+  "里安娜路西艾拉": {"S1":{"type":"single"},"S2":{"type":"single","extra_turn":true},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"extra_turn":"S2","priority":["S2","S3","S1"],"s3_skip":1}
 }

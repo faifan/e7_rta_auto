@@ -136,7 +136,7 @@ def _ncc_flat(a: np.ndarray, b: np.ndarray) -> float:
 
 # ── 合成模板识别（新方法：合成立绘 + 职业/属性过滤 + NCC）─────────────────
 # 覆盖 380+ 英雄，自动适配 1920×1080 / 1280×720 分辨率
-_NEW_THRESHOLD   = 0.45
+_NEW_THRESHOLD   = 0.38
 _NEW_CROP_LEFT   = 0.33     # 跳过左侧 UI 区（Lv.60/星级/图标），只比较右侧立绘
 _REF_SLOT_H      = 125      # 1080p 基准槽高，用于计算分辨率缩放系数
 
@@ -318,7 +318,7 @@ def _detect_job_attr_new(img_rgb, region):
             'wind':  int(np.sum((G > 130) & (G > R+30) & (G > B+30))),
         }
         best_a = max(sc_a, key=sc_a.get)
-        if sc_a[best_a] >= 5:
+        if sc_a[best_a] >= 15:
             attr_cd = best_a
 
     return job_cd, attr_cd
@@ -1405,8 +1405,11 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
 
             if recs or _force_cands or _counter_cands:
                 candidates = list(prepend_candidates or []) + _counter_cands + _force_cands
+                _cand_codes = {c for c, _, _ in candidates}
                 for rec in recs[:5]:
                     code = rec['hero_code']
+                    if code in _cand_codes:
+                        continue
                     if code in unavailable_codes:
                         name = _code_to_name.get(code, code)
                         log_fn(f"  → 跳过不可用: {name}（{code}）")
@@ -1542,7 +1545,7 @@ def run_draft(recommender, my_first: bool = True, banned: list = None,
                 continue
             code = 'unknown'
             pick_score = 0.0
-            for attempt in range(1, 6):
+            for attempt in range(1, 4):
                 time.sleep(0.4)
                 img_after = capture()
                 code, score, gap = identify_slot_debug(img_after, cur_opp_slots[opp_slot_idx], exclude=set(my_picks))
