@@ -134,13 +134,28 @@ def _ncc_flat(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / denom) if denom > 1e-6 else 0.0
 
 
+def _ncc_masked_new(q: np.ndarray, t: np.ndarray, mask: np.ndarray) -> float:
+    """取 plain NCC 和 masked NCC 的最大值：透明区不一致时跳过更准，一致时不损失信号"""
+    plain = _ncc_flat(q, t)
+    flat = mask.flatten() > 64
+    if flat.sum() < 100:
+        return plain
+    a = q.flatten()[flat].astype(np.float32); a -= a.mean()
+    b = t.flatten()[flat].astype(np.float32); b -= b.mean()
+    denom = np.sqrt((a**2).sum() * (b**2).sum())
+    masked = float(np.dot(a, b) / denom) if denom > 1e-6 else 0.0
+    return max(plain, masked)
+
+
 # ── 合成模板识别（新方法：合成立绘 + 职业/属性过滤 + NCC）─────────────────
 # 覆盖 380+ 英雄，自动适配 1920×1080 / 1280×720 分辨率
-_NEW_THRESHOLD   = 0.38
+_NEW_THRESHOLD   = 0.40
 _NEW_CROP_LEFT   = 0.33     # 跳过左侧 UI 区（Lv.60/星级/图标），只比较右侧立绘
+_NEW_MIN_GAP     = 0.02     # 第1名与第2名分数差低于此值视为不确定
 _REF_SLOT_H      = 125      # 1080p 基准槽高，用于计算分辨率缩放系数
 
 _CARD_ASSETS_NEW = os.path.join(_ROOT, 'templates', 'card')
+_HERO_LIST_JSON  = os.path.join(_ROOT, 'hero_list_146.json')
 _ZYSX_DIR_NEW    = os.path.join(_CARD_ASSETS_NEW, 'zysx')
 _L_CODE_RE_NEW   = _re.compile(r'^(.+?)(?:_s\d+)?_l(?:_\w+)?$')
 
@@ -168,7 +183,16 @@ _JOB_ICON_FILES = {
 }
 
 _E7_ATTRS: dict = {}          # code → (job_cd, attribute_cd)
-_new_tmpls_cache: dict = {}   # (slot_w, slot_h) → {code: [gray ndarray]}
+_new_tmpls_cache: dict = {}   # (slot_w, slot_h) → {code: [(gray, mask) ndarray]}
+
+def _load_new_whitelist() -> set:
+    try:
+        with open(_HERO_LIST_JSON, 'r', encoding='utf-8') as f:
+            return set(json.load(f).get('hero_list', []))
+    except Exception:
+        return set()
+
+_NEW_WHITELIST: set = _load_new_whitelist()
 _JOB_ICON_RGB_NEW:  dict = {} # job_cd  → uint8 (44, 44, 3) @1080p 基准尺寸
 _ATTR_ICON_RGB_NEW: dict = {} # attr_cd → uint8 (32, 32, 3) @1080p 基准尺寸
 
@@ -223,6 +247,20 @@ def _build_card_new(tp_path, attribute_cd, slot_w=426, slot_h=_REF_SLOT_H):
     return canvas
 
 
+def _build_alpha_mask_new(tp_path, slot_w: int, slot_h: int) -> np.ndarray:
+    """返回与 _build_card_new 布局一致的 alpha 掩码 (slot_h × slot_w, uint8)"""
+    arr = np.array(Image.open(tp_path).convert('RGBA'))[:, :, 3]
+    scale = slot_h / arr.shape[0]
+    cw = max(1, int(arr.shape[1] * scale))
+    canvas = np.zeros((slot_h, slot_w), dtype=np.uint8)
+    alp = cv2.resize(arr, (cw, slot_h), interpolation=cv2.INTER_LINEAR)
+    if cw <= slot_w:
+        canvas[:, slot_w - cw:] = alp
+    else:
+        canvas[:] = alp[:, cw - slot_w:]
+    return canvas
+
+
 def _get_new_templates(slot_w: int, slot_h: int) -> dict:
     dim = (slot_w, slot_h)
     if dim in _new_tmpls_cache:
@@ -241,16 +279,19 @@ def _get_new_templates(slot_w: int, slot_h: int) -> dict:
         code = m.group(1)
         if code not in _E7_ATTRS:
             continue
+        if _NEW_WHITELIST and code not in _NEW_WHITELIST:
+            continue
         _, attr_cd = _E7_ATTRS[code]
         try:
-            rgb  = _build_card_new(
-                os.path.join(_CARD_ASSETS_NEW, fname),
-                attr_cd, slot_w=426, slot_h=slot_h)
-            rgb  = rgb[:, (426 - slot_w):]          # 右对齐裁剪到槽宽
+            tp_path = os.path.join(_CARD_ASSETS_NEW, fname)
+            rgb  = _build_card_new(tp_path, attr_cd, slot_w=slot_w, slot_h=slot_h)
             lx   = int(slot_w * _NEW_CROP_LEFT)
             gray = cv2.cvtColor(rgb[:, lx:], cv2.COLOR_RGB2GRAY)
-            tmpls.setdefault(code, []).append(
-                cv2.resize(gray, _TMPL_SIZE).astype(np.float32))
+            g_r  = cv2.resize(gray, _TMPL_SIZE).astype(np.float32)
+            msk_full = _build_alpha_mask_new(tp_path, slot_w, slot_h)
+            msk  = cv2.resize(msk_full[:, lx:].astype(np.uint8), _TMPL_SIZE,
+                               interpolation=cv2.INTER_LINEAR)
+            tmpls.setdefault(code, []).append((g_r, msk))
         except Exception:
             pass
     _new_tmpls_cache[dim] = tmpls
@@ -388,7 +429,7 @@ def identify_slot_debug(img: np.ndarray, region: tuple, exclude: set = None) -> 
     gray  = cv2.cvtColor(crop[:, lx:], cv2.COLOR_RGB2GRAY)
     query = cv2.resize(gray, _TMPL_SIZE).astype(np.float32)
 
-    scores = [(max(_ncc_flat(query, t) for t in ts), code)
+    scores = [(max(_ncc_masked_new(query, g, m) for g, m in ts), code)
               for code, ts in tmpls.items()]
     scores.sort(reverse=True)
 
@@ -396,7 +437,7 @@ def identify_slot_debug(img: np.ndarray, region: tuple, exclude: set = None) -> 
     second_score = scores[1][0] if len(scores) > 1 else -1.0
     gap = best_score - second_score
 
-    if best_score >= _NEW_THRESHOLD:
+    if best_score >= _NEW_THRESHOLD and gap >= _NEW_MIN_GAP:
         return best_code, best_score, gap
     return 'unknown', best_score, gap
 
@@ -422,6 +463,8 @@ def _load_ban_templates():
             if not fname.endswith('.png'):
                 continue
             code = fname[:-4]
+            if _NEW_WHITELIST and code not in _NEW_WHITELIST:
+                continue
             path = os.path.join(_HERO_IMAGES_DIR, fname)
             try:
                 h = Image.open(path).convert('RGBA')
