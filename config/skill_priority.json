@@ -12,7 +12,7 @@
   "诺托斯": {"priority":["S3","S2","S1"],"soul_burn":"S2","s3_skip":2,"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"burn_timing":"second"},
   "灵眼的瑟琳": {"priority":["S3","S1"],"soul_burn":"S1","s3_skip":2,"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"burn_timing":"first","burn_extra_turn":"S1"},
   "狮心王洁若米亚": {"priority":["S3","S1"],"s3_skip":0,"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S1","extra_turn":"S3","burn_timing":"second"},
-  "利纳柯": {"priority":["S2","S3","S1"],"extra_turn":"S2","s3_skip":1,"S1":{"type":"single"},"S2":{"type":"single","extra_turn":true},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S2"},
+  "利纳柯": {"priority":["S2","S3","S1"],"extra_turn":"S2","s3_skip":0,"S1":{"type":"single"},"S2":{"type":"single","extra_turn":true},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S2"},
   "萨洛美": {"priority":["S2","S3","S1"],"extra_turn":"S2","soul_burn":null,"s3_skip":0,"S1":{"type":"single"},"S2":{"type":"active","extra_turn":true},"S3":{"type":"aoe","extra_turn":false}},
   "艾丝黛": {"priority":["S3","S1"],"soul_burn":"S3","s3_skip":0,"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"burn_timing":"first"},
   "黑暗牧者迪埃妮": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
@@ -90,5 +90,6 @@
   "红焰亚敏": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
   "落月": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S3","extra_turn":"S3","burn_timing":"first","priority":["S3","S2","S1"],"s3_skip":2},
   "伊凡娜": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
-  "里安娜路西艾拉": {"S1":{"type":"single"},"S2":{"type":"single","extra_turn":true},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"extra_turn":"S2","priority":["S2","S3","S1"],"s3_skip":1}
+  "里安娜路西艾拉": {"S1":{"type":"single"},"S2":{"type":"single","extra_turn":true},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"extra_turn":"S2","priority":["S2","S3","S1"],"s3_skip":0},
+  "黎明序曲鲁特比": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2}
 }

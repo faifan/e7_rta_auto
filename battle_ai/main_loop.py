@@ -8,7 +8,7 @@ _COLLECT_BATTLE_CAPS = 1
 _CAPS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                          'data', 'battle_caps')
 
-def _save_battle_cap(img, turn: int):
+def _save_battle_cap(img, turn):
     try:
         os.makedirs(_CAPS_DIR, exist_ok=True)
         ts = time.strftime('%Y%m%d_%H%M%S')
@@ -121,6 +121,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
     turn = 0
     _pos_map: dict = {}
     _pos_detected = False
+    _enemy_cap_saved = False
     while True:
         if stop_event and stop_event.is_set():
             _log("战斗AI：收到停止信号，退出")
@@ -142,6 +143,9 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
         badge = read_turn_badge(img)
 
         if badge != 'my_turn':
+            if _COLLECT_BATTLE_CAPS and badge == 'enemy_turn' and not _enemy_cap_saved:
+                _save_battle_cap(img, 'e')
+                _enemy_cap_saved = True
             time.sleep(POLL_INTERVAL)
             continue
 
