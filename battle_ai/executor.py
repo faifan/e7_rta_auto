@@ -135,8 +135,57 @@ def _find_main_hwnd(title: str):
     return hwnd
 
 
+def _is_adb() -> bool:
+    try:
+        from config_loader import cfg
+        return cfg.is_loaded() and cfg.input_method == 'adb'
+    except ImportError:
+        return False
+
+
+# ── ADB 支持 ──────────────────────────────────────────────────
+import os as _os
+import subprocess as _subprocess
+
+_NO_WINDOW = _subprocess.CREATE_NO_WINDOW
+
+_adb_device: str = ''
+
+def _get_adb_exe() -> str:
+    import sys
+    proj = getattr(sys, '_MEIPASS', _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    return _os.path.join(proj, 'platform-tools', 'adb.exe')
+
+def set_device(address: str):
+    global _adb_device
+    _adb_device = address.strip()
+
+def get_device() -> str:
+    return _adb_device
+
+def _adb(*args) -> '_subprocess.CompletedProcess':
+    adb_exe = _get_adb_exe()
+    cmd = [adb_exe]
+    if _adb_device:
+        cmd += ['-s', _adb_device]
+    cmd += [str(a) for a in args]
+    return _subprocess.run(cmd, capture_output=True, creationflags=_NO_WINDOW)
+
+def adb_connect() -> bool:
+    if not _adb_device:
+        return False
+    r = _adb('connect', _adb_device)
+    ok = b'connected' in r.stdout.lower() or b'already' in r.stdout.lower()
+    print(f"[ADB] connect {_adb_device} → {'OK' if ok else 'FAIL'}  {r.stdout.decode(errors='ignore').strip()}")
+    return ok
+
+
 def focus_game_window():
-    """把游戏窗口拉到前台，缓存客户区屏幕偏移量。"""
+    """把游戏窗口拉到前台，缓存客户区屏幕偏移量。ADB模式只做连接确认。"""
+    if _is_adb():
+        adb_connect()
+        return
+
     global _win_offset, WINDOW_TITLE, SKILL_POS
     title = get_window_title()
     WINDOW_TITLE = title
@@ -244,8 +293,10 @@ def _send_input_click(sx: int, sy: int):
 
 
 def _click(x, y, delay=0.4):
-    # x, y 是 profile 里的逻辑游戏坐标
-    # 转屏幕物理坐标：窗口偏移 + 逻辑坐标 × dpi_scale
+    if _is_adb():
+        _adb('shell', 'input', 'tap', int(x), int(y))
+        time.sleep(delay)
+        return
     if _win_offset is None:
         raise RuntimeError("请先调用 focus_game_window()")
     ox, oy = _win_offset
@@ -288,6 +339,16 @@ def do_aoe(skill: str, burn: bool = False):
         click_burn()
     pos = _get_skill_pos()
     x, y = pos[skill]
+    if _is_adb():
+        cmd = f'input tap {int(x)} {int(y)}; sleep 0.08; input tap {int(x)} {int(y)}'
+        if _adb_device:
+            _subprocess.run([_get_adb_exe(), '-s', _adb_device, 'shell', cmd],
+                            capture_output=True, creationflags=_NO_WINDOW)
+        else:
+            _subprocess.run([_get_adb_exe(), 'shell', cmd],
+                            capture_output=True, creationflags=_NO_WINDOW)
+        time.sleep(0.4)
+        return
     if _win_offset is None:
         raise RuntimeError("请先调用 focus_game_window()")
     ox, oy = _win_offset
@@ -311,6 +372,18 @@ def type_text(text: str):
 
 
 def type_text_chinese(text: str):
+    if _is_adb():
+        try:
+            from config_loader import cfg
+            if cfg.is_loaded() and getattr(cfg, 'use_adbkeyboard', False):
+                _adb('shell', 'am', 'broadcast', '-a', 'ADB_INPUT_TEXT', '--es', 'msg', text)
+                time.sleep(0.2)
+                return
+        except Exception:
+            pass
+        _adb('shell', 'input', 'text', text)
+        time.sleep(0.2)
+        return
     _set_clipboard(text)
     time.sleep(0.1)
     pyautogui.hotkey('ctrl', 'a')

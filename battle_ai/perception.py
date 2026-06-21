@@ -62,10 +62,37 @@ def _get_window_region():
     return pt.x, pt.y + tab_bar, ew, eh
 
 
+def _capture_adb() -> np.ndarray:
+    """ADB截图：exec-out screencap -p，缩放到profile分辨率后返回RGB数组。"""
+    import io
+    from battle_ai.executor import _adb, _get_expected_resolution
+    for attempt in range(3):
+        result = _adb('exec-out', 'screencap', '-p')
+        try:
+            from PIL import Image as _PILImg
+            img = np.array(_PILImg.open(io.BytesIO(result.stdout)).convert('RGB'))
+            ew, eh = _get_expected_resolution()
+            if img.shape[1] != ew or img.shape[0] != eh:
+                img = np.array(_PILImg.fromarray(img).resize((ew, eh), _PILImg.LANCZOS))
+            top_mean    = float(img[:img.shape[0] // 4].mean())
+            bottom_mean = float(img[img.shape[0] * 3 // 4:].mean())
+            if top_mean > 20 and bottom_mean < 5:
+                raise ValueError("bad screenshot (truncated)")
+            return img
+        except Exception:
+            if attempt < 2:
+                time.sleep(0.3)
+    raise RuntimeError("ADB screencap 连续3次失败")
+
+
 def capture() -> np.ndarray:
     """截取游戏画面，返回 numpy RGB 数组（profile 分辨率 ew×eh）。
     Win32 返回物理坐标，PIL grab 用逻辑坐标，用 dpi_scale 换算后再裁剪。
     """
+    from battle_ai.executor import _is_adb
+    if _is_adb():
+        return _capture_adb()
+
     from PIL import ImageGrab, Image as PILImage
     from battle_ai.executor import get_window_title, _find_main_hwnd, _get_expected_resolution
 

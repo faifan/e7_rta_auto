@@ -1169,7 +1169,8 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         click_at(*_search_input(), delay=0.8)
         try:
             from config_loader import cfg
-            if cfg.is_loaded() and getattr(cfg, 'input_method', 'emulator') == 'pc':
+            _mode = getattr(cfg, 'input_method', 'emulator') if cfg.is_loaded() else 'emulator'
+            if _mode in ('pc', 'adb'):
                 from battle_ai.executor import type_text_chinese
                 type_text_chinese(name)
             else:

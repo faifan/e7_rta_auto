@@ -23,6 +23,8 @@ class _Cfg:
         self.lang_path:     str  = _DEFAULT_LANG
         self.input_method:        str  = 'emulator'
         self.local_stats_enabled: bool = True
+        self.adb_device:          str  = ''
+        self.use_adbkeyboard:     bool = False
         self._loaded = False
 
     def load(self, window_title: str,

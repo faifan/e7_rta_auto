@@ -199,14 +199,40 @@ class AutoRunApp:
 
         # 客户端类型行
         row3 = tk.Frame(cfg_frame, bg='#1e1e1e')
-        row3.pack(fill=tk.X, padx=8, pady=(2, 6))
+        row3.pack(fill=tk.X, padx=8, pady=(2, 2))
         tk.Label(row3, text='客户端:', font=CN_FONT,
                  fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
         self._client_var = tk.StringVar(value='安卓模拟器')
         self._client_cb  = ttk.Combobox(row3, textvariable=self._client_var,
-                                        font=CN_FONT, width=14, state='readonly')
-        self._client_cb['values'] = ['安卓模拟器', 'PC客户端']
+                                        font=CN_FONT, width=16, state='readonly')
+        self._client_cb['values'] = ['安卓模拟器', '安卓模拟器-ADB', 'PC客户端']
         self._client_cb.pack(side=tk.LEFT, padx=(4, 0))
+        self._client_cb.bind('<<ComboboxSelected>>', self._on_client_change)
+
+        # ADB 地址行（仅 ADB 模式显示）
+        self._adb_row = tk.Frame(cfg_frame, bg='#1e1e1e')
+        tk.Label(self._adb_row, text='ADB地址:', font=CN_FONT,
+                 fg='#c9d1d9', bg='#1e1e1e', width=8, anchor='e').pack(side=tk.LEFT)
+        self._adb_device_var = tk.StringVar(value='127.0.0.1:16384')
+        self._adb_device_entry = tk.Entry(self._adb_row, textvariable=self._adb_device_var,
+                                          font=CN_FONT, width=22,
+                                          bg='#0d1117', fg='#c9d1d9', insertbackground='white',
+                                          relief=tk.FLAT, highlightthickness=1,
+                                          highlightbackground='#30363d', highlightcolor='#1f6feb')
+        self._adb_device_entry.pack(side=tk.LEFT, padx=(4, 4))
+        tk.Button(self._adb_row, text='连接测试', font=CN_SMALL,
+                  bg='#21262d', fg='#c9d1d9', activebackground='#30363d',
+                  relief=tk.FLAT, padx=6,
+                  command=self._test_adb).pack(side=tk.LEFT)
+
+        self._adbkeyboard_row = tk.Frame(cfg_frame, bg='#1e1e1e')
+        self._adbkeyboard_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(self._adbkeyboard_row,
+                       text='使用ADBKeyboard输入中文（需模拟器安装ADBKeyboard.apk）',
+                       variable=self._adbkeyboard_var, font=CN_FONT,
+                       fg='#c9d1d9', bg='#1e1e1e',
+                       activebackground='#1e1e1e', activeforeground='#c9d1d9',
+                       selectcolor='#0d1117').pack(side=tk.LEFT)
 
         # 本地辅助开关
         row3b = tk.Frame(cfg_frame, bg='#1e1e1e')
@@ -243,6 +269,9 @@ class AutoRunApp:
         # 填充下拉选项
         self._refresh_windows()
         self._refresh_lang_profile()
+
+        # 恢复上次保存的设置
+        self._load_settings()
 
         # ── 状态行 ────────────────────────────────────────────
         self._status_var = tk.StringVar(value='就绪 — 选择窗口后点击"开始"')
@@ -343,6 +372,41 @@ class AutoRunApp:
         self._status_var.set(text)
         self._status_lbl.config(fg=color)
 
+    # ── 设置持久化 ────────────────────────────────────────────
+    _SETTINGS_SAVE = os.path.join(_HERE, 'config', 'settings.json')
+
+    def _save_settings(self):
+        data = {
+            'client':          self._client_var.get(),
+            'adb_device':      self._adb_device_var.get().strip(),
+            'profile':         self._profile_var.get(),
+            'lang':            self._lang_var.get(),
+            'use_adbkeyboard': self._adbkeyboard_var.get(),
+        }
+        try:
+            with open(self._SETTINGS_SAVE, 'w', encoding='utf-8') as f:
+                _json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def _load_settings(self):
+        try:
+            with open(self._SETTINGS_SAVE, encoding='utf-8') as f:
+                data = _json.load(f)
+            if data.get('client') and data['client'] in self._client_cb['values']:
+                self._client_var.set(data['client'])
+                self._on_client_change()
+            if data.get('adb_device'):
+                self._adb_device_var.set(data['adb_device'])
+            if data.get('profile') and data['profile'] in self._profile_cb['values']:
+                self._profile_var.set(data['profile'])
+            if data.get('lang') and data['lang'] in self._lang_map:
+                self._lang_var.set(data['lang'])
+            if 'use_adbkeyboard' in data:
+                self._adbkeyboard_var.set(data['use_adbkeyboard'])
+        except Exception:
+            pass
+
     # ── 预禁用配置持久化 ──────────────────────────────────────
     _PREBAN_SAVE = os.path.join(_HERE, 'config', 'preban_save.json')
 
@@ -368,12 +432,54 @@ class AutoRunApp:
         except Exception:
             pass
 
+    def _on_client_change(self, *_):
+        is_adb = self._client_var.get() == '安卓模拟器-ADB'
+        if is_adb:
+            self._adb_row.pack(fill=tk.X, padx=8, pady=(2, 2))
+            self._adbkeyboard_row.pack(fill=tk.X, padx=8, pady=(0, 2))
+        else:
+            self._adb_row.pack_forget()
+            self._adbkeyboard_row.pack_forget()
+        self._update_resize_btn_visibility()
+
+    def _test_adb(self):
+        from battle_ai.executor import set_device, adb_connect
+        device = self._adb_device_var.get().strip()
+        if not device:
+            self._set_status('请填写ADB地址！', '#f85149')
+            return
+        set_device(device)
+        ok = adb_connect()
+        if ok:
+            self._set_status(f'连接成功: {device}', '#3fb950')
+            self.log(f'ADB连接成功: {device}', 'ok')
+        else:
+            self._set_status(f'连接失败: {device}', '#f85149')
+            self.log(f'ADB连接失败: {device}', 'error')
+
     # ── 按钮回调 ─────────────────────────────────────────────
     def _on_start(self):
-        window_title = self._window_var.get().strip()
-        if not window_title:
-            self._set_status('请先选择游戏窗口！', '#f85149')
-            return
+        self._save_settings()
+        client = self._client_var.get()
+        is_adb = client == '安卓模拟器-ADB'
+
+        if is_adb:
+            device_address = self._adb_device_var.get().strip()
+            if not device_address:
+                self._set_status('请填写ADB地址！', '#f85149')
+                return
+            from battle_ai.executor import set_device, adb_connect
+            set_device(device_address)
+            if not adb_connect():
+                self._set_status(f'ADB连接失败: {device_address}', '#f85149')
+                self.log(f'ADB连接失败: {device_address}，请检查模拟器是否开启', 'error')
+                return
+            window_title = device_address
+        else:
+            window_title = self._window_var.get().strip()
+            if not window_title:
+                self._set_status('请先选择游戏窗口！', '#f85149')
+                return
 
         # 加载配置
         from config_loader import cfg, _ROOT
@@ -384,9 +490,24 @@ class AutoRunApp:
         profile_name = self._profile_var.get()
         profile_path = os.path.join(_ROOT, 'profiles', profile_name)
         cfg.load(window_title, profile_path, lang_path)
-        cfg.input_method        = 'pc' if self._client_var.get() == 'PC客户端' else 'emulator'
+        if client == 'PC客户端':
+            cfg.input_method = 'pc'
+        elif is_adb:
+            cfg.input_method    = 'adb'
+            cfg.adb_device      = window_title
+            cfg.use_adbkeyboard = self._adbkeyboard_var.get()
+            if cfg.use_adbkeyboard:
+                from battle_ai.executor import _adb
+                _adb('shell', 'ime', 'enable', 'com.android.adbkeyboard/.AdbIME')
+                _adb('shell', 'ime', 'set',    'com.android.adbkeyboard/.AdbIME')
+                r = _adb('shell', 'settings', 'get', 'secure', 'default_input_method')
+                if b'adbkeyboard' not in r.stdout.lower():
+                    self.log('⚠ ADBKeyboard未安装或未激活，请在模拟器中安装ADBKeyboard.apk后重试', 'warn')
+                    cfg.use_adbkeyboard = False
+        else:
+            cfg.input_method = 'emulator'
         cfg.local_stats_enabled = self._local_stats_var.get()
-        self.log(f'配置加载完成：窗口={window_title}  语言={lang_name}  坐标={profile_name}  客户端={self._client_var.get()}  本地辅助={"开" if cfg.local_stats_enabled else "关"}', 'ok')
+        self.log(f'配置加载完成：客户端={client}  语言={lang_name}  坐标={profile_name}  本地辅助={"开" if cfg.local_stats_enabled else "关"}', 'ok')
 
         # 读取预禁用目标（英雄名 → code）
         self._first_ban_codes  = [cb.get_code() for cb in self._first_ban_cb  if cb.get_code()]
@@ -416,7 +537,8 @@ class AutoRunApp:
         self._set_status('已停止 — 点击"开始"继续', '#d29922')
 
     def _update_resize_btn_visibility(self):
-        if self._client_var.get() == 'PC客户端':
+        client = self._client_var.get()
+        if client == 'PC客户端':
             self._resize_btn.pack(side=tk.LEFT, padx=12, before=self._start_btn)
         else:
             self._resize_btn.pack_forget()
@@ -642,7 +764,12 @@ class AutoRunApp:
         _wait_start      = None
 
         while not self._stop_event.is_set():
-            img = capture()
+            try:
+                img = capture()
+            except RuntimeError as e:
+                self.log(f'  截图失败: {e}，等待重试...', 'warn')
+                time.sleep(2.0)
+                continue
 
             if   is_intimacy_levelup(img):         phase = 'intimacy'
             elif is_signin_reward(img):            phase = 'signin_reward'

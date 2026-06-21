@@ -31,6 +31,7 @@ from battle_ai.decision import (
     get_burn_timing, is_first_action_done, mark_first_action_done,
     get_skill_type, get_attack_target, get_attack_targets_ordered,
     set_pending_extra_turn, get_pending_extra_turn, clear_pending_extra_turn,
+    get_priority_list,
 )
 from battle_ai.hero_config import resolve_attack_target
 from battle_ai.draft import _code_to_name
@@ -368,8 +369,14 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
 
         # ── Step 3: 普通技能 ─────────────────────────────────────
         if not executed:
-            if is_extra_turn and extra_turn_mode == 'normal' and _et_skill:
-                cands = [s for s in _candidates if s != _et_skill]
+            if is_extra_turn:
+                _bet_skill = get_burn_extra_turn_skill(char_name)
+                _skip = {s for s in [_et_skill, _bet_skill] if s}
+                if _skip:
+                    full = get_priority_list(char_name)
+                    cands = [s for s in full if s not in _skip] or ['S1']
+                else:
+                    cands = _candidates
             else:
                 cands = _candidates
             _log(f"[回合 {turn}] 角色={char_name or '未知'} 候选={cands}")

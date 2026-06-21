@@ -114,6 +114,11 @@ def _get_priority(key: str | None) -> list[str]:
     return list(_DEFAULT_PRIORITY)
 
 
+def get_priority_list(char_name: str | None) -> list[str]:
+    """返回角色完整技能优先级，不过滤s3_skip冷却。额外回合用。"""
+    return _get_priority(_norm(char_name))
+
+
 def _get_s3_skip_cfg(key: str | None) -> int:
     if key and key in _db:
         entry = _db[key]
