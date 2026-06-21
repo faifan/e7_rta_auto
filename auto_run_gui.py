@@ -537,6 +537,8 @@ class AutoRunApp:
         self._set_status('已停止 — 点击"开始"继续', '#d29922')
 
     def _update_resize_btn_visibility(self):
+        if not hasattr(self, '_resize_btn'):
+            return
         client = self._client_var.get()
         if client == 'PC客户端':
             self._resize_btn.pack(side=tk.LEFT, padx=12, before=self._start_btn)

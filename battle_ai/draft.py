@@ -1140,15 +1140,15 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
         _log('  [搜索] 超时：弹窗未打开，放弃本轮')
         return '', [], []
 
-    click_at(*_search_input(), delay=1.5)
-
     picked_code = ''
     seen_selected = []
     seen_banned   = []
     banned_kw   = _dlang('draft_hero_banned',   '禁用')
     selected_kw = _dlang('draft_hero_selected',  '已选')
 
-    for code, name, prob in candidates:
+    click_at(*_search_input(), delay=0.5)   # 初始聚焦文本框
+
+    for i, (code, name, prob) in enumerate(candidates):
         if not _is_search_popup_open():
             _log('  [搜索] 弹窗未打开，反复尝试重开...')
             opened = False
@@ -1165,8 +1165,10 @@ def search_and_pick_candidates(candidates: list, log_fn=None, unavailable: set =
 
         _log(f'  [搜索] 搜索: {name!r}（{code}）')
 
-        click_at(*_search_clear_btn(), delay=0.3)
-        click_at(*_search_input(), delay=0.8)
+        if i > 0:
+            # 第二个候选起才需要清除上次内容
+            click_at(*_search_clear_btn(), delay=0.2)
+            click_at(*_search_input(), delay=0.3)
         try:
             from config_loader import cfg
             _mode = getattr(cfg, 'input_method', 'emulator') if cfg.is_loaded() else 'emulator'

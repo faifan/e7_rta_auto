@@ -92,10 +92,15 @@ def _execute_skill(skill: str, char_name: str | None, turn: int, log_fn,
         time.sleep(2.7)
     if read_turn_badge() != 'my_turn':
         if _is_et_skill:
-            time.sleep(1.5)
-            if read_turn_badge() == 'my_turn':
-                log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓ (额外回合)")
-                return 'extra_turn'
+            deadline = time.time() + 6.0
+            while time.time() < deadline:
+                time.sleep(0.5)
+                badge = read_turn_badge()
+                if badge == 'my_turn':
+                    log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓ (额外回合)")
+                    return 'extra_turn'
+                if badge == 'enemy_turn':
+                    break
         log_fn(f"[回合 {turn}] {char_name or '?'} {skill} ✓")
         return 'success'
     log_fn(f"[回合 {turn}] {char_name or '?'} {skill} 无响应")
@@ -393,7 +398,7 @@ def run(stop_event=None, log_fn=None, arm_force_burn=False, my_team_names=None,
                     if skill == 'S2':
                         on_s2_success(char_name)
                     executed = True
-                    if result == 'extra_turn':
+                    if skill == _et_skill:
                         sb = get_soul_burn_skill(char_name)
                         if sb and sb != skill:
                             set_pending_extra_turn(char_name, 'soul_burn')
