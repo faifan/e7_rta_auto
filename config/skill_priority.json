@@ -91,5 +91,7 @@
   "落月": {"S1":{"type":"single"},"S2":{"type":"active","extra_turn":false},"S3":{"type":"aoe","extra_turn":true},"soul_burn":"S3","extra_turn":"S3","burn_timing":"first","priority":["S3","S2","S1"],"s3_skip":2},
   "伊凡娜": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
   "里安娜路西艾拉": {"S1":{"type":"single"},"S2":{"type":"single","extra_turn":true},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"extra_turn":"S2","priority":["S2","S3","S1"],"s3_skip":0},
-  "黎明序曲鲁特比": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2}
+  "黎明序曲鲁特比": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2},
+  "黎洁特": {"S1":{"type":"aoe"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":"S1","priority":["S3","S1"],"s3_skip":2,"burn_timing":"second"},
+  "波涛裂痕艾碧拉": {"S1":{"type":"single"},"S2":{"type":"passive","extra_turn":false},"S3":{"type":"aoe","extra_turn":false},"soul_burn":null,"priority":["S3","S1"],"s3_skip":2}
 }

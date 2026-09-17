@@ -1,5 +1,5 @@
 {
-  "client": "安卓模拟器-ADB",
+  "client": "安卓模拟器",
   "adb_device": "127.0.0.1:16384",
   "profile": "1920x1080.json",
   "lang": "简体中文",

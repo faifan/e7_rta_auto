@@ -1612,7 +1612,7 @@
   {
     "code": "c2110",
     "grade": "5",
-    "name": "海洋猎手芙兰",
+    "name": "海盗船长芙兰",
     "job_cd": "ranger",
     "attribute_cd": "dark"
   },
@@ -1694,6 +1694,13 @@
     "attribute_cd": "light"
   },
   {
+    "code": "c2148",
+    "grade": "5",
+    "name": "波涛裂痕艾碧拉",
+    "job_cd": "mage",
+    "attribute_cd": "dark"
+  },
+  {
     "code": "c2165",
     "grade": "4",
     "name": "转学生艾庭",
@@ -1720,6 +1727,13 @@
     "name": "里安娜路西艾拉",
     "job_cd": "assassin",
     "attribute_cd": "dark"
+  },
+  {
+    "code": "c2186",
+    "grade": "5",
+    "name": "黎洁特",
+    "job_cd": "manauser",
+    "attribute_cd": "light"
   },
   {
     "code": "c3001",
@@ -2569,11 +2583,25 @@
     "attribute_cd": "fire"
   },
   {
+    "code": "c5112",
+    "grade": "5",
+    "name": "未知开拓者佛里蒂丝",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
+  },
+  {
     "code": "c5128",
     "grade": "5",
     "name": "银光海啸和英",
     "job_cd": "assassin",
     "attribute_cd": "ice"
+  },
+  {
+    "code": "c5147",
+    "grade": "5",
+    "name": "深海之眼芙米尔",
+    "job_cd": "mage",
+    "attribute_cd": "wind"
   },
   {
     "code": "c5149",
@@ -2595,6 +2623,13 @@
     "name": "亚澜",
     "job_cd": "manauser",
     "attribute_cd": "fire"
+  },
+  {
+    "code": "c5190",
+    "grade": "5",
+    "name": "奥芙",
+    "job_cd": "ranger",
+    "attribute_cd": "ice"
   },
   {
     "code": "c6003",
