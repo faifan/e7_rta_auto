@@ -1113,6 +1113,27 @@
     "attribute_cd": "wind"
   },
   {
+    "code": "c1191",
+    "grade": "5",
+    "name": "梅铃",
+    "job_cd": "assassin",
+    "attribute_cd": "fire"
+  },
+  {
+    "code": "c1192",
+    "grade": "5",
+    "name": "小春",
+    "job_cd": "warrior",
+    "attribute_cd": "ice"
+  },
+  {
+    "code": "c1193",
+    "grade": "5",
+    "name": "蕾诺娅",
+    "job_cd": "ranger",
+    "attribute_cd": "dark"
+  },
+  {
     "code": "c2001",
     "grade": "5",
     "name": "起源拉斯",
