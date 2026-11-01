@@ -1,6 +1,6 @@
 {
-  "unpracticed": ["亚澜","丽迪卡","碧儿姬达"],
-  "priority": [],
-  "force_pick": [],
+  "unpracticed": ["亚澜","丽迪卡","碧儿姬达","智武"],
+  "priority": ["黎洁特","诺托斯"],
+  "force_pick": ["黎洁特"],
   "fallback_picks": []
 }
